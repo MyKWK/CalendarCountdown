@@ -1,0 +1,180 @@
+name: CalendarCountdown
+options:
+  bundleIdPrefix: app.calendarcountdown
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "14.0"
+  groupSortPosition: top
+  generateEmptyDirectories: true
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    CLANG_ENABLE_MODULES: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+  configs:
+    Debug:
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+    Release:
+      SWIFT_OPTIMIZATION_LEVEL: "-O"
+
+targets:
+  CalendarCountdownCore:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: Core
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.Core
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+
+  CalendarCountdownCalendar:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: CalendarBridge
+    dependencies:
+      - target: CalendarCountdownCore
+      - sdk: EventKit.framework
+      - sdk: AppKit.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.Calendar
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+
+  CalendarCountdown:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+      - path: Resources
+    info:
+      path: Config/App-Info.plist
+      properties:
+        CFBundleDisplayName: 日历倒数
+        CFBundleShortVersionString: 1.0.0
+        CFBundleVersion: "1"
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        NSCalendarsFullAccessUsageDescription: “日历倒数”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。
+        CFBundleURLTypes:
+          - CFBundleURLName: CalendarCountdown Event
+            CFBundleURLSchemes:
+              - calendarcountdown
+    entitlements:
+      path: Config/App.entitlements
+      properties:
+        com.apple.security.personal-information.calendars: true
+    dependencies:
+      - target: CalendarCountdownCore
+      - target: CalendarCountdownCalendar
+      - target: CalendarCountdownWidget
+        embed: true
+      - sdk: EventKit.framework
+      - sdk: WidgetKit.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown
+        PRODUCT_NAME: CalendarCountdown
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        ENABLE_APP_SANDBOX: NO
+        CODE_SIGN_STYLE: Automatic
+
+  CalendarCountdownWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Widget
+    info:
+      path: Config/Widget-Info.plist
+      properties:
+        CFBundleDisplayName: 日历倒数
+        CFBundleShortVersionString: 1.0.0
+        CFBundleVersion: "1"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Config/Widget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+    dependencies:
+      - target: CalendarCountdownCore
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.Widget
+        PRODUCT_NAME: CalendarCountdownWidget
+        APPLICATION_EXTENSION_API_ONLY: YES
+        ENABLE_APP_SANDBOX: YES
+        SKIP_INSTALL: YES
+        CODE_SIGN_STYLE: Automatic
+
+  calcount:
+    type: tool
+    platform: macOS
+    sources:
+      - path: CLI
+    info:
+      path: Config/CLI-Info.plist
+      properties:
+        CFBundleShortVersionString: 1.0.0
+        CFBundleVersion: "1"
+        NSCalendarsFullAccessUsageDescription: calcount 需要读取 Apple 日历并管理你明确指定的日历事件。
+    entitlements:
+      path: Config/CLI.entitlements
+      properties:
+        com.apple.security.personal-information.calendars: true
+    dependencies:
+      - target: CalendarCountdownCore
+      - target: CalendarCountdownCalendar
+      - sdk: EventKit.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.CLI
+        PRODUCT_NAME: calcount
+        CREATE_INFOPLIST_SECTION_IN_BINARY: YES
+        ENABLE_APP_SANDBOX: NO
+        CODE_SIGN_STYLE: Automatic
+
+  CalendarCountdownCoreTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: CalendarCountdownCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.CoreTests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  CalendarCountdown:
+    build:
+      targets:
+        CalendarCountdown: all
+        CalendarCountdownWidget: all
+        calcount: all
+        CalendarCountdownCoreTests: [test]
+    test:
+      targets:
+        - CalendarCountdownCoreTests
+    run:
+      config: Debug
+    archive:
+      config: Release
+  calcount:
+    build:
+      targets:
+        calcount: all
+    run:
+      config: Debug

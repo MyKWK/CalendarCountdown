@@ -1,0 +1,24 @@
+.DS_Store
+
+# Xcode user-specific state
+**/xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+.build/
+Source/.build/
+
+# Local build and packaging products
+Source/DerivedData/
+Source/DerivedData-*/
+Source/dist/
+
+# DMGs are published as GitHub Release assets, not committed to Git history.
+Releases/**/*.dmg
+
+# Private local import material; never publish it with the open-source repository.
+Documentation/first-batch.user.json
+Documentation/FIRST_BATCH_REVIEW.md
+Source/Docs/first-batch.user.json
+Source/Docs/FIRST_BATCH_REVIEW.md
+Releases/0.1.0/

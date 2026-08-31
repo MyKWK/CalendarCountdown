@@ -1,0 +1,14 @@
+.DS_Store
+**/xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData/
+DerivedData-*/
+build/
+dist/*.dmg
+*.xcuserstate
+xcuserdata/
+.swiftpm/
+.build/
+Docs/first-batch.user.json
+Docs/FIRST_BATCH_REVIEW.md

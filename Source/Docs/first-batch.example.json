@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "events": [
+    {
+      "externalId": "launch-2026",
+      "title": "项目正式上线",
+      "calendarTitle": "个人",
+      "calendarSystem": "gregorian",
+      "recurrence": "none",
+      "date": "2026-10-01",
+      "isAllDay": true,
+      "alertDaysBefore": [7, 1, 0],
+      "notes": "第一批普通事件"
+    },
+    {
+      "externalId": "birthday-demo-xiaolin",
+      "title": "小林",
+      "calendarTitle": "生日",
+      "calendarSystem": "gregorian",
+      "recurrence": "yearly",
+      "date": "1990-09-04",
+      "isAllDay": true,
+      "alertDaysBefore": [7, 1, 0]
+    },
+    {
+      "externalId": "birthday-demo-alex",
+      "title": "Alex",
+      "calendarTitle": "生日",
+      "calendarSystem": "lunar",
+      "recurrence": "yearly",
+      "lunarMonth": 8,
+      "lunarDay": 15,
+      "lunarLeapMonthPolicy": "regularOnly",
+      "invalidLunarDayPolicy": "clampToMonthEnd",
+      "isAllDay": true,
+      "alertDaysBefore": [7, 1, 0]
+    }
+  ],
+  "selections": [
+    {
+      "calendarTitle": "中国大陆节假日",
+      "eventTitle": "元旦",
+      "mode": "annualTitle"
+    }
+  ]
+}

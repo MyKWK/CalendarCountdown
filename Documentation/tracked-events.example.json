@@ -1,0 +1,75 @@
+{
+  "events": [
+    {
+      "appleCalendar": {
+        "calendarItemIdentifier": "APPLE-CALENDAR-ITEM-ID",
+        "externalIdentifier": "APPLE-EXTERNAL-ID"
+      },
+      "calendar": {
+        "colorHex": "#FF3B30",
+        "identifier": "APPLE-CALENDAR-ID",
+        "sourceTitle": "iCloud",
+        "title": "生日"
+      },
+      "date": {
+        "calendarSystem": "lunar",
+        "day": 29,
+        "isLeapMonth": false,
+        "month": 12,
+        "startYear": 1990
+      },
+      "id": "11111111-1111-1111-1111-111111111111",
+      "isAllDay": true,
+      "kind": "birthday",
+      "nextOccurrence": "2027-02-05",
+      "recurrence": {
+        "calendarSystem": "lunar",
+        "frequency": "yearly",
+        "invalidLunarDayPolicy": "clampToMonthEnd",
+        "lunarLeapMonthPolicy": "regularOnly"
+      },
+      "timeZoneIdentifier": "Asia/Shanghai",
+      "title": "示例农历生日",
+      "tracking": {
+        "isPinned": false,
+        "mode": "managedRecord",
+        "trackedSince": "2026-08-31T00:00:00Z"
+      }
+    },
+    {
+      "appleCalendar": {
+        "calendarItemIdentifier": "APPLE-ONE-OFF-ID"
+      },
+      "calendar": {
+        "colorHex": "#0A84FF",
+        "identifier": "APPLE-PERSONAL-CALENDAR-ID",
+        "sourceTitle": "iCloud",
+        "title": "个人"
+      },
+      "date": {
+        "calendarSystem": "gregorian",
+        "day": 7,
+        "month": 6,
+        "startYear": 2028
+      },
+      "id": "22222222-2222-2222-2222-222222222222",
+      "isAllDay": true,
+      "kind": "importantDate",
+      "nextOccurrence": "2028-06-07",
+      "recurrence": {
+        "calendarSystem": "gregorian",
+        "frequency": "none"
+      },
+      "timeZoneIdentifier": "Asia/Shanghai",
+      "title": "重要纪念日",
+      "tracking": {
+        "isPinned": true,
+        "mode": "exactEvent",
+        "trackedSince": "2026-08-31T00:00:00Z"
+      }
+    }
+  ],
+  "schemaVersion": 1,
+  "sourceOfTruth": "appleCalendar",
+  "updatedAt": "2026-08-31T00:00:00Z"
+}
