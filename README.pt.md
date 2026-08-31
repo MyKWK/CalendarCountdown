@@ -31,7 +31,6 @@ CalendarCountdown não é outro banco de dados de calendário. Contas, calendár
 - Suporta regras anuais do calendário gregoriano e lunar chinês, incluindo mês intercalar e ajuste para meses curtos.
 - Calcula “hoje”, “amanhã” e os dias restantes usando o calendário local do sistema.
 - App nativo para macOS, visualização na barra de menus e widget de desktop com WidgetKit.
-- Um anel azul persistente mantém a ação de atualizar fácil de localizar tanto na janela principal quanto no menu suspenso.
 - Adiciona eventos comuns e aniversários gregorianos ou lunares a um calendário Apple escolhido explicitamente.
 - Exporta com um clique todas as datas importantes acompanhadas no momento.
 - Binário universal para Macs Apple Silicon e Intel, com macOS 14 ou posterior.

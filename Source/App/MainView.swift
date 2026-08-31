@@ -48,6 +48,7 @@ struct MainView: View {
                     Label("刷新", systemImage: "arrow.clockwise")
                 }
                 .disabled(model.isLoading)
+                .focusEffectDisabled()
 
                 Button {
                     openAppearanceSettings()

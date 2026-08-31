@@ -31,7 +31,6 @@ CalendarCountdown is not another calendar database. Accounts, calendars, events,
 - Support yearly Gregorian and Chinese lunar rules, including leap-month and short-month fallback policies.
 - Calculate “today,” “tomorrow,” and remaining days using the local system calendar.
 - Native macOS app, menu-bar glance, and WidgetKit desktop widget.
-- A persistent blue accent ring keeps the refresh action easy to find in both the main window and menu-bar popover.
 - Add regular events, Gregorian birthdays, and lunar birthdays to an explicitly selected Apple calendar.
 - Export every currently tracked important date with one click in the app.
 - Universal Binary for Apple Silicon and Intel Macs, requiring macOS 14 or later.

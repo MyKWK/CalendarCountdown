@@ -18,6 +18,7 @@ struct MenuBarContentView: View {
                     Image(systemName: "arrow.clockwise")
                 }
                 .buttonStyle(.plain)
+                .focusEffectDisabled()
             }
 
             if model.selectedEvents.isEmpty {

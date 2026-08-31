@@ -31,7 +31,6 @@ CalendarCountdown ist keine weitere Kalenderdatenbank. Konten, Kalender, Ereigni
 - Unterstützt jährliche Regeln nach gregorianischem und chinesischem Mondkalender, einschließlich Schaltmonaten und Ausgleich für kurze Mondmonate.
 - Berechnet „heute“, „morgen“ und verbleibende Tage anhand des lokalen Systemkalenders.
 - Native macOS-App, Menüleistenansicht und WidgetKit-Desktop-Widget.
-- Ein dauerhaft sichtbarer blauer Akzentring macht die Aktualisieren-Aktion im Hauptfenster und im Menüleisten-Popover leicht auffindbar.
 - Fügt normale Ereignisse sowie gregorianische oder lunare Geburtstage einem ausdrücklich gewählten Apple-Kalender hinzu.
 - Exportiert alle aktuell verfolgten wichtigen Termine mit einem Klick.
 - Universal Binary für Apple-Silicon- und Intel-Macs ab macOS 14.
