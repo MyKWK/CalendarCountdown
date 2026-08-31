@@ -1,0 +1,2 @@
+"CFBundleDisplayName" = "Calendar Countdown";
+"NSCalendarsFullAccessUsageDescription" = "Calendar Countdown needs to read your calendars to calculate countdowns and writes events only to a calendar you select after you confirm.";

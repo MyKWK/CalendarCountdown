@@ -1,0 +1,2 @@
+"CFBundleDisplayName" = "日历倒数";
+"NSCalendarsFullAccessUsageDescription" = "“日历倒数”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。";

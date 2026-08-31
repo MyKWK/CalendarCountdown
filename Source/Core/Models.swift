@@ -6,8 +6,10 @@ public enum CalendarSystemKind: String, Codable, CaseIterable, Sendable {
 
     public var displayName: String {
         switch self {
-        case .gregorian: "公历"
-        case .lunar: "农历"
+        case .gregorian:
+            AppLocalization.text("calendar_system.gregorian", defaultValue: "公历")
+        case .lunar:
+            AppLocalization.text("calendar_system.lunar", defaultValue: "农历")
         }
     }
 }
@@ -186,16 +188,60 @@ public enum ManagedEventValidationError: LocalizedError, Equatable {
 
     public var errorDescription: String? {
         switch self {
-        case .emptyTitle: "事件标题不能为空。"
-        case .missingDestinationCalendar: "必须提供目标 Apple 日历的 calendarTitle 或 calendarIdentifier。"
-        case .invalidAlertDays: "提前提醒天数必须在 0 到 3650 之间。"
-        case let .invalidStartYear(value): "无效的开始年份：\(value)，应为 1 到 9999。"
-        case let .invalidGregorianDate(value): "无效的公历日期：\(value ?? "未提供")，应为 YYYY-MM-DD。"
-        case let .invalidTime(value): "无效的时间：\(value)，应为 HH:mm。"
-        case .lunarMustRepeatYearly: "农历事件必须使用 yearly 重复规则。"
-        case let .invalidLunarMonth(value): "无效的农历月份：\(value.map(String.init) ?? "未提供")。"
-        case let .invalidLunarDay(value): "无效的农历日期：\(value.map(String.init) ?? "未提供")。"
-        case .invalidSelection: "倒数选择必须同时包含 Apple 日历名称和事件标题。"
+        case .emptyTitle:
+            AppLocalization.text("error.empty_title", defaultValue: "事件标题不能为空。")
+        case .missingDestinationCalendar:
+            AppLocalization.text(
+                "error.missing_destination_calendar",
+                defaultValue: "必须提供目标 Apple 日历的 calendarTitle 或 calendarIdentifier。"
+            )
+        case .invalidAlertDays:
+            AppLocalization.text(
+                "error.invalid_alert_days",
+                defaultValue: "提前提醒天数必须在 0 到 3650 之间。"
+            )
+        case let .invalidStartYear(value):
+            AppLocalization.format(
+                "error.invalid_start_year",
+                defaultValue: "无效的开始年份：%lld，应为 1 到 9999。",
+                Int64(value)
+            )
+        case let .invalidGregorianDate(value):
+            AppLocalization.format(
+                "error.invalid_gregorian_date",
+                defaultValue: "无效的公历日期：%@，应为 YYYY-MM-DD。",
+                value ?? AppLocalization.text("common.not_provided", defaultValue: "未提供")
+            )
+        case let .invalidTime(value):
+            AppLocalization.format(
+                "error.invalid_time",
+                defaultValue: "无效的时间：%@，应为 HH:mm。",
+                value
+            )
+        case .lunarMustRepeatYearly:
+            AppLocalization.text(
+                "error.lunar_requires_yearly",
+                defaultValue: "农历事件必须使用 yearly 重复规则。"
+            )
+        case let .invalidLunarMonth(value):
+            AppLocalization.format(
+                "error.invalid_lunar_month",
+                defaultValue: "无效的农历月份：%@。",
+                value.map(String.init)
+                    ?? AppLocalization.text("common.not_provided", defaultValue: "未提供")
+            )
+        case let .invalidLunarDay(value):
+            AppLocalization.format(
+                "error.invalid_lunar_day",
+                defaultValue: "无效的农历日期：%@。",
+                value.map(String.init)
+                    ?? AppLocalization.text("common.not_provided", defaultValue: "未提供")
+            )
+        case .invalidSelection:
+            AppLocalization.text(
+                "error.invalid_selection",
+                defaultValue: "倒数选择必须同时包含 Apple 日历名称和事件标题。"
+            )
         }
     }
 }
@@ -258,8 +304,17 @@ public enum ImportValidationError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case let .unsupportedSchemaVersion(version): "不支持 schemaVersion \(version)，当前仅支持 1。"
-        case .duplicateExternalId: "同一导入文件中不能出现重复的 externalId。"
+        case let .unsupportedSchemaVersion(version):
+            AppLocalization.format(
+                "error.unsupported_schema_version",
+                defaultValue: "不支持 schemaVersion %lld，当前仅支持 1。",
+                Int64(version)
+            )
+        case .duplicateExternalId:
+            AppLocalization.text(
+                "error.duplicate_external_id",
+                defaultValue: "同一导入文件中不能出现重复的 externalId。"
+            )
         }
     }
 }

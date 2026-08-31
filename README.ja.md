@@ -2,7 +2,7 @@
 
 > Appleカレンダーを信頼できる唯一の情報源として使い、ユーザー、ウィジェット、AIエージェントに見やすく持ち運べるカウントダウン機能を提供する、macOSネイティブの重要日トラッカーです。
 
-[中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
+[中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Русский](README.ru.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
 
 ## スクリーンショット
 
@@ -31,6 +31,7 @@ CalendarCountdownは別のカレンダーデータベースではありません
 - グレゴリオ暦と中国旧暦の年次ルール、閏月、月末補正に対応。
 - システムのローカルカレンダーで「今日」「明日」と残り日数を計算。
 - macOSネイティブアプリ、メニューバー表示、WidgetKitデスクトップウィジェット。
+- アプリ、メニューバー、ウィジェットはmacOSの言語に合わせ、簡体字中国語、英語、日本語、韓国語、スペイン語、ロシア語で表示。
 - 通常の予定、グレゴリオ暦の誕生日、旧暦の誕生日を、明示的に選んだAppleカレンダーへ追加。
 - 現在追跡中の重要日をアプリからワンクリックで書き出し。
 - Apple SiliconとIntel Macに対応するUniversal Binary（macOS 14以降）。

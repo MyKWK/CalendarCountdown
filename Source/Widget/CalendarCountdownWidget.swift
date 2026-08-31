@@ -14,10 +14,16 @@ struct CountdownTimelineProvider: TimelineProvider {
             snapshot: WidgetSnapshot(items: [
                 WidgetSnapshotItem(
                     id: "preview",
-                    title: "张三",
+                    title: AppLocalization.text(
+                        "widget.preview_title",
+                        defaultValue: "示例生日"
+                    ),
                     eventDate: Calendar.current.date(byAdding: .day, value: 5, to: Date()) ?? Date(),
                     colorHex: "#EC4899",
-                    calendarTitle: "生日"
+                    calendarTitle: AppLocalization.text(
+                        "widget.preview_calendar",
+                        defaultValue: "生日"
+                    )
                 )
             ])
         )

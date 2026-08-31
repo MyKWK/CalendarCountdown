@@ -2,7 +2,7 @@
 
 > Un rastreador nativo de fechas importantes para macOS. Apple Calendar sigue siendo la fuente de verdad, mientras que usuarios, widgets y agentes de IA reciben una capa de cuenta atrás clara y portable.
 
-[中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
+[中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Русский](README.ru.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
 
 ## Capturas de pantalla
 
@@ -31,6 +31,7 @@ CalendarCountdown no es otra base de datos de calendarios. Las cuentas, calendar
 - Admite reglas anuales del calendario gregoriano y lunar chino, incluidos el mes intercalar y la compensación para meses cortos.
 - Calcula «hoy», «mañana» y los días restantes con el calendario local del sistema.
 - App nativa para macOS, vista en la barra de menús y widget de escritorio con WidgetKit.
+- La app, el menú emergente y los widgets siguen el idioma de macOS en chino simplificado, inglés, japonés, coreano, español o ruso.
 - Añade eventos normales y cumpleaños gregorianos o lunares a un calendario de Apple elegido explícitamente.
 - Exporta con un clic todas las fechas importantes que se están siguiendo.
 - Binario universal para Macs Apple Silicon e Intel, con macOS 14 o posterior.

@@ -1,4 +1,5 @@
 import AppKit
+import CalendarCountdownCore
 import Combine
 import SwiftUI
 
@@ -11,9 +12,12 @@ enum AppAppearanceMode: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .system: "跟随系统"
-        case .light: "浅色"
-        case .dark: "深色"
+        case .system:
+            AppLocalization.text("appearance.mode_system", defaultValue: "跟随系统")
+        case .light:
+            AppLocalization.text("appearance.mode_light", defaultValue: "浅色")
+        case .dark:
+            AppLocalization.text("appearance.mode_dark", defaultValue: "深色")
         }
     }
 
@@ -55,13 +59,20 @@ enum AppThemePreset: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .aiBlue: "AI 蓝"
-        case .indigo: "靛蓝"
-        case .purple: "紫色"
-        case .pink: "粉色"
-        case .orange: "橙色"
-        case .yellow: "黄色"
-        case .green: "绿色"
+        case .aiBlue:
+            AppLocalization.text("appearance.color_ai_blue", defaultValue: "AI 蓝")
+        case .indigo:
+            AppLocalization.text("appearance.color_indigo", defaultValue: "靛蓝")
+        case .purple:
+            AppLocalization.text("appearance.color_purple", defaultValue: "紫色")
+        case .pink:
+            AppLocalization.text("appearance.color_pink", defaultValue: "粉色")
+        case .orange:
+            AppLocalization.text("appearance.color_orange", defaultValue: "橙色")
+        case .yellow:
+            AppLocalization.text("appearance.color_yellow", defaultValue: "黄色")
+        case .green:
+            AppLocalization.text("appearance.color_green", defaultValue: "绿色")
         }
     }
 
@@ -215,9 +226,21 @@ struct AppearanceSettingsView: View {
 
     private var appearanceDescription: String {
         switch settings.appearanceMode {
-        case .system: "根据 macOS 当前的浅色或深色外观自动切换。"
-        case .light: "始终使用明亮页面与深色文字。"
-        case .dark: "始终使用深色页面与浅色文字。"
+        case .system:
+            AppLocalization.text(
+                "appearance.description_system",
+                defaultValue: "根据 macOS 当前的浅色或深色外观自动切换。"
+            )
+        case .light:
+            AppLocalization.text(
+                "appearance.description_light",
+                defaultValue: "始终使用明亮页面与深色文字。"
+            )
+        case .dark:
+            AppLocalization.text(
+                "appearance.description_dark",
+                defaultValue: "始终使用深色页面与浅色文字。"
+            )
         }
     }
 }
@@ -256,7 +279,11 @@ private struct ThemeSwatch: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("主题颜色：\(title)")
+        .accessibilityLabel(AppLocalization.format(
+            "appearance.theme_accessibility_label",
+            defaultValue: "主题颜色：%@",
+            title
+        ))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

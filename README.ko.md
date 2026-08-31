@@ -2,7 +2,7 @@
 
 > Apple 캘린더를 단일 진실 공급원으로 사용하고 사용자, 위젯, AI 에이전트에 명확하고 이식 가능한 카운트다운 기능을 제공하는 네이티브 macOS 중요 날짜 추적기입니다.
 
-[中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
+[中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Русский](README.ru.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
 
 ## 스크린샷
 
@@ -31,6 +31,7 @@ CalendarCountdown은 또 하나의 캘린더 데이터베이스가 아닙니다.
 - 양력과 중국 음력의 연간 규칙, 윤달과 짧은 음력 월의 보정 정책을 지원합니다.
 - 시스템의 로컬 캘린더로 ‘오늘’, ‘내일’과 남은 일수를 계산합니다.
 - 네이티브 macOS 앱, 메뉴 막대 보기와 WidgetKit 데스크톱 위젯을 제공합니다.
+- 앱, 메뉴 막대 및 위젯은 macOS 언어에 따라 중국어 간체, 영어, 일본어, 한국어, 스페인어 또는 러시아어로 표시됩니다.
 - 일반 이벤트, 양력 생일과 음력 생일을 명시적으로 선택한 Apple 캘린더에 추가합니다.
 - 앱에서 현재 추적 중인 모든 중요 날짜를 한 번에 내보냅니다.
 - Apple Silicon과 Intel Mac을 모두 지원하는 Universal Binary입니다(macOS 14 이상).

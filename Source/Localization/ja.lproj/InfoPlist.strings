@@ -1,0 +1,2 @@
+"CFBundleDisplayName" = "カレンダーカウントダウン";
+"NSCalendarsFullAccessUsageDescription" = "カウントダウンの計算にはカレンダーの読み取りが必要です。確認後、選択したカレンダーにのみイベントを書き込みます。";

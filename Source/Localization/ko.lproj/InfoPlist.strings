@@ -1,0 +1,2 @@
+"CFBundleDisplayName" = "캘린더 카운트다운";
+"NSCalendarsFullAccessUsageDescription" = "카운트다운을 계산하려면 캘린더 읽기 권한이 필요하며, 확인 후 선택한 캘린더에만 이벤트를 기록합니다.";

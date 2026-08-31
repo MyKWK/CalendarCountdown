@@ -15,6 +15,47 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertEqual(CountdownCalculator.label(until: now, from: now, calendar: calendar), "今天")
     }
 
+    func testLocalizationResourcesHaveMatchingKeysAndPlaceholders() throws {
+        let sourceRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let localizationRoot = sourceRoot.appendingPathComponent("Localization", isDirectory: true)
+        let locales = ["zh-Hans", "en", "ja", "ko", "es", "ru"]
+        let reference = try localizationDictionary(
+            at: localizationRoot.appendingPathComponent("zh-Hans.lproj/Localizable.strings")
+        )
+        let referenceInfo = try localizationDictionary(
+            at: localizationRoot.appendingPathComponent("zh-Hans.lproj/InfoPlist.strings")
+        )
+
+        XCTAssertGreaterThanOrEqual(reference.count, 180)
+        XCTAssertNotNil(reference["countdown.remaining_days"])
+        XCTAssertNotNil(reference["status.tracked_events_exported"])
+        XCTAssertEqual(Set(referenceInfo.keys), [
+            "CFBundleDisplayName",
+            "NSCalendarsFullAccessUsageDescription"
+        ])
+
+        for locale in locales {
+            let localized = try localizationDictionary(
+                at: localizationRoot.appendingPathComponent("\(locale).lproj/Localizable.strings")
+            )
+            let localizedInfo = try localizationDictionary(
+                at: localizationRoot.appendingPathComponent("\(locale).lproj/InfoPlist.strings")
+            )
+            XCTAssertEqual(Set(localized.keys), Set(reference.keys), "Missing Localizable.strings keys for \(locale)")
+            XCTAssertEqual(Set(localizedInfo.keys), Set(referenceInfo.keys), "Missing InfoPlist.strings keys for \(locale)")
+
+            for key in reference.keys {
+                XCTAssertEqual(
+                    formatPlaceholders(in: localized[key] ?? ""),
+                    formatPlaceholders(in: reference[key] ?? ""),
+                    "Format placeholders differ for \(locale): \(key)"
+                )
+            }
+        }
+    }
+
     func testLunarDatesMatchFirstBatchScreenshots() throws {
         let zone = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
         var calendar = Calendar(identifier: .gregorian)
@@ -307,4 +348,21 @@ final class CalendarCountdownCoreTests: XCTestCase {
             url: nil
         )
     }
+}
+
+private func localizationDictionary(at url: URL) throws -> [String: String] {
+    let data = try Data(contentsOf: url)
+    return try XCTUnwrap(
+        PropertyListSerialization.propertyList(from: data, format: nil) as? [String: String],
+        "Invalid strings file: \(url.path)"
+    )
+}
+
+private func formatPlaceholders(in value: String) -> [String] {
+    let pattern = #"%(?:[0-9]+\$)?(?:@|lld)"#
+    guard let expression = try? NSRegularExpression(pattern: pattern) else { return [] }
+    let range = NSRange(value.startIndex..., in: value)
+    return expression.matches(in: value, range: range).compactMap { match in
+        Range(match.range, in: value).map { String(value[$0]) }
+    }.sorted()
 }

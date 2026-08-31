@@ -101,7 +101,9 @@ final class AppModel: ObservableObject {
             try CountdownDisplayPreferencesStore.save(updated)
             displayPreferences = updated
             try await rebuildCountdownPresentation()
-            statusMessage = tracked ? "已追踪该类别" : "该类别已设为不追踪"
+            statusMessage = tracked
+                ? AppLocalization.text("status.calendar_tracked", defaultValue: "已追踪该类别")
+                : AppLocalization.text("status.calendar_untracked", defaultValue: "该类别已设为不追踪")
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -109,7 +111,10 @@ final class AppModel: ObservableObject {
 
     func togglePin(_ event: CountdownEvent) async {
         guard let matchingSelection = selections.first(where: { $0.matches(event) }) else {
-            errorMessage = "请先将事件加入倒数，再进行置顶。"
+            errorMessage = AppLocalization.text(
+                "error.pin_requires_tracking",
+                defaultValue: "请先将事件加入倒数，再进行置顶。"
+            )
             return
         }
 
@@ -121,7 +126,9 @@ final class AppModel: ObservableObject {
             try CountdownDisplayPreferencesStore.save(updated)
             displayPreferences = updated
             try await rebuildCountdownPresentation()
-            statusMessage = updated.pinnedSelectionID == nil ? "已取消置顶" : "已置顶到顶部菜单栏"
+            statusMessage = updated.pinnedSelectionID == nil
+                ? AppLocalization.text("status.unpinned", defaultValue: "已取消置顶")
+                : AppLocalization.text("status.pinned", defaultValue: "已置顶到顶部菜单栏")
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -130,7 +137,12 @@ final class AppModel: ObservableObject {
     func select(_ event: CountdownEvent, mode: SelectionMode) async {
         do {
             _ = try await repository.select(event: event, mode: mode)
-            statusMessage = mode == .annualTitle ? "已按同名年度事件加入倒数" : "已加入倒数"
+            statusMessage = mode == .annualTitle
+                ? AppLocalization.text(
+                    "status.annual_event_tracked",
+                    defaultValue: "已按同名年度事件加入倒数"
+                )
+                : AppLocalization.text("status.event_tracked", defaultValue: "已加入倒数")
             await refresh()
         } catch {
             errorMessage = error.localizedDescription
@@ -149,7 +161,10 @@ final class AppModel: ObservableObject {
                 try CountdownDisplayPreferencesStore.save(updated)
                 displayPreferences = updated
             }
-            statusMessage = "已从倒数展示中移除"
+            statusMessage = AppLocalization.text(
+                "status.event_untracked",
+                defaultValue: "已从倒数展示中移除"
+            )
             await refresh()
         } catch {
             errorMessage = error.localizedDescription
@@ -159,7 +174,11 @@ final class AppModel: ObservableObject {
     func add(_ draft: ManagedEventDraft) async -> Bool {
         do {
             let result = try await repository.writeCalendarBacked(draft)
-            statusMessage = "已同步到 Apple 日历，生成 \(result.createdEventCount) 个事件"
+            statusMessage = AppLocalization.format(
+                "status.calendar_sync_complete",
+                defaultValue: "已同步到 Apple 日历，生成 %lld 个事件",
+                Int64(result.createdEventCount)
+            )
             await refresh()
             return true
         } catch {
@@ -175,8 +194,17 @@ final class AppModel: ObservableObject {
             let document = try JSONCoding.decoder().decode(ImportDocument.self, from: Data(contentsOf: url))
             let result = try await repository.importDocument(document, dryRun: dryRun)
             statusMessage = dryRun
-                ? "校验通过：\(result.validatedEventCount) 个待写事件，\(result.validatedSelectionCount) 个已有事件选择"
-                : "导入完成：生成 \(result.projectedEventCount) 个日历事件"
+                ? AppLocalization.format(
+                    "status.import_validation_complete",
+                    defaultValue: "校验通过：%lld 个待写事件，%lld 个已有事件选择",
+                    Int64(result.validatedEventCount),
+                    Int64(result.validatedSelectionCount)
+                )
+                : AppLocalization.format(
+                    "status.import_complete",
+                    defaultValue: "导入完成：生成 %lld 个日历事件",
+                    Int64(result.projectedEventCount)
+                )
             await refresh()
         } catch {
             errorMessage = error.localizedDescription

@@ -24,10 +24,12 @@
 		6C9BFE30D7F55CCC36863361 /* libCalendarCountdownCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E8AC3FCC01295977EDB1CC2 /* libCalendarCountdownCore.a */; };
 		70371D254506530E3F03F560 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7BD05FE988DA963486060135 /* WidgetKit.framework */; };
 		710AD34AD15E30721E38F620 /* Persistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACCD0715AF49783237256570 /* Persistence.swift */; };
+		71BD9E7CF9A5C44E677E25F3 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4C7730FB193A9AB04CED3A0D /* InfoPlist.strings */; };
 		78583CD46349A08EB415AFD3 /* libCalendarCountdownCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E8AC3FCC01295977EDB1CC2 /* libCalendarCountdownCore.a */; };
 		78A34B836A5F202979BCA451 /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F962E882C560CE12182B37E3 /* EventKit.framework */; };
 		86FDDF0F199E77B45A707129 /* libCalendarCountdownCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E8AC3FCC01295977EDB1CC2 /* libCalendarCountdownCore.a */; };
 		8F3047F9F8BDFF082AD33699 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 241317BB23CE634E81423861 /* WidgetSnapshot.swift */; };
+		93AD99C1DEC5BD3E49DF8149 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3261404CA33E927A22BACE6D /* AppLocalization.swift */; };
 		94FAF9D870C43DCF16C14855 /* CalCountCLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83BDAAB03B2612D98EC39EEE /* CalCountCLI.swift */; };
 		9B9961711EE60D16A5727842 /* MenuBarContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 056E118F36D92693F8D13E2E /* MenuBarContentView.swift */; };
 		9D060BE8DAC1A32343B2B42E /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCFB902ACE9E608A590C8CCA /* MainView.swift */; };
@@ -35,9 +37,12 @@
 		B3F65511E371D76879117737 /* libCalendarCountdownCalendar.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 01240C817008A5CF3E1E2BBD /* libCalendarCountdownCalendar.a */; };
 		BB317182A51C1EFFF391E8C4 /* CalendarCountdownWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 67CDF0687E4148F3520C3E2B /* CalendarCountdownWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BD5A49ED87605283D7D595E7 /* AddEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A00A2EC823BEC266439258 /* AddEventView.swift */; };
+		C07AAA284E31B110E5055364 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AD2B277F119CDCAE06896A48 /* Localizable.strings */; };
 		CE9AC2EF628C3295DBABC4E0 /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F962E882C560CE12182B37E3 /* EventKit.framework */; };
+		D820F6736B8767EE964BBB04 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AD2B277F119CDCAE06896A48 /* Localizable.strings */; };
 		D8C35AB08476A9A70AE7507F /* ProductConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 023A0029FABCE35A937F3BF1 /* ProductConstants.swift */; };
 		DD7D32E06C9DF768BBF29F03 /* AppearanceSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAE508BFB13FF36FA3261846 /* AppearanceSettings.swift */; };
+		EFF34B38DF4B20B9EF08BD4C /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4C7730FB193A9AB04CED3A0D /* InfoPlist.strings */; };
 		F14844B86DB636D4B84CBB87 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BE5412E680BD1E9983A7C92 /* Models.swift */; };
 /* End PBXBuildFile section */
 
@@ -117,15 +122,20 @@
 /* Begin PBXFileReference section */
 		01240C817008A5CF3E1E2BBD /* libCalendarCountdownCalendar.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCalendarCountdownCalendar.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		023A0029FABCE35A937F3BF1 /* ProductConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductConstants.swift; sourceTree = "<group>"; };
+		03A2BB18C1099A9C35520E72 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		03EE2CE943906F7FAF742B10 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		056E118F36D92693F8D13E2E /* MenuBarContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarContentView.swift; sourceTree = "<group>"; };
 		0C3F4DA09F836B3727643B6F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		1B9ED4A5ED8CF6612F8B5B40 /* CalendarCountdownCoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarCountdownCoreTests.swift; sourceTree = "<group>"; };
 		1E8AC3FCC01295977EDB1CC2 /* libCalendarCountdownCore.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libCalendarCountdownCore.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		241317BB23CE634E81423861 /* WidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshot.swift; sourceTree = "<group>"; };
+		29473E91E876101F89D1D9E6 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		3261404CA33E927A22BACE6D /* AppLocalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLocalization.swift; sourceTree = "<group>"; };
 		3F1F4255E9C01615675FAF30 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		453C7F5E119353B3742D12DA /* DateSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateSupport.swift; sourceTree = "<group>"; };
 		48A65B465D7CC242E16586C7 /* EventKitRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventKitRepository.swift; sourceTree = "<group>"; };
 		5FF27CFF5C668AB0527D8B2D /* CalendarCountdown.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CalendarCountdown.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		60B7B487607D0E3996D771DE /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		622448B5801D2B556C2B8581 /* LunarDateResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LunarDateResolver.swift; sourceTree = "<group>"; };
 		65A00A2EC823BEC266439258 /* AddEventView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddEventView.swift; sourceTree = "<group>"; };
 		672D0198C6AF457258E6910C /* CalendarCountdownCoreTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CalendarCountdownCoreTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -133,15 +143,23 @@
 		6BEDD997023ABA523C99D095 /* calcount */ = {isa = PBXFileReference; includeInIndex = 0; path = calcount; sourceTree = BUILT_PRODUCTS_DIR; };
 		72E2718D0B79EFBCB1E614BF /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		742C4AE139255505851E4CCF /* TrackedEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackedEvents.swift; sourceTree = "<group>"; };
+		746625886D5A61E1F5D9ED19 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		79BD277BC526FCD3170F925B /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		7BD05FE988DA963486060135 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		838E45BBAAFD99B3BA3D87EF /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		83BDAAB03B2612D98EC39EEE /* CalCountCLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalCountCLI.swift; sourceTree = "<group>"; };
 		8BE5412E680BD1E9983A7C92 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		8EEE845B42F1D86E560D1C09 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		918C9B454898EDC9D7657C73 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		AAE508BFB13FF36FA3261846 /* AppearanceSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettings.swift; sourceTree = "<group>"; };
 		ACCD0715AF49783237256570 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
+		BA99A6374B377C630F7C846B /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		BD4CE6822FDA07E3C00A9348 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
 		BE6D6D4F30560F2D37B83C3D /* CalendarCountdownWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarCountdownWidget.swift; sourceTree = "<group>"; };
 		D8978D9965FE285A78896EA9 /* CalendarCountdownApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarCountdownApp.swift; sourceTree = "<group>"; };
+		F03F2D051D91FCE8E433ABDA /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F962E882C560CE12182B37E3 /* EventKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = EventKit.framework; path = System/Library/Frameworks/EventKit.framework; sourceTree = SDKROOT; };
+		FB34B671921FE15BFBC5372F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		FCFB902ACE9E608A590C8CCA /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -212,6 +230,7 @@
 				A7A72B1A7790B6ABFEC0A1CB /* CalendarBridge */,
 				5C9B448B5DE1510BB9B9CD1A /* CLI */,
 				17C945DDB76410BEFAEAD672 /* Core */,
+				B7E76111D37D3194BEBD66AA /* Localization */,
 				D91B86E2203EDB845FF6C9F2 /* Resources */,
 				3236FD6B745F95B6866FE7F9 /* Tests */,
 				129BCC9B8619489B2610BFD8 /* Widget */,
@@ -223,6 +242,7 @@
 		17C945DDB76410BEFAEAD672 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				3261404CA33E927A22BACE6D /* AppLocalization.swift */,
 				453C7F5E119353B3742D12DA /* DateSupport.swift */,
 				622448B5801D2B556C2B8581 /* LunarDateResolver.swift */,
 				8BE5412E680BD1E9983A7C92 /* Models.swift */,
@@ -269,6 +289,15 @@
 				48A65B465D7CC242E16586C7 /* EventKitRepository.swift */,
 			);
 			path = CalendarBridge;
+			sourceTree = "<group>";
+		};
+		B7E76111D37D3194BEBD66AA /* Localization */ = {
+			isa = PBXGroup;
+			children = (
+				4C7730FB193A9AB04CED3A0D /* InfoPlist.strings */,
+				AD2B277F119CDCAE06896A48 /* Localizable.strings */,
+			);
+			path = Localization;
 			sourceTree = "<group>";
 		};
 		BF672FE43BC13CAA4EFAF4AC /* App */ = {
@@ -411,6 +440,7 @@
 			buildConfigurationList = 3E6F5AA81FE5931BEA932791 /* Build configuration list for PBXNativeTarget "CalendarCountdownWidget" */;
 			buildPhases = (
 				1083586D4ECE60DF085EB469 /* Sources */,
+				0B0C9CD4836627C2A6583AFE /* Resources */,
 				D27BC7C077DA1994F9C560CC /* Frameworks */,
 			);
 			buildRules = (
@@ -446,11 +476,16 @@
 				};
 			};
 			buildConfigurationList = E4CFBCC3779405B48A9C4B49 /* Build configuration list for PBXProject "CalendarCountdown" */;
-			developmentRegion = en;
+			developmentRegion = "zh-Hans";
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
 				en,
+				es,
+				ja,
+				ko,
+				ru,
+				"zh-Hans",
 			);
 			mainGroup = 173485CB641B469736B3194E;
 			minimizedProjectReferenceProxies = 1;
@@ -470,11 +505,22 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		0B0C9CD4836627C2A6583AFE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EFF34B38DF4B20B9EF08BD4C /* InfoPlist.strings in Resources */,
+				D820F6736B8767EE964BBB04 /* Localizable.strings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1D4E3F7666B1ACA072AD0A5E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				3B82A9B6FD92696816214F4C /* Assets.xcassets in Resources */,
+				71BD9E7CF9A5C44E677E25F3 /* InfoPlist.strings in Resources */,
+				C07AAA284E31B110E5055364 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -565,6 +611,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				93AD99C1DEC5BD3E49DF8149 /* AppLocalization.swift in Sources */,
 				422A2925787CB710EAF7569A /* DateSupport.swift in Sources */,
 				0D486CDB74342695FFC2DC0F /* LunarDateResolver.swift in Sources */,
 				F14844B86DB636D4B84CBB87 /* Models.swift in Sources */,
@@ -619,6 +666,35 @@
 			targetProxy = 989BC5D0B7A2FE723EE8CFCF /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		4C7730FB193A9AB04CED3A0D /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				03A2BB18C1099A9C35520E72 /* en */,
+				60B7B487607D0E3996D771DE /* es */,
+				BA99A6374B377C630F7C846B /* ja */,
+				746625886D5A61E1F5D9ED19 /* ko */,
+				29473E91E876101F89D1D9E6 /* ru */,
+				79BD277BC526FCD3170F925B /* zh-Hans */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		AD2B277F119CDCAE06896A48 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				838E45BBAAFD99B3BA3D87EF /* en */,
+				03EE2CE943906F7FAF742B10 /* es */,
+				918C9B454898EDC9D7657C73 /* ja */,
+				BD4CE6822FDA07E3C00A9348 /* ko */,
+				F03F2D051D91FCE8E433ABDA /* ru */,
+				FB34B671921FE15BFBC5372F /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		0A16C1B68F43CE2BDEE92B31 /* Release */ = {

@@ -83,7 +83,10 @@ struct MainView: View {
         ) { result in
             switch result {
             case .success:
-                model.statusMessage = "当前追踪的重要日已导出"
+                model.statusMessage = AppLocalization.text(
+                    "status.tracked_events_exported",
+                    defaultValue: "当前追踪的重要日已导出"
+                )
             case let .failure(error):
                 model.errorMessage = error.localizedDescription
             }
@@ -94,7 +97,10 @@ struct MainView: View {
         )) {
             Button("好", role: .cancel) { model.errorMessage = nil }
         } message: {
-            Text(model.errorMessage ?? "未知错误")
+            Text(model.errorMessage ?? AppLocalization.text(
+                "error.unknown",
+                defaultValue: "未知错误"
+            ))
         }
         .overlay(alignment: .bottom) {
             if let message = model.statusMessage {
@@ -175,11 +181,27 @@ struct MainView: View {
         Group {
             if displayedEvents.isEmpty {
                 ContentUnavailableView(
-                    selectedCalendarID == "__countdown__" ? "尚未选择倒数事件" : "没有未来事件",
+                    selectedCalendarID == "__countdown__"
+                        ? AppLocalization.text(
+                            "empty.no_countdown_events",
+                            defaultValue: "尚未选择倒数事件"
+                        )
+                        : AppLocalization.text(
+                            "empty.no_future_events",
+                            defaultValue: "没有未来事件"
+                        ),
                     systemImage: "calendar",
-                    description: Text(selectedCalendarID == "__countdown__"
-                        ? "从任意 Apple 日历中选择具体事件加入倒数。"
-                        : "尝试扩大时间范围或检查该日历是否包含未来事件。")
+                    description: Text(
+                        selectedCalendarID == "__countdown__"
+                            ? AppLocalization.text(
+                                "empty.select_event_description",
+                                defaultValue: "从任意 Apple 日历中选择具体事件加入倒数。"
+                            )
+                            : AppLocalization.text(
+                                "empty.future_events_description",
+                                defaultValue: "尝试扩大时间范围或检查该日历是否包含未来事件。"
+                            )
+                    )
                 )
             } else {
                 List(displayedEvents) { event in
@@ -217,8 +239,11 @@ struct MainView: View {
     }
 
     private var selectedTitle: String {
-        if selectedCalendarID == "__countdown__" { return "倒数展示" }
-        return model.calendars.first(where: { $0.id == selectedCalendarID })?.title ?? "未来事件"
+        if selectedCalendarID == "__countdown__" {
+            return AppLocalization.text("navigation.countdown", defaultValue: "倒数展示")
+        }
+        return model.calendars.first(where: { $0.id == selectedCalendarID })?.title
+            ?? AppLocalization.text("navigation.future_events", defaultValue: "未来事件")
     }
 
     private var groupedCalendars: [(key: String, value: [CalendarSummary])] {
@@ -255,7 +280,12 @@ private struct CalendarTrackingButton: View {
 
     var body: some View {
         Button(action: action) {
-            Label(isTracked ? "不追踪" : "追踪", systemImage: isTracked ? "eye.slash" : "eye")
+            Label(
+                isTracked
+                    ? AppLocalization.text("action.untrack", defaultValue: "不追踪")
+                    : AppLocalization.text("action.track", defaultValue: "追踪"),
+                systemImage: isTracked ? "eye.slash" : "eye"
+            )
                 .font(.caption2)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
@@ -263,9 +293,17 @@ private struct CalendarTrackingButton: View {
         }
         .buttonStyle(.borderless)
         .fixedSize()
-        .help(isTracked
-            ? "不再在倒数展示、顶部菜单栏和小组件中显示这个类别"
-            : "在倒数展示、顶部菜单栏和小组件中追踪这个类别")
+        .help(
+            isTracked
+                ? AppLocalization.text(
+                    "help.untrack_calendar",
+                    defaultValue: "不再在倒数展示、顶部菜单栏和小组件中显示这个类别"
+                )
+                : AppLocalization.text(
+                    "help.track_calendar",
+                    defaultValue: "在倒数展示、顶部菜单栏和小组件中追踪这个类别"
+                )
+        )
     }
 }
 
@@ -305,9 +343,16 @@ private struct EventRow: View {
             }
             .buttonStyle(.plain)
             .disabled(!isSelected)
-            .help(isSelected
-                ? (isPinned ? "取消置顶" : "置顶到顶部菜单栏")
-                : "请先追踪这个事件，再进行置顶")
+            .help(
+                isSelected
+                    ? (isPinned
+                        ? AppLocalization.text("action.unpin", defaultValue: "取消置顶")
+                        : AppLocalization.text("action.pin", defaultValue: "置顶到顶部菜单栏"))
+                    : AppLocalization.text(
+                        "help.pin_requires_tracking",
+                        defaultValue: "请先追踪这个事件，再进行置顶"
+                    )
+            )
             Menu {
                 if isSelected {
                     Button("不追踪这个倒数", role: .destructive, action: onUnselect)

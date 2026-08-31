@@ -23,17 +23,42 @@ public enum EventKitRepositoryError: LocalizedError {
     public var errorDescription: String? {
         switch self {
         case let .calendarAccessRequired(state):
-            "需要 Apple 日历完全访问权限，当前状态：\(state.rawValue)。"
+            AppLocalization.format(
+                "error.calendar_access_required",
+                defaultValue: "需要 Apple 日历完全访问权限，当前状态：%@。",
+                state.rawValue
+            )
         case let .calendarNotFound(identifier, title):
-            "找不到目标 Apple 日历（identifier: \(identifier ?? "未提供"), title: \(title ?? "未提供")）。"
+            AppLocalization.format(
+                "error.calendar_not_found",
+                defaultValue: "找不到目标 Apple 日历（identifier: %@, title: %@）。",
+                identifier ?? AppLocalization.text("common.not_provided", defaultValue: "未提供"),
+                title ?? AppLocalization.text("common.not_provided", defaultValue: "未提供")
+            )
         case let .ambiguousCalendarTitle(title, sources):
-            "存在多个名为“\(title)”的日历，请使用 calendarIdentifier 指定。来源：\(sources.joined(separator: "、"))。"
+            AppLocalization.format(
+                "error.ambiguous_calendar_title",
+                defaultValue: "存在多个名为“%@”的日历，请使用 calendarIdentifier 指定。来源：%@。",
+                title,
+                ListFormatter.localizedString(byJoining: sources)
+            )
         case let .calendarReadOnly(title):
-            "Apple 日历“\(title)”是只读的，不能写入。"
+            AppLocalization.format(
+                "error.calendar_read_only",
+                defaultValue: "Apple 日历“%@”是只读的，不能写入。",
+                title
+            )
         case .invalidManagedURL:
-            "无法生成本工具事件的稳定 URL。"
+            AppLocalization.text(
+                "error.invalid_managed_url",
+                defaultValue: "无法生成本工具事件的稳定 URL。"
+            )
         case let .recordNotFound(id):
-            "找不到本工具记录：\(id.uuidString)。"
+            AppLocalization.format(
+                "error.record_not_found",
+                defaultValue: "找不到本工具记录：%@。",
+                id.uuidString
+            )
         }
     }
 }
@@ -921,7 +946,10 @@ public actor EventKitRepository {
             seriesIdentifier: seriesIdentifier(for: event),
             calendarItemIdentifier: event.calendarItemIdentifier,
             externalIdentifier: event.calendarItemExternalIdentifier,
-            title: event.title ?? "未命名事件",
+            title: event.title ?? AppLocalization.text(
+                "event.untitled",
+                defaultValue: "未命名事件"
+            ),
             eventDate: event.startDate ?? .distantFuture,
             endDate: event.endDate ?? event.startDate ?? .distantFuture,
             isAllDay: event.isAllDay,

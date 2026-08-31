@@ -1,0 +1,2 @@
+"CFBundleDisplayName" = "Cuenta atrás del calendario";
+"NSCalendarsFullAccessUsageDescription" = "Cuenta atrás del calendario necesita leer tus calendarios para calcular las cuentas atrás y solo escribe eventos en el calendario que elijas después de confirmarlo.";

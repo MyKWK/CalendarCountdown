@@ -125,7 +125,13 @@ struct AddEventView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                Stepper("开始年份：\(lunarStartYear)", value: $lunarStartYear, in: 1...9999)
+                Stepper(value: $lunarStartYear, in: 1...9999) {
+                    Text(AppLocalization.format(
+                        "add.start_year",
+                        defaultValue: "开始年份：%lld",
+                        Int64(lunarStartYear)
+                    ))
+                }
                 Text("例如生日填写出生年份；该年份会进入可导出的追踪清单。")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -155,7 +161,11 @@ struct AddEventView: View {
                         Text(nextLunarDate, format: .dateTime.year().month().day())
                     }
                 }
-                Text("EventKit 不支持农历重复规则，因此会把未来 \(ProductConstants.defaultProjectionYears) 年的实际日期直接写入 Apple 日历。")
+                Text(AppLocalization.format(
+                    "add.lunar_projection_note",
+                    defaultValue: "EventKit 不支持农历重复规则，因此会把未来 %lld 年的实际日期直接写入 Apple 日历。",
+                    Int64(ProductConstants.defaultProjectionYears)
+                ))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -204,14 +214,28 @@ struct AddEventView: View {
     private var nextLunarDate: Date? { projectedLunarDates.first }
 
     private var syncPreview: String {
-        let calendarName = calendars.first(where: { $0.id == calendarIdentifier })?.title ?? "所选日历"
+        let calendarName = calendars.first(where: { $0.id == calendarIdentifier })?.title
+            ?? AppLocalization.text("add.selected_calendar", defaultValue: "所选日历")
         switch (entryKind, calendarSystem) {
         case (.oneTime, _):
-            return "向“\(calendarName)”写入 1 个单次事件。"
+            return AppLocalization.format(
+                "add.preview_one_time",
+                defaultValue: "向“%@”写入 1 个单次事件。",
+                calendarName
+            )
         case (.yearly, .gregorian):
-            return "向“\(calendarName)”写入 1 个每年重复事件。"
+            return AppLocalization.format(
+                "add.preview_yearly_gregorian",
+                defaultValue: "向“%@”写入 1 个每年重复事件。",
+                calendarName
+            )
         case (.yearly, .lunar):
-            return "向“\(calendarName)”写入 \(projectedLunarDates.count) 个农历循环日期。"
+            return AppLocalization.format(
+                "add.preview_yearly_lunar",
+                defaultValue: "向“%@”写入 %lld 个农历循环日期。",
+                calendarName,
+                Int64(projectedLunarDates.count)
+            )
         }
     }
 
@@ -227,7 +251,12 @@ struct AddEventView: View {
 
     private func selectSuggestedCalendar(for kind: EntryKind, force: Bool) {
         guard force || calendarIdentifier == nil else { return }
-        let preferredTitle = kind == .yearly ? ProductConstants.suggestedBirthdayCalendarTitle : "个人"
+        let preferredTitle = kind == .yearly
+            ? AppLocalization.text(
+                "calendar.suggested_birthdays",
+                defaultValue: ProductConstants.suggestedBirthdayCalendarTitle
+            )
+            : AppLocalization.text("calendar.suggested_personal", defaultValue: "个人")
         calendarIdentifier = calendars.first(where: { $0.title == preferredTitle })?.id
             ?? calendars.first?.id
     }
@@ -268,19 +297,41 @@ struct AddEventView: View {
         case yearly
 
         var id: String { rawValue }
-        var title: String { self == .oneTime ? "单次重要日" : "每年循环" }
+        var title: String {
+            self == .oneTime
+                ? AppLocalization.text("add.kind_one_time", defaultValue: "单次重要日")
+                : AppLocalization.text("add.kind_yearly", defaultValue: "每年循环")
+        }
         var systemImage: String { self == .oneTime ? "calendar.badge.plus" : "repeat" }
-        var titlePlaceholder: String { self == .oneTime ? "例如：项目纪念日" : "例如：小林生日" }
+        var titlePlaceholder: String {
+            self == .oneTime
+                ? AppLocalization.text(
+                    "add.placeholder_one_time",
+                    defaultValue: "例如：项目纪念日"
+                )
+                : AppLocalization.text(
+                    "add.placeholder_yearly",
+                    defaultValue: "例如：小林生日"
+                )
+        }
     }
 
-    private static let lunarMonthNames = [
+    private static let defaultLunarMonthNames = [
         "正月", "二月", "三月", "四月", "五月", "六月",
         "七月", "八月", "九月", "十月", "冬月", "腊月"
     ]
 
-    private static let lunarDayNames = [
+    private static let defaultLunarDayNames = [
         "初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
         "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
         "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"
     ]
+
+    private static let lunarMonthNames = defaultLunarMonthNames.enumerated().map { index, value in
+        AppLocalization.text("lunar.month.\(index + 1)", defaultValue: value)
+    }
+
+    private static let lunarDayNames = defaultLunarDayNames.enumerated().map { index, value in
+        AppLocalization.text("lunar.day.\(index + 1)", defaultValue: value)
+    }
 }

@@ -43,7 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             let hostingController = NSHostingController(rootView: rootView)
             let window = NSWindow(contentViewController: hostingController)
-            window.title = "日历倒数"
+            window.title = AppLocalization.text("app.name", defaultValue: "日历倒数")
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.setContentSize(NSSize(width: 1_040, height: 700))
             window.minSize = NSSize(width: 880, height: 580)
@@ -63,7 +63,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 rootView: AppearanceSettingsView(settings: appearanceSettings)
             )
             let window = NSWindow(contentViewController: hostingController)
-            window.title = "外观设置"
+            window.title = AppLocalization.text(
+                "window.appearance_settings",
+                defaultValue: "外观设置"
+            )
             window.styleMask = [.titled, .closable]
             window.setContentSize(NSSize(width: 610, height: 390))
             window.center()
@@ -80,7 +83,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.image = NSImage(
             systemSymbolName: "calendar.badge.clock",
-            accessibilityDescription: "日历倒数"
+            accessibilityDescription: AppLocalization.text(
+                "app.name",
+                defaultValue: "日历倒数"
+            )
         )
         item.button?.imagePosition = .imageLeading
         item.button?.imageHugsTitle = true
@@ -123,17 +129,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let button = statusItem?.button else { return }
         guard let event else {
             button.title = ""
-            button.toolTip = "日历倒数 · 尚无追踪事件"
+            button.toolTip = AppLocalization.text(
+                "status_item.no_events",
+                defaultValue: "日历倒数 · 尚无追踪事件"
+            )
             return
         }
 
         let days = CountdownCalculator.daysRemaining(until: event.eventDate)
-        button.title = days == 0 ? "今天" : String(days)
+        button.title = days == 0
+            ? AppLocalization.text("countdown.today", defaultValue: "今天")
+            : String(days)
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "zh_CN")
-        formatter.dateFormat = "M月d日"
-        button.toolTip = "\(event.title) · \(formatter.string(from: event.eventDate)) · \(CountdownCalculator.label(until: event.eventDate))"
-        button.setAccessibilityLabel("日历倒数，\(event.title)，\(CountdownCalculator.label(until: event.eventDate))")
+        formatter.locale = .current
+        formatter.setLocalizedDateFormatFromTemplate("MMMd")
+        button.toolTip = AppLocalization.format(
+            "status_item.event_tooltip",
+            defaultValue: "%@ · %@ · %@",
+            event.title,
+            formatter.string(from: event.eventDate),
+            CountdownCalculator.label(until: event.eventDate)
+        )
+        button.setAccessibilityLabel(AppLocalization.format(
+            "status_item.accessibility_label",
+            defaultValue: "日历倒数，%@，%@",
+            event.title,
+            CountdownCalculator.label(until: event.eventDate)
+        ))
     }
 
     @objc private func toggleStatusPopover(_ sender: Any?) {

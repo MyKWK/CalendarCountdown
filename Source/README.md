@@ -7,11 +7,14 @@
 - EventKit 日历读取、原生分类展示与指定日历写入
 - 普通事件、公历生日、农历生日
 - 菜单栏最近事件和桌面小组件
+- App、菜单栏与桌面小组件跟随 macOS 语言，支持简体中文、英语、日语、韩语、西班牙语和俄语
 - JSON CLI 与批量导入
 - 当前追踪清单自动维护为 JSON，并可在 App 中一键导出
 - 为未来 iOS App 复用核心模型
 
 产品边界见 [Docs/PRODUCT.md](Docs/PRODUCT.md)。
+
+界面翻译位于 `Localization/<locale>.lproj/Localizable.strings`，应用名称与日历权限说明位于同目录的 `InfoPlist.strings`。App 与 Widget 共用这六套资源；CLI 的命令、JSON 字段和退出码不会随界面语言改变。
 
 ## 生成工程
 

@@ -70,10 +70,22 @@ public enum CountdownCalculator {
     public static func label(until target: Date, from now: Date = Date(), calendar: Calendar = .current) -> String {
         let days = daysRemaining(until: target, from: now, calendar: calendar)
         return switch days {
-        case ..<0: "已过期 \(-days) 天"
-        case 0: "今天"
-        case 1: "明天"
-        default: "还有 \(days) 天"
+        case ..<0:
+            AppLocalization.format(
+                "countdown.expired_days",
+                defaultValue: "已过期 %lld 天",
+                Int64(-days)
+            )
+        case 0:
+            AppLocalization.text("countdown.today", defaultValue: "今天")
+        case 1:
+            AppLocalization.text("countdown.tomorrow", defaultValue: "明天")
+        default:
+            AppLocalization.format(
+                "countdown.remaining_days",
+                defaultValue: "还有 %lld 天",
+                Int64(days)
+            )
         }
     }
 }

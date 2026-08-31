@@ -152,7 +152,12 @@ public enum ManagedRecordStoreError: LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case let .recordNotFound(id): "找不到本工具记录：\(id.uuidString)。"
+        case let .recordNotFound(id):
+            AppLocalization.format(
+                "error.record_not_found",
+                defaultValue: "找不到本工具记录：%@。",
+                id.uuidString
+            )
         }
     }
 }

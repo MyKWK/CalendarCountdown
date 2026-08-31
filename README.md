@@ -2,7 +2,7 @@
 
 > 一个原生 macOS 重要日期追踪工具：以 Apple 日历为事实源，同时为用户、小组件和 AI Agent 提供清晰、可移植的倒数与纪念日能力。
 
-[中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
+[中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Русский](README.ru.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
 
 ## 产品截图
 
@@ -31,6 +31,7 @@ CalendarCountdown 不是另一套日历数据库。账户、日历、事件和�
 - 支持公历与中国农历周年规则，包括闰月和农历月末回退策略。
 - 按系统本地日历计算“今天”、“明天”和剩余天数。
 - 原生 macOS App、菜单栏快览和 WidgetKit 桌面小组件。
+- App、菜单栏和小组件随 macOS 语言显示简体中文、英文、日语、韩语、西班牙语或俄语。
 - 支持将普通事件、公历生日和农历生日写入明确指定的 Apple 日历。
 - 通过 App 一键导出当前追踪的重要日子。
 - Universal Binary，同时支持 Apple Silicon 和 Intel Mac（macOS 14+）。

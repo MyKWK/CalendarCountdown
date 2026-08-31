@@ -2,7 +2,7 @@
 
 > Ein nativer macOS-Tracker für wichtige Termine. Apple Kalender bleibt die maßgebliche Datenquelle, während Benutzer, Widgets und KI-Agenten eine klare und portable Countdown-Ebene erhalten.
 
-[中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
+[中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Русский](README.ru.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
 
 ## Screenshots
 
@@ -31,6 +31,7 @@ CalendarCountdown ist keine weitere Kalenderdatenbank. Konten, Kalender, Ereigni
 - Unterstützt jährliche Regeln nach gregorianischem und chinesischem Mondkalender, einschließlich Schaltmonaten und Ausgleich für kurze Mondmonate.
 - Berechnet „heute“, „morgen“ und verbleibende Tage anhand des lokalen Systemkalenders.
 - Native macOS-App, Menüleistenansicht und WidgetKit-Desktop-Widget.
+- App, Menüleisten-Popover und Widgets folgen der macOS-Sprache auf vereinfachtem Chinesisch, Englisch, Japanisch, Koreanisch, Spanisch oder Russisch.
 - Fügt normale Ereignisse sowie gregorianische oder lunare Geburtstage einem ausdrücklich gewählten Apple-Kalender hinzu.
 - Exportiert alle aktuell verfolgten wichtigen Termine mit einem Klick.
 - Universal Binary für Apple-Silicon- und Intel-Macs ab macOS 14.

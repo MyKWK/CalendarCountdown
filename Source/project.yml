@@ -2,6 +2,7 @@ name: CalendarCountdown
 options:
   bundleIdPrefix: app.calendarcountdown
   createIntermediateGroups: true
+  developmentLanguage: zh-Hans
   deploymentTarget:
     macOS: "14.0"
   groupSortPosition: top
@@ -56,6 +57,7 @@ targets:
     sources:
       - path: App
       - path: Resources
+      - path: Localization
     info:
       path: Config/App-Info.plist
       properties:
@@ -93,6 +95,7 @@ targets:
     platform: macOS
     sources:
       - path: Widget
+      - path: Localization
     info:
       path: Config/Widget-Info.plist
       properties:
