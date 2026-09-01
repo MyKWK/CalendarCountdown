@@ -8,6 +8,7 @@
 - 选择单次事件、同名年度事件或本工具创建的事件参与倒数。
 - 支持单次重要日、公历年度纪念日、农历年度纪念日和提前提醒。
 - 提供主窗口、菜单栏最近倒数和 WidgetKit 桌面小组件。
+- App、菜单栏和 WidgetKit 小组件跟随 macOS 语言，支持简体中文、英语、日语、韩语、西班牙语和俄语。
 - 自动维护版本化 `tracked-events.json`，记录当前可见追踪项的开始年份、月日、历法、循环方式、闰月策略和 Apple 日历关联信息。
 - App 一键导出追踪清单；CLI 支持 `tracking list`、`tracking refresh` 和 `tracking export`。
 - CLI 提供 Apple 日历查询、录入、批量导入、预演和诊断能力。
