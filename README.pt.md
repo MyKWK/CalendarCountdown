@@ -92,13 +92,13 @@ Veja o exemplo anônimo completo em [tracked-events.example.json](Documentation/
 
 ## Instalação
 
-Versão atual: **1.0.0**
+Versão atual: **1.0.1**
 
-1. [Baixe CalendarCountdown-1.0.0-macos-universal.dmg no GitHub Releases](https://github.com/MyKWK/CalendarCountdown/releases/download/v1.0.0/CalendarCountdown-1.0.0-macos-universal.dmg).
+1. [Baixe CalendarCountdown-1.0.1-macos-universal.dmg no GitHub Releases](https://github.com/MyKWK/CalendarCountdown/releases/download/v1.0.1/CalendarCountdown-1.0.1-macos-universal.dmg).
 2. Arraste CalendarCountdown para Aplicativos.
 3. Inicie o app e conceda acesso completo ao Apple Calendar.
 
-A versão 1.0.0 usa atualmente assinatura ad-hoc; não possui assinatura Apple Developer ID nem notarização. Na primeira execução, talvez seja necessário clicar no app com a tecla Control no Finder e escolher Abrir.
+A versão 1.0.1 usa atualmente assinatura ad-hoc; não possui assinatura Apple Developer ID nem notarização. Na primeira execução, talvez seja necessário clicar no app com a tecla Control no Finder e escolher Abrir.
 
 ## Compilar a partir do código-fonte
 
@@ -131,7 +131,7 @@ xcodebuild -project CalendarCountdown.xcodeproj -scheme CalendarCountdown \
 
 - `Source/`: código Swift, configuração do XcodeGen, testes e scripts de compilação.
 - `Documentation/`: contrato do produto, instruções de instalação e exemplos JSON anônimos.
-- `Releases/1.0.0/`: notas da versão e checksum SHA-256; o DMG é distribuído pelo GitHub Releases.
+- `Releases/1.0.1/`: notas da versão e checksum SHA-256; o DMG é distribuído pelo GitHub Releases.
 
 ## Licença
 

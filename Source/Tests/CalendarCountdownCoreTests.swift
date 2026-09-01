@@ -3,7 +3,7 @@ import XCTest
 
 final class CalendarCountdownCoreTests: XCTestCase {
     func testReleaseVersion() {
-        XCTAssertEqual(ProductConstants.version, "1.0.0")
+        XCTAssertEqual(ProductConstants.version, "1.0.1")
     }
 
     func testCalendarDayCountdown() throws {
@@ -13,6 +13,53 @@ final class CalendarCountdownCoreTests: XCTestCase {
         let target = try XCTUnwrap(DateSupport.parseDateOnly("2026-09-07", calendar: calendar))
         XCTAssertEqual(CountdownCalculator.daysRemaining(until: target, from: now, calendar: calendar), 8)
         XCTAssertEqual(CountdownCalculator.label(until: now, from: now, calendar: calendar), "今天")
+    }
+
+    func testSingleDayAllDayEndSemantics() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let start = try XCTUnwrap(DateSupport.parseDateOnly("2026-09-20", calendar: calendar))
+
+        let exchangeEnd = DateSupport.allDayEventEnd(
+            startingAt: start,
+            semantics: .inclusiveSameDay,
+            calendar: calendar
+        )
+        let standardEnd = DateSupport.allDayEventEnd(
+            startingAt: start,
+            semantics: .exclusiveNextDay,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(DateSupport.dateOnlyString(exchangeEnd, calendar: calendar), "2026-09-20")
+        XCTAssertEqual(DateSupport.dateOnlyString(standardEnd, calendar: calendar), "2026-09-21")
+        XCTAssertEqual(standardEnd.timeIntervalSince(exchangeEnd), 1)
+        XCTAssertFalse(DateSupport.allDayEventExceedsSingleDay(
+            startDate: start,
+            endDate: exchangeEnd,
+            semantics: .inclusiveSameDay,
+            calendar: calendar
+        ))
+        XCTAssertTrue(DateSupport.allDayEventExceedsSingleDay(
+            startDate: start,
+            endDate: standardEnd,
+            semantics: .inclusiveSameDay,
+            calendar: calendar
+        ))
+    }
+
+    func testSingleDayAllDayEndUsesCalendarDayAcrossDST() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "America/Los_Angeles"))
+        let start = try XCTUnwrap(DateSupport.parseDateOnly("2026-03-08", calendar: calendar))
+        let end = DateSupport.allDayEventEnd(
+            startingAt: start,
+            semantics: .inclusiveSameDay,
+            calendar: calendar
+        )
+
+        XCTAssertEqual(DateSupport.dateOnlyString(end, calendar: calendar), "2026-03-08")
+        XCTAssertEqual(end.timeIntervalSince(start), 82_799)
     }
 
     func testLocalizationResourcesHaveMatchingKeysAndPlaceholders() throws {

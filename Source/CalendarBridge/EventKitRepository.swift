@@ -84,6 +84,27 @@ public struct ImportRunResult: Codable, Sendable {
     public let selectionCount: Int
 }
 
+public struct AllDayEventRepairItem: Codable, Sendable {
+    public let title: String
+    public let calendarTitle: String
+    public let calendarIdentifier: String
+    public let sourceType: String
+    public let startDate: Date
+    public let previousEndDate: Date
+    public let correctedEndDate: Date
+    public let url: String
+    public let recurringSeries: Bool
+}
+
+public struct AllDayEventRepairReport: Codable, Sendable {
+    public let dryRun: Bool
+    public let scannedEventCount: Int
+    public let affectedOccurrenceCount: Int
+    public let repairOperationCount: Int
+    public let repairedOperationCount: Int
+    public let items: [AllDayEventRepairItem]
+}
+
 public actor EventKitRepository {
     private let store: EKEventStore
 
@@ -443,6 +464,103 @@ public actor EventKitRepository {
         try ManagedEventFileStore.load()
     }
 
+    /// Repairs CalendarCountdown-created all-day events whose persisted end date
+    /// extends into an extra calendar day. Exchange stores all-day end dates as
+    /// an inclusive timestamp, unlike EventKit's usual next-midnight boundary.
+    public func repairCalendarCountdownAllDayEvents(dryRun: Bool = true) throws -> AllDayEventRepairReport {
+        try requireFullAccess()
+        let currentYear = Calendar.current.component(.year, from: Date())
+        var scannedByOccurrence: [String: EKEvent] = [:]
+        // EventKit providers may truncate very large predicates. Scan one year at
+        // a time so every projected CalendarCountdown occurrence is inspected.
+        for year in currentYear...(currentYear + ProductConstants.defaultProjectionYears) {
+            guard let start = Calendar.current.date(
+                from: DateComponents(year: year, month: 1, day: 1)
+            ), let end = Calendar.current.date(
+                from: DateComponents(year: year + 1, month: 1, day: 1)
+            ) else {
+                continue
+            }
+            let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
+            for event in store.events(matching: predicate) where event.status != .canceled {
+                scannedByOccurrence[allDayOccurrenceKey(for: event)] = event
+            }
+        }
+        let scannedEvents = Array(scannedByOccurrence.values)
+        let affected = scannedEvents.filter { event in
+            guard event.isAllDay,
+                  isCalendarCountdownEvent(event),
+                  event.calendar.source.sourceType == .exchange,
+                  let startDate = event.startDate,
+                  let endDate = event.endDate else {
+                return false
+            }
+            return DateSupport.allDayEventExceedsSingleDay(
+                startDate: startDate,
+                endDate: endDate,
+                semantics: .inclusiveSameDay
+            )
+        }.sorted { lhs, rhs in
+            if lhs.startDate == rhs.startDate {
+                return (lhs.title ?? "").localizedStandardCompare(rhs.title ?? "") == .orderedAscending
+            }
+            return lhs.startDate < rhs.startDate
+        }
+
+        var repairTargets: [String: EKEvent] = [:]
+        for event in affected {
+            let key = allDayRepairKey(for: event)
+            if let existing = repairTargets[key], existing.startDate <= event.startDate { continue }
+            repairTargets[key] = event
+        }
+        let targets = repairTargets.values.sorted { lhs, rhs in
+            if lhs.startDate == rhs.startDate {
+                return (lhs.title ?? "").localizedStandardCompare(rhs.title ?? "") == .orderedAscending
+            }
+            return lhs.startDate < rhs.startDate
+        }
+
+        let items = targets.compactMap { event -> AllDayEventRepairItem? in
+            guard let startDate = event.startDate,
+                  let previousEndDate = event.endDate,
+                  let url = event.url?.absoluteString else {
+                return nil
+            }
+            return AllDayEventRepairItem(
+                title: event.title ?? AppLocalization.text("event.untitled", defaultValue: "未命名事件"),
+                calendarTitle: event.calendar.title,
+                calendarIdentifier: event.calendar.calendarIdentifier,
+                sourceType: "exchange",
+                startDate: startDate,
+                previousEndDate: previousEndDate,
+                correctedEndDate: allDayEndDate(startingAt: startDate, in: event.calendar),
+                url: url,
+                recurringSeries: isRecurring(event)
+            )
+        }
+
+        if !dryRun {
+            for event in targets {
+                event.endDate = allDayEndDate(startingAt: event.startDate, in: event.calendar)
+                try store.save(
+                    event,
+                    span: isRecurring(event) ? .futureEvents : .thisEvent,
+                    commit: false
+                )
+            }
+            if !targets.isEmpty { try store.commit() }
+        }
+
+        return AllDayEventRepairReport(
+            dryRun: dryRun,
+            scannedEventCount: scannedEvents.count,
+            affectedOccurrenceCount: affected.count,
+            repairOperationCount: targets.count,
+            repairedOperationCount: dryRun ? 0 : targets.count,
+            items: items
+        )
+    }
+
     public func updateManagedRecord(id: UUID, draft: ManagedEventDraft) throws -> ManagedEventWriteResult {
         try requireFullAccess()
         guard try ManagedEventFileStore.record(id: id) != nil else {
@@ -534,7 +652,7 @@ public actor EventKitRepository {
         event.startDate = startDate
         event.isAllDay = draft.isAllDay
         event.endDate = draft.isAllDay
-            ? Calendar.current.date(byAdding: .day, value: 1, to: startDate) ?? startDate.addingTimeInterval(86_400)
+            ? allDayEndDate(startingAt: startDate, in: calendar)
             : startDate.addingTimeInterval(3_600)
         event.notes = draft.notes
         event.url = url
@@ -674,7 +792,7 @@ public actor EventKitRepository {
         event.startDate = startDate
         event.isAllDay = record.draft.isAllDay
         event.endDate = record.draft.isAllDay
-            ? Calendar.current.date(byAdding: .day, value: 1, to: startDate) ?? startDate.addingTimeInterval(86_400)
+            ? allDayEndDate(startingAt: startDate, in: calendar)
             : startDate.addingTimeInterval(3_600)
         event.notes = record.draft.notes
         event.url = url ?? managedURL(recordID: record.id, year: year, occurrenceIndex: nil)
@@ -694,6 +812,48 @@ public actor EventKitRepository {
         if let occurrenceIndex { queryItems.append(URLQueryItem(name: "occurrence", value: String(occurrenceIndex))) }
         components.queryItems = queryItems.isEmpty ? nil : queryItems
         return components.url
+    }
+
+    private func allDayEndDate(startingAt startDate: Date, in calendar: EKCalendar) -> Date {
+        let semantics: AllDayEventEndSemantics = calendar.source.sourceType == .exchange
+            ? .inclusiveSameDay
+            : .exclusiveNextDay
+        return DateSupport.allDayEventEnd(startingAt: startDate, semantics: semantics)
+    }
+
+    private func isCalendarCountdownEvent(_ event: EKEvent) -> Bool {
+        event.url?.scheme == ProductConstants.managedURLScheme
+            && event.url?.host == ProductConstants.managedURLHost
+    }
+
+    private func isRecurring(_ event: EKEvent) -> Bool {
+        event.hasRecurrenceRules
+    }
+
+    private func allDayOccurrenceKey(for event: EKEvent) -> String {
+        let occurrenceDate = event.occurrenceDate ?? event.startDate ?? .distantFuture
+        return [
+            event.calendar.calendarIdentifier,
+            event.calendarItemIdentifier,
+            String(Int(occurrenceDate.timeIntervalSince1970))
+        ].joined(separator: ":")
+    }
+
+    private func allDayRepairKey(for event: EKEvent) -> String {
+        if isRecurring(event) {
+            return [
+                "series",
+                event.calendar.calendarIdentifier,
+                event.url?.absoluteString
+                    ?? event.calendarItemExternalIdentifier
+                    ?? event.calendarItemIdentifier
+            ].joined(separator: ":")
+        }
+        return [
+            "event",
+            event.calendar.calendarIdentifier,
+            event.calendarItemIdentifier
+        ].joined(separator: ":")
     }
 
     private func projectedURLs(recordID: UUID, calendar: EKCalendar) throws -> Set<String> {

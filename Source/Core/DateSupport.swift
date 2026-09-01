@@ -1,5 +1,12 @@
 import Foundation
 
+public enum AllDayEventEndSemantics: Sendable {
+    /// EventKit's native half-open representation: the end is midnight after the event day.
+    case exclusiveNextDay
+    /// Exchange's persisted representation: the end is the final second of the event day.
+    case inclusiveSameDay
+}
+
 public enum DateSupport {
     public static func parseDateOnly(_ value: String, calendar: Calendar = .current) -> Date? {
         let parts = value.split(separator: "-", omittingEmptySubsequences: false)
@@ -57,6 +64,33 @@ public enum DateSupport {
     public static func nextMidnight(after date: Date = Date(), calendar: Calendar = .current) -> Date {
         let start = calendar.startOfDay(for: date)
         return calendar.date(byAdding: .day, value: 1, to: start) ?? date.addingTimeInterval(86_400)
+    }
+
+    public static func allDayEventEnd(
+        startingAt date: Date,
+        semantics: AllDayEventEndSemantics,
+        calendar: Calendar = .current
+    ) -> Date {
+        let nextMidnight = nextMidnight(after: date, calendar: calendar)
+        switch semantics {
+        case .exclusiveNextDay:
+            return nextMidnight
+        case .inclusiveSameDay:
+            return nextMidnight.addingTimeInterval(-1)
+        }
+    }
+
+    public static func allDayEventExceedsSingleDay(
+        startDate: Date,
+        endDate: Date,
+        semantics: AllDayEventEndSemantics,
+        calendar: Calendar = .current
+    ) -> Bool {
+        endDate > allDayEventEnd(
+            startingAt: startDate,
+            semantics: semantics,
+            calendar: calendar
+        )
     }
 }
 

@@ -92,13 +92,13 @@ CalendarCountdownは別のカレンダーデータベースではありません
 
 ## インストール
 
-現在のバージョン：**1.0.0**
+現在のバージョン：**1.0.1**
 
-1. [GitHub ReleasesからCalendarCountdown-1.0.0-macos-universal.dmgをダウンロード](https://github.com/MyKWK/CalendarCountdown/releases/download/v1.0.0/CalendarCountdown-1.0.0-macos-universal.dmg)します。
+1. [GitHub ReleasesからCalendarCountdown-1.0.1-macos-universal.dmgをダウンロード](https://github.com/MyKWK/CalendarCountdown/releases/download/v1.0.1/CalendarCountdown-1.0.1-macos-universal.dmg)します。
 2. CalendarCountdownをApplicationsへドラッグします。
 3. アプリを起動し、Appleカレンダーへのフルアクセスを許可します。
 
-1.0.0は現在ad-hoc署名で、Apple Developer ID署名と公証は未実施です。初回起動時はFinderでControlキーを押しながらアプリをクリックし、「開く」を選ぶ必要がある場合があります。
+1.0.1は現在ad-hoc署名で、Apple Developer ID署名と公証は未実施です。初回起動時はFinderでControlキーを押しながらアプリをクリックし、「開く」を選ぶ必要がある場合があります。
 
 ## ソースからビルド
 
@@ -131,7 +131,7 @@ xcodebuild -project CalendarCountdown.xcodeproj -scheme CalendarCountdown \
 
 - `Source/`：Swiftソース、XcodeGen設定、テスト、ビルドスクリプト。
 - `Documentation/`：製品契約、インストール説明、匿名JSON例。
-- `Releases/1.0.0/`：リリースノートとSHA-256チェックサム。DMGはGitHub Releasesで配布します。
+- `Releases/1.0.1/`：リリースノートとSHA-256チェックサム。DMGはGitHub Releasesで配布します。
 
 ## ライセンス
 

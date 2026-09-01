@@ -116,6 +116,11 @@ struct CalCountCLI {
             case "sync":
                 let count = try await repository.syncManagedRecords()
                 try emit(["projectedEventCount": count])
+            case "repair":
+                try requireSubcommand(raw, "all-day-events")
+                try emit(await repository.repairCalendarCountdownAllDayEvents(
+                    dryRun: !arguments.has("--apply")
+                ))
             case "doctor":
                 try await handleDoctor(repository: repository)
             default:
@@ -379,6 +384,7 @@ struct CalCountCLI {
         calcount next [--limit 10] [--days N]
         calcount import FILE.json [--dry-run]
         calcount sync
+        calcount repair all-day-events [--apply]
         calcount doctor
 
         所有结构化命令均输出 JSON。写操作只作用于明确指定的 Apple 日历。

@@ -62,7 +62,7 @@ targets:
       path: Config/App-Info.plist
       properties:
         CFBundleDisplayName: 日历倒数
-        CFBundleShortVersionString: 1.0.0
+        CFBundleShortVersionString: 1.0.1
         CFBundleVersion: "1"
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         NSCalendarsFullAccessUsageDescription: “日历倒数”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。
@@ -100,7 +100,7 @@ targets:
       path: Config/Widget-Info.plist
       properties:
         CFBundleDisplayName: 日历倒数
-        CFBundleShortVersionString: 1.0.0
+        CFBundleShortVersionString: 1.0.1
         CFBundleVersion: "1"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
@@ -129,7 +129,7 @@ targets:
     info:
       path: Config/CLI-Info.plist
       properties:
-        CFBundleShortVersionString: 1.0.0
+        CFBundleShortVersionString: 1.0.1
         CFBundleVersion: "1"
         NSCalendarsFullAccessUsageDescription: calcount 需要读取 Apple 日历并管理你明确指定的日历事件。
     entitlements:

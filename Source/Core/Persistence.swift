@@ -11,6 +11,7 @@ public enum SharedContainer {
                 .appendingPathComponent(ProductConstants.appGroupIdentifier, isDirectory: true)
                 .appendingPathComponent("CalendarCountdown", isDirectory: true)
             try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+            try migrateLegacySharedFilesIfNeeded(to: url, fileManager: fileManager)
             return url
         }
 
@@ -23,6 +24,34 @@ public enum SharedContainer {
         }
 
         return try applicationSupportRootURL(fileManager: fileManager)
+    }
+
+    private static func migrateLegacySharedFilesIfNeeded(
+        to destinationRoot: URL,
+        fileManager: FileManager
+    ) throws {
+        let legacyRoot = fileManager.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Group Containers", isDirectory: true)
+            .appendingPathComponent(ProductConstants.legacyAppGroupIdentifier, isDirectory: true)
+            .appendingPathComponent("CalendarCountdown", isDirectory: true)
+        guard fileManager.fileExists(atPath: legacyRoot.path) else { return }
+
+        let filenames = [
+            "managed-events.json",
+            "countdown-selections.json",
+            "display-preferences.json",
+            "tracked-events.json",
+            "widget-snapshot.json"
+        ]
+        for filename in filenames {
+            let source = legacyRoot.appendingPathComponent(filename)
+            let destination = destinationRoot.appendingPathComponent(filename)
+            guard fileManager.fileExists(atPath: source.path),
+                  !fileManager.fileExists(atPath: destination.path) else {
+                continue
+            }
+            try fileManager.copyItem(at: source, to: destination)
+        }
     }
 
     public static func applicationSupportRootURL(fileManager: FileManager = .default) throws -> URL {

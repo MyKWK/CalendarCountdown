@@ -92,13 +92,13 @@ CalendarCountdown은 또 하나의 캘린더 데이터베이스가 아닙니다.
 
 ## 설치
 
-현재 버전: **1.0.0**
+현재 버전: **1.0.1**
 
-1. [GitHub Releases에서 CalendarCountdown-1.0.0-macos-universal.dmg를 다운로드](https://github.com/MyKWK/CalendarCountdown/releases/download/v1.0.0/CalendarCountdown-1.0.0-macos-universal.dmg)합니다.
+1. [GitHub Releases에서 CalendarCountdown-1.0.1-macos-universal.dmg를 다운로드](https://github.com/MyKWK/CalendarCountdown/releases/download/v1.0.1/CalendarCountdown-1.0.1-macos-universal.dmg)합니다.
 2. CalendarCountdown을 Applications로 드래그합니다.
 3. 앱을 실행하고 Apple 캘린더 전체 접근 권한을 허용합니다.
 
-1.0.0 빌드는 현재 ad-hoc 서명 상태이며 Apple Developer ID 서명이나 공증은 받지 않았습니다. 처음 실행할 때 Finder에서 Control-클릭한 후 ‘열기’를 선택해야 할 수 있습니다.
+1.0.1 빌드는 현재 ad-hoc 서명 상태이며 Apple Developer ID 서명이나 공증은 받지 않았습니다. 처음 실행할 때 Finder에서 Control-클릭한 후 ‘열기’를 선택해야 할 수 있습니다.
 
 ## 소스에서 빌드
 
@@ -131,7 +131,7 @@ xcodebuild -project CalendarCountdown.xcodeproj -scheme CalendarCountdown \
 
 - `Source/`: Swift 소스, XcodeGen 설정, 테스트와 빌드 스크립트.
 - `Documentation/`: 제품 계약, 설치 안내와 익명 JSON 예시.
-- `Releases/1.0.0/`: 릴리스 노트와 SHA-256 체크섬. DMG는 GitHub Releases에서 배포합니다.
+- `Releases/1.0.1/`: 릴리스 노트와 SHA-256 체크섬. DMG는 GitHub Releases에서 배포합니다.
 
 ## 라이선스
 

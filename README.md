@@ -92,13 +92,13 @@ Apple 日历始终是事件内容的事实源。`tracked-events.json` 不是第�
 
 ## 安装
 
-当前版本：**1.0.0**
+当前版本：**1.0.1**
 
-1. 从 [GitHub Release 下载 CalendarCountdown-1.0.0-macos-universal.dmg](https://github.com/MyKWK/CalendarCountdown/releases/download/v1.0.0/CalendarCountdown-1.0.0-macos-universal.dmg)。
+1. 从 [GitHub Release 下载 CalendarCountdown-1.0.1-macos-universal.dmg](https://github.com/MyKWK/CalendarCountdown/releases/download/v1.0.1/CalendarCountdown-1.0.1-macos-universal.dmg)。
 2. 将“日历倒数.app”拖入 Applications。
 3. 启动 App 并授予 Apple 日历完全访问权限。
 
-1.0.0 发布包目前采用 ad-hoc 签名，尚未经过 Apple Developer ID 签名和公证。首次运行可能需要在 Finder 中按住 Control 点击 App，然后选择“打开”。
+1.0.1 发布包目前采用 ad-hoc 签名，尚未经过 Apple Developer ID 签名和公证。首次运行可能需要在 Finder 中按住 Control 点击 App，然后选择“打开”。
 
 ## 从源码构建
 
@@ -134,7 +134,7 @@ xcodebuild -project CalendarCountdown.xcodeproj \
 
 - `Source/`：Swift 源码、XcodeGen 配置、测试和构建脚本。
 - `Documentation/`：产品合同、安装说明和匿名 JSON 示例。
-- `Releases/1.0.0/`：版本说明和 SHA-256 校验文件；DMG 通过 GitHub Releases 分发。
+- `Releases/1.0.1/`：版本说明和 SHA-256 校验文件；DMG 通过 GitHub Releases 分发。
 
 ## 开源许可证
 

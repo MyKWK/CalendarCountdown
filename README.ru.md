@@ -92,13 +92,13 @@ CalendarCountdown — не ещё одна база данных календа�
 
 ## Установка
 
-Текущая версия: **1.0.0**
+Текущая версия: **1.0.1**
 
-1. [Скачайте CalendarCountdown-1.0.0-macos-universal.dmg из GitHub Releases](https://github.com/MyKWK/CalendarCountdown/releases/download/v1.0.0/CalendarCountdown-1.0.0-macos-universal.dmg).
+1. [Скачайте CalendarCountdown-1.0.1-macos-universal.dmg из GitHub Releases](https://github.com/MyKWK/CalendarCountdown/releases/download/v1.0.1/CalendarCountdown-1.0.1-macos-universal.dmg).
 2. Перетащите CalendarCountdown в папку «Программы».
 3. Запустите приложение и предоставьте полный доступ к Календарю Apple.
 
-Сборка 1.0.0 использует временную ad-hoc подпись и не подписана Apple Developer ID и не нотарифицирована. При первом запуске может потребоваться щёлкнуть приложение в Finder с удержанием Control и выбрать «Открыть».
+Сборка 1.0.1 использует временную ad-hoc подпись и не подписана Apple Developer ID и не нотарифицирована. При первом запуске может потребоваться щёлкнуть приложение в Finder с удержанием Control и выбрать «Открыть».
 
 ## Сборка из исходного кода
 
@@ -134,7 +134,7 @@ xcodebuild -project CalendarCountdown.xcodeproj \
 
 - `Source/`: исходный код Swift, конфигурация XcodeGen, тесты и сценарии сборки.
 - `Documentation/`: контракт продукта, инструкции по установке и анонимные примеры JSON.
-- `Releases/1.0.0/`: примечания к выпуску и контрольная сумма SHA-256; DMG распространяется через GitHub Releases.
+- `Releases/1.0.1/`: примечания к выпуску и контрольная сумма SHA-256; DMG распространяется через GitHub Releases.
 
 ## Лицензия
 
