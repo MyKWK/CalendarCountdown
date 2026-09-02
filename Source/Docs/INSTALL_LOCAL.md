@@ -1,8 +1,8 @@
-# 日历倒数 1.0.0（macOS Universal）
+# 日历倒数 1.0.2（macOS Universal）
 
 ## 安装 App
 
-1. 打开 `CalendarCountdown-1.0.0-macos-universal.dmg`。
+1. 打开 `CalendarCountdown-1.0.2-macos-universal.dmg`。
 2. 将“日历倒数.app”拖到“Applications”快捷方式。
 3. 此 GitHub 构建为 ad-hoc 签名、尚未经过 Apple 公证。首次打开若被 macOS 阻止，请在 Finder 中按住 Control 点击 App，选择“打开”，或前往“系统设置 → 隐私与安全性”确认打开。
 4. 在 App 中点击“授权日历访问”。只有在你明确新建或导入时，App 才会写入选定的 Apple 日历。
@@ -21,10 +21,10 @@ DMG 只附带匿名格式示例，不包含开发者或用户的私人纪念日�
 DMG 根目录中的 `calcount` 是同时支持 Apple Silicon 与 Intel Mac 的 Universal 命令行工具。示例：
 
 ```bash
-/Volumes/日历倒数\ 1.0.0/calcount version
-/Volumes/日历倒数\ 1.0.0/calcount auth
-/Volumes/日历倒数\ 1.0.0/calcount import "/Volumes/日历倒数 1.0.0/导入格式示例.json" --dry-run
-/Volumes/日历倒数\ 1.0.0/calcount tracking export --output ~/Desktop/important-days.json
+/Volumes/日历倒数\ 1.0.2/calcount version
+/Volumes/日历倒数\ 1.0.2/calcount auth
+/Volumes/日历倒数\ 1.0.2/calcount import "/Volumes/日历倒数 1.0.2/导入格式示例.json" --dry-run
+/Volumes/日历倒数\ 1.0.2/calcount tracking export --output ~/Desktop/important-days.json
 ```
 
 ## 签名状态

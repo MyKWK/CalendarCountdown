@@ -14,13 +14,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusPopover: NSPopover?
     private var featuredEventCancellable: AnyCancellable?
     private var appearanceCancellable: AnyCancellable?
+    private var midnightRefreshTimer: Timer?
+    private var calendarDayRefreshPolicy = CalendarDayRefreshPolicy()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         observeAppearance()
         installStatusItem()
+        installAutomaticCalendarDayRefresh()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.showMainWindow()
         }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        midnightRefreshTimer?.invalidate()
+        NotificationCenter.default.removeObserver(self)
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
     func applicationShouldHandleReopen(
@@ -123,6 +132,64 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .sink { mode in
                 NSApp.appearance = mode.appKitAppearance
             }
+    }
+
+    private func installAutomaticCalendarDayRefresh() {
+        let notificationCenter = NotificationCenter.default
+        notificationCenter.addObserver(
+            self,
+            selector: #selector(calendarDayMayHaveChanged(_:)),
+            name: .NSCalendarDayChanged,
+            object: nil
+        )
+        notificationCenter.addObserver(
+            self,
+            selector: #selector(calendarDayMayHaveChanged(_:)),
+            name: .NSSystemClockDidChange,
+            object: nil
+        )
+        notificationCenter.addObserver(
+            self,
+            selector: #selector(calendarDayMayHaveChanged(_:)),
+            name: .NSSystemTimeZoneDidChange,
+            object: nil
+        )
+        notificationCenter.addObserver(
+            self,
+            selector: #selector(calendarDayMayHaveChanged(_:)),
+            name: NSApplication.didBecomeActiveNotification,
+            object: nil
+        )
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self,
+            selector: #selector(calendarDayMayHaveChanged(_:)),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+        scheduleNextMidnightRefresh()
+    }
+
+    private func scheduleNextMidnightRefresh(now: Date = Date()) {
+        midnightRefreshTimer?.invalidate()
+        let timer = Timer(
+            fireAt: DateSupport.nextMidnight(after: now),
+            interval: 0,
+            target: self,
+            selector: #selector(calendarDayMayHaveChanged(_:)),
+            userInfo: nil,
+            repeats: false
+        )
+        timer.tolerance = 1
+        RunLoop.main.add(timer, forMode: .common)
+        midnightRefreshTimer = timer
+    }
+
+    @objc private func calendarDayMayHaveChanged(_ sender: Any) {
+        scheduleNextMidnightRefresh()
+        guard calendarDayRefreshPolicy.shouldRefresh() else { return }
+        Task { [weak self] in
+            await self?.model.refresh()
+        }
     }
 
     private func updateStatusItem(for event: CountdownEvent?) {

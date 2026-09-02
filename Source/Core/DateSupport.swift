@@ -94,6 +94,26 @@ public enum DateSupport {
     }
 }
 
+/// Tracks the local calendar day so long-running app processes can refresh
+/// date-derived presentation exactly once after a day, clock, or time-zone change.
+public struct CalendarDayRefreshPolicy: Sendable {
+    private var observedDayStart: Date
+
+    public init(now: Date = Date(), calendar: Calendar = .current) {
+        observedDayStart = calendar.startOfDay(for: now)
+    }
+
+    public mutating func shouldRefresh(
+        at now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Bool {
+        let currentDayStart = calendar.startOfDay(for: now)
+        guard currentDayStart != observedDayStart else { return false }
+        observedDayStart = currentDayStart
+        return true
+    }
+}
+
 public enum CountdownCalculator {
     public static func daysRemaining(until target: Date, from now: Date = Date(), calendar: Calendar = .current) -> Int {
         let start = calendar.startOfDay(for: now)

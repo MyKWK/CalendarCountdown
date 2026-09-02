@@ -38,7 +38,7 @@ open CalendarCountdown.xcodeproj
 ./Scripts/package-dmg.sh
 ```
 
-1.0.1 产物位于 `dist/CalendarCountdown-1.0.1-macos-universal.dmg`，内含 arm64 和 x86_64 可执行文件。当前构建采用 ad-hoc 签名，不等同于经过 Developer ID 签名和 Apple 公证的发行包。
+1.0.2 产物位于 `dist/CalendarCountdown-1.0.2-macos-universal.dmg`，内含 arm64 和 x86_64 可执行文件。当前构建采用 ad-hoc 签名，不等同于经过 Developer ID 签名和 Apple 公证的发行包。
 
 要运行日历权限和小组件，需要在 Xcode 中为 App、Widget 和 CLI 配置同一个开发团队及 App Group：
 

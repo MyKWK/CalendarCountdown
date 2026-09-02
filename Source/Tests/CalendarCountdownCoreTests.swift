@@ -3,7 +3,7 @@ import XCTest
 
 final class CalendarCountdownCoreTests: XCTestCase {
     func testReleaseVersion() {
-        XCTAssertEqual(ProductConstants.version, "1.0.1")
+        XCTAssertEqual(ProductConstants.version, "1.0.2")
     }
 
     func testCalendarDayCountdown() throws {
@@ -13,6 +13,37 @@ final class CalendarCountdownCoreTests: XCTestCase {
         let target = try XCTUnwrap(DateSupport.parseDateOnly("2026-09-07", calendar: calendar))
         XCTAssertEqual(CountdownCalculator.daysRemaining(until: target, from: now, calendar: calendar), 8)
         XCTAssertEqual(CountdownCalculator.label(until: now, from: now, calendar: calendar), "今天")
+    }
+
+    func testCalendarDayRefreshPolicyRefreshesOnceAfterMidnight() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let beforeMidnight = try XCTUnwrap(
+            calendar.date(from: DateComponents(year: 2026, month: 9, day: 2, hour: 23, minute: 59))
+        )
+        let midnight = try XCTUnwrap(
+            calendar.date(from: DateComponents(year: 2026, month: 9, day: 3))
+        )
+        var policy = CalendarDayRefreshPolicy(now: beforeMidnight, calendar: calendar)
+
+        XCTAssertFalse(policy.shouldRefresh(at: beforeMidnight, calendar: calendar))
+        XCTAssertTrue(policy.shouldRefresh(at: midnight, calendar: calendar))
+        XCTAssertFalse(policy.shouldRefresh(
+            at: midnight.addingTimeInterval(60),
+            calendar: calendar
+        ))
+        XCTAssertEqual(DateSupport.nextMidnight(after: beforeMidnight, calendar: calendar), midnight)
+    }
+
+    func testCalendarDayRefreshPolicyHandlesWakeAfterMultipleDays() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let beforeSleep = try XCTUnwrap(DateSupport.parseDateOnly("2026-09-02", calendar: calendar))
+        let afterWake = try XCTUnwrap(DateSupport.parseDateOnly("2026-09-05", calendar: calendar))
+        var policy = CalendarDayRefreshPolicy(now: beforeSleep, calendar: calendar)
+
+        XCTAssertTrue(policy.shouldRefresh(at: afterWake, calendar: calendar))
+        XCTAssertFalse(policy.shouldRefresh(at: afterWake, calendar: calendar))
     }
 
     func testSingleDayAllDayEndSemantics() throws {
