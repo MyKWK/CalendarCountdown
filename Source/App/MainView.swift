@@ -27,6 +27,7 @@ struct MainView: View {
                     Label("导入", systemImage: "square.and.arrow.down")
                 }
                 .disabled(model.accessState != .fullAccess)
+                .appActionFocusEffectDisabled()
 
                 Button {
                     showingExporter = true
@@ -34,6 +35,7 @@ struct MainView: View {
                     Label("导出追踪清单", systemImage: "square.and.arrow.up")
                 }
                 .disabled(model.trackedEventsDocument.events.isEmpty)
+                .appActionFocusEffectDisabled()
 
                 Button {
                     showingAddEvent = true
@@ -41,6 +43,7 @@ struct MainView: View {
                     Label("录入重要日", systemImage: "calendar.badge.plus")
                 }
                 .disabled(model.writableCalendars.isEmpty)
+                .appActionFocusEffectDisabled()
 
                 Button {
                     Task { await model.refresh() }
@@ -48,13 +51,14 @@ struct MainView: View {
                     Label("刷新", systemImage: "arrow.clockwise")
                 }
                 .disabled(model.isLoading)
-                .focusEffectDisabled()
+                .appActionFocusEffectDisabled()
 
                 Button {
                     openAppearanceSettings()
                 } label: {
                     Label("外观设置", systemImage: "paintpalette")
                 }
+                .appActionFocusEffectDisabled()
             }
         }
         .searchable(text: $searchText, prompt: "搜索日历事件")
@@ -96,6 +100,7 @@ struct MainView: View {
             set: { if !$0 { model.errorMessage = nil } }
         )) {
             Button("好", role: .cancel) { model.errorMessage = nil }
+                .appActionFocusEffectDisabled()
         } message: {
             Text(model.errorMessage ?? AppLocalization.text(
                 "error.unknown",
@@ -128,6 +133,7 @@ struct MainView: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(model.isLoading)
+            .appActionFocusEffectDisabled()
         }
     }
 
@@ -292,6 +298,7 @@ private struct CalendarTrackingButton: View {
                 .background(.quaternary, in: Capsule())
         }
         .buttonStyle(.borderless)
+        .appActionFocusEffectDisabled()
         .fixedSize()
         .help(
             isTracked
@@ -343,6 +350,7 @@ private struct EventRow: View {
             }
             .buttonStyle(.plain)
             .disabled(!isSelected)
+            .appActionFocusEffectDisabled()
             .help(
                 isSelected
                     ? (isPinned
@@ -365,6 +373,7 @@ private struct EventRow: View {
                     .foregroundStyle(.secondary)
             }
             .menuStyle(.borderlessButton)
+            .appActionFocusEffectDisabled()
             .fixedSize()
         }
         .padding(.vertical, 5)

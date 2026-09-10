@@ -184,7 +184,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         midnightRefreshTimer = timer
     }
 
-    @objc private func calendarDayMayHaveChanged(_ sender: Any) {
+    // NSCalendarDayChanged can be posted from a background queue.  Keep this
+    // Objective-C selector nonisolated and explicitly return to MainActor
+    // before accessing the app delegate's main-actor state.
+    @objc nonisolated private func calendarDayMayHaveChanged(_ sender: Any) {
+        Task { @MainActor [weak self] in
+            self?.handleCalendarDayMayHaveChanged()
+        }
+    }
+
+    private func handleCalendarDayMayHaveChanged() {
         scheduleNextMidnightRefresh()
         guard calendarDayRefreshPolicy.shouldRefresh() else { return }
         Task { [weak self] in

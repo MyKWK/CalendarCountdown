@@ -18,7 +18,7 @@ struct MenuBarContentView: View {
                     Image(systemName: "arrow.clockwise")
                 }
                 .buttonStyle(.plain)
-                .focusEffectDisabled()
+                .appActionFocusEffectDisabled()
             }
 
             if model.selectedEvents.isEmpty {
@@ -47,8 +47,10 @@ struct MenuBarContentView: View {
             Divider()
             HStack {
                 Button("打开日历倒数", action: openMainWindow)
+                    .appActionFocusEffectDisabled()
                 Spacer()
                 Button("退出") { NSApplication.shared.terminate(nil) }
+                    .appActionFocusEffectDisabled()
             }
         }
         .padding(14)

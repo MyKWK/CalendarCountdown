@@ -15,7 +15,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.0.2</string>
 	<key>CFBundleVersion</key>
-	<string>2</string>
+	<string>3</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>calcount 需要读取 Apple 日历并管理你明确指定的日历事件。</string>
 </dict>

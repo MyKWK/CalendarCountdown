@@ -78,7 +78,8 @@ enum AppThemePreset: String, CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-        case .aiBlue: Color(nsColor: .systemBlue)
+        // sRGB approximation of the blue-green/turquoise ADS marker-lamp gamut.
+        case .aiBlue: Color(hex: "#00E5D4")
         case .indigo: Color(nsColor: .systemIndigo)
         case .purple: Color(nsColor: .systemPurple)
         case .pink: Color(nsColor: .systemPink)
@@ -199,6 +200,7 @@ struct AppearanceSettingsView: View {
                             settings.useCustomColor()
                         }
                         .disabled(settings.selectedThemeID == AppAppearanceSettings.customThemeID)
+                        .appActionFocusEffectDisabled()
                     }
                 }
                 .padding(.vertical, 6)
@@ -261,7 +263,7 @@ private struct ThemeSwatch: View {
                     if isSelected {
                         Image(systemName: "checkmark")
                             .font(.caption.bold())
-                            .foregroundStyle(.white)
+                            .foregroundStyle(selectionForegroundColor)
                     }
                 }
                 .overlay {
@@ -279,12 +281,21 @@ private struct ThemeSwatch: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .appActionFocusEffectDisabled()
         .accessibilityLabel(AppLocalization.format(
             "appearance.theme_accessibility_label",
             defaultValue: "主题颜色：%@",
             title
         ))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+
+    private var selectionForegroundColor: Color {
+        guard let rgb = NSColor(color).usingColorSpace(.sRGB) else { return .white }
+        let perceivedBrightness = 0.2126 * rgb.redComponent
+            + 0.7152 * rgb.greenComponent
+            + 0.0722 * rgb.blueComponent
+        return perceivedBrightness > 0.6 ? .black.opacity(0.72) : .white
     }
 }
 

@@ -28,6 +28,7 @@
 		78583CD46349A08EB415AFD3 /* libCalendarCountdownCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E8AC3FCC01295977EDB1CC2 /* libCalendarCountdownCore.a */; };
 		78A34B836A5F202979BCA451 /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F962E882C560CE12182B37E3 /* EventKit.framework */; };
 		86FDDF0F199E77B45A707129 /* libCalendarCountdownCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E8AC3FCC01295977EDB1CC2 /* libCalendarCountdownCore.a */; };
+		8EE06AEAC7C11EFB7DD54F25 /* FocusAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1DD3DCF6D0B33B7C1BA434D /* FocusAppearance.swift */; };
 		8F3047F9F8BDFF082AD33699 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 241317BB23CE634E81423861 /* WidgetSnapshot.swift */; };
 		93AD99C1DEC5BD3E49DF8149 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3261404CA33E927A22BACE6D /* AppLocalization.swift */; };
 		94FAF9D870C43DCF16C14855 /* CalCountCLI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83BDAAB03B2612D98EC39EEE /* CalCountCLI.swift */; };
@@ -151,6 +152,7 @@
 		8BE5412E680BD1E9983A7C92 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		8EEE845B42F1D86E560D1C09 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		918C9B454898EDC9D7657C73 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A1DD3DCF6D0B33B7C1BA434D /* FocusAppearance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusAppearance.swift; sourceTree = "<group>"; };
 		AAE508BFB13FF36FA3261846 /* AppearanceSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettings.swift; sourceTree = "<group>"; };
 		ACCD0715AF49783237256570 /* Persistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Persistence.swift; sourceTree = "<group>"; };
 		BA99A6374B377C630F7C846B /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -307,6 +309,7 @@
 				AAE508BFB13FF36FA3261846 /* AppearanceSettings.swift */,
 				8EEE845B42F1D86E560D1C09 /* AppModel.swift */,
 				D8978D9965FE285A78896EA9 /* CalendarCountdownApp.swift */,
+				A1DD3DCF6D0B33B7C1BA434D /* FocusAppearance.swift */,
 				FCFB902ACE9E608A590C8CCA /* MainView.swift */,
 				056E118F36D92693F8D13E2E /* MenuBarContentView.swift */,
 			);
@@ -594,6 +597,7 @@
 				2597DE80B43C2CFD86E8B9F5 /* AppModel.swift in Sources */,
 				DD7D32E06C9DF768BBF29F03 /* AppearanceSettings.swift in Sources */,
 				68398549AD3EDCA7F659487B /* CalendarCountdownApp.swift in Sources */,
+				8EE06AEAC7C11EFB7DD54F25 /* FocusAppearance.swift in Sources */,
 				9D060BE8DAC1A32343B2B42E /* MainView.swift in Sources */,
 				9B9961711EE60D16A5727842 /* MenuBarContentView.swift in Sources */,
 			);

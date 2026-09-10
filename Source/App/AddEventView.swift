@@ -87,6 +87,7 @@ struct AddEventView: View {
             Divider()
             HStack {
                 Button("取消", role: .cancel) { dismiss() }
+                    .appActionFocusEffectDisabled()
                 Spacer()
                 if isSaving {
                     ProgressView().controlSize(.small)
@@ -94,6 +95,7 @@ struct AddEventView: View {
                 Button("同步到 Apple 日历") { Task { await save() } }
                     .buttonStyle(.borderedProminent)
                     .disabled(!canSave)
+                    .appActionFocusEffectDisabled()
             }
             .padding()
         }
