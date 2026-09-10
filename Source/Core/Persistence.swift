@@ -15,6 +15,10 @@ public enum SharedContainer {
             return url
         }
 
+        #if canImport(Darwin)
+        // App-group containers only exist on Apple platforms. The sandboxed
+        // widget extension reaches this branch; other platforms fall through to
+        // the Application Support directory below.
         if let groupURL = fileManager.containerURL(
             forSecurityApplicationGroupIdentifier: ProductConstants.appGroupIdentifier
         ) {
@@ -22,6 +26,7 @@ public enum SharedContainer {
             try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
             return url
         }
+        #endif
 
         return try applicationSupportRootURL(fileManager: fileManager)
     }
