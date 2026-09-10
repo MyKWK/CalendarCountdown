@@ -63,6 +63,20 @@
                ReferencedContainer = "container:CalendarCountdown.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5E5985CA69687C50AF22E019"
+               BuildableName = "CalendarCountdownPersistenceTests.xctest"
+               BlueprintName = "CalendarCountdownPersistenceTests"
+               ReferencedContainer = "container:CalendarCountdown.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -89,6 +103,17 @@
                BlueprintIdentifier = "6377F8DF46BFFCC3C602C1D1"
                BuildableName = "CalendarCountdownCoreTests.xctest"
                BlueprintName = "CalendarCountdownCoreTests"
+               ReferencedContainer = "container:CalendarCountdown.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "5E5985CA69687C50AF22E019"
+               BuildableName = "CalendarCountdownPersistenceTests.xctest"
+               BlueprintName = "CalendarCountdownPersistenceTests"
                ReferencedContainer = "container:CalendarCountdown.xcodeproj">
             </BuildableReference>
          </TestableReference>

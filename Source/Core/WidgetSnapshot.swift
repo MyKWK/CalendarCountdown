@@ -41,8 +41,13 @@ public enum WidgetSnapshotStore {
         let ownContainerURL = try? SharedContainer.applicationSupportRootURL(fileManager: fileManager)
             .appendingPathComponent("widget-snapshot.json")
         let sharedURL = try? SharedContainer.widgetSnapshotURL(fileManager: fileManager)
+        #if os(iOS)
+        let candidates = [sharedURL, ownContainerURL]
+        #else
+        let candidates = [ownContainerURL, sharedURL]
+        #endif
 
-        for url in [ownContainerURL, sharedURL].compactMap({ $0 }) {
+        for url in candidates.compactMap({ $0 }) {
             guard fileManager.fileExists(atPath: url.path),
                   let data = try? Data(contentsOf: url),
                   let snapshot = try? JSONCoding.decoder().decode(WidgetSnapshot.self, from: data)

@@ -1,8 +1,12 @@
-import CalendarCountdownCalendar
-import CalendarCountdownCore
 import Combine
 import Foundation
 import WidgetKit
+#if canImport(CalendarCountdownCalendar)
+import CalendarCountdownCalendar
+#endif
+#if canImport(CalendarCountdownCore)
+import CalendarCountdownCore
+#endif
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -19,6 +23,7 @@ final class AppModel: ObservableObject {
     @Published var statusMessage: String?
 
     let repository: EventKitRepository
+    var countdownMirror: (([CountdownSelection], CountdownDisplayPreferences) -> Void)?
     private var didBootstrap = false
 
     init(repository: EventKitRepository = EventKitRepository()) {
@@ -227,5 +232,6 @@ final class AppModel: ObservableObject {
         )
         try WidgetSnapshotStore.save(events: selectedEvents)
         WidgetCenter.shared.reloadTimelines(ofKind: ProductConstants.widgetKind)
+        countdownMirror?(selections, displayPreferences)
     }
 }

@@ -1,10 +1,13 @@
+#if canImport(CalendarCountdownCore)
 import CalendarCountdownCore
+#endif
 import SwiftUI
 import UniformTypeIdentifiers
 
 struct MainView: View {
     @ObservedObject var model: AppModel
     let openAppearanceSettings: () -> Void
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var selectedCalendarID: String? = "__countdown__"
     @State private var searchText = ""
     @State private var showingAddEvent = false
@@ -15,6 +18,8 @@ struct MainView: View {
         Group {
             if model.accessState != .fullAccess {
                 permissionView
+            } else if sizeClass == .compact {
+                compactContent
             } else {
                 content
             }
@@ -135,6 +140,23 @@ struct MainView: View {
             .disabled(model.isLoading)
             .appActionFocusEffectDisabled()
         }
+    }
+
+    private var compactContent: some View {
+        eventList
+            .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    Menu {
+                        Button("倒数展示") { selectedCalendarID = "__countdown__" }
+                        ForEach(model.calendars) { calendar in
+                            Button(calendar.title) { selectedCalendarID = calendar.id }
+                        }
+                    } label: {
+                        Label(selectedTitle, systemImage: "calendar")
+                    }
+                    .accessibilityIdentifier("calendar-picker")
+                }
+            }
     }
 
     private var content: some View {
@@ -372,7 +394,7 @@ private struct EventRow: View {
                 Image(systemName: "ellipsis")
                     .foregroundStyle(.secondary)
             }
-            .menuStyle(.borderlessButton)
+            .appBorderlessMenuStyle()
             .appActionFocusEffectDisabled()
             .fixedSize()
         }

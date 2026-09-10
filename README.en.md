@@ -126,7 +126,7 @@ xcodebuild -project CalendarCountdown.xcodeproj \
 
 ## Current scope
 
-- macOS is supported today. An iPhone app, iPhone widgets, and CloudKit rule sync are future work.
+- The Xcode project now includes macOS and iPhone/iPad targets for the same product (countdown, tasks, missions, habits). iOS Simulator, device, TestFlight, and Production CloudKit still need verification on a Mac with Xcode. See [Documentation/IPHONE_IPAD_ACCEPTANCE_STATUS.md](Documentation/IPHONE_IPAD_ACCEPTANCE_STATUS.md).
 - This project is not a CalDAV server and does not duplicate Apple Calendar’s account or category hierarchy.
 - See [Documentation/PRODUCT.md](Documentation/PRODUCT.md) for the detailed product and data contract.
 

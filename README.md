@@ -102,7 +102,7 @@ Apple 日历始终是事件内容的事实源。`tracked-events.json` 不是第�
 
 ## 从源码构建
 
-需要 macOS 14+、Xcode 和 [XcodeGen](https://github.com/yonaskolb/XcodeGen)。
+需要 macOS 14+、Xcode 和 [XcodeGen](https://github.com/yonaskolb/XcodeGen)。iPhone/iPad 构建还需要 iOS 18 SDK。
 
 ```bash
 cd Source
@@ -112,6 +112,15 @@ xcodebuild -project CalendarCountdown.xcodeproj \
   -scheme CalendarCountdown \
   -configuration Debug \
   -destination 'platform=macOS,arch=arm64' \
+  -derivedDataPath DerivedData \
+  CODE_SIGNING_ALLOWED=NO test
+xcodebuild -project CalendarCountdown.xcodeproj -list
+xcodebuild -project CalendarCountdown.xcodeproj \
+  -scheme CalendarCountdowniOS \
+  -showdestinations
+xcodebuild -project CalendarCountdown.xcodeproj \
+  -scheme CalendarCountdowniOS \
+  -destination 'platform=iOS Simulator,name=iPhone 16' \
   -derivedDataPath DerivedData \
   CODE_SIGNING_ALLOWED=NO test
 ./Scripts/package-dmg.sh
@@ -126,14 +135,14 @@ xcodebuild -project CalendarCountdown.xcodeproj \
 
 ## 当前边界
 
-- 当前支持 macOS；iPhone App、iPhone 小组件和 CloudKit 规则同步属于后续阶段。
+- 工程已包含同一产品的 macOS 与 iPhone/iPad target（四模块：倒数日、任务清单、使命清单、打卡）。iOS Simulator / 真机 / TestFlight / Production CloudKit 需在 macOS + Xcode 上验收，详见 [Documentation/IPHONE_IPAD_ACCEPTANCE_STATUS.md](Documentation/IPHONE_IPAD_ACCEPTANCE_STATUS.md)。
 - 本项目不是 CalDAV 服务器，不复制 Apple 日历的账户与分类体系。
 - 详细产品和数据合同见 [Documentation/PRODUCT.md](Documentation/PRODUCT.md)。
 
 ## 项目结构
 
 - `Source/`：Swift 源码、XcodeGen 配置、测试和构建脚本。
-- `Documentation/`：产品合同、安装说明和匿名 JSON 示例。
+- `Documentation/`：产品合同、安装说明、App Group 清单和 iPhone/iPad 实施状态。
 - `Releases/1.0.1/`：版本说明和 SHA-256 校验文件；DMG 通过 GitHub Releases 分发。
 
 ## 开源许可证

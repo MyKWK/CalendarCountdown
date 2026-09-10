@@ -2,6 +2,16 @@ import Foundation
 
 public enum SharedContainer {
     public static func rootURL(fileManager: FileManager = .default) throws -> URL {
+        #if os(iOS)
+        guard let groupURL = fileManager.containerURL(
+            forSecurityApplicationGroupIdentifier: ProductConstants.appGroupIdentifier
+        ) else {
+            throw SharedContainerError.appGroupUnavailable
+        }
+        let url = groupURL.appendingPathComponent("CalendarCountdown", isDirectory: true)
+        try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+        #else
         // Local packages are ad-hoc signed and therefore have no Apple Team ID.
         // A non-sandboxed host can keep using the established group-container
         // folder directly, while the sandboxed widget uses its own container.
@@ -24,6 +34,7 @@ public enum SharedContainer {
         }
 
         return try applicationSupportRootURL(fileManager: fileManager)
+        #endif
     }
 
     private static func migrateLegacySharedFilesIfNeeded(
@@ -92,6 +103,28 @@ public enum SharedContainer {
 
     public static func displayPreferencesURL(fileManager: FileManager = .default) throws -> URL {
         try rootURL(fileManager: fileManager).appendingPathComponent("display-preferences.json")
+    }
+
+    public static func sqliteDatabaseURL(fileManager: FileManager = .default) throws -> URL {
+        try rootURL(fileManager: fileManager).appendingPathComponent("calendarcountdown-v2.sqlite")
+    }
+
+    public static func sqliteBackupDirectoryURL(fileManager: FileManager = .default) throws -> URL {
+        try rootURL(fileManager: fileManager).appendingPathComponent("Backups", isDirectory: true)
+    }
+}
+
+public enum SharedContainerError: LocalizedError {
+    case appGroupUnavailable
+
+    public var errorDescription: String? {
+        switch self {
+        case .appGroupUnavailable:
+            AppLocalization.text(
+                "error.app_group_unavailable",
+                defaultValue: "无法打开 App Group 容器。请确认 App 与小组件使用同一 App Group。"
+            )
+        }
     }
 }
 

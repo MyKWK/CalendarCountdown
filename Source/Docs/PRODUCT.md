@@ -73,4 +73,4 @@ Apple 日历仍是事件内容的唯一事实源。`tracked-events.json` 不是�
 - MVP 不实现 CalDAV 服务器，也不复制 Apple 日历的分类体系。
 - MVP 不向云端服务上传日历数据。
 - MVP 不承诺 Apple 日历对生成农历实例的直接编辑会反向改变农历规则。
-- iPhone App、iPhone 小组件和 CloudKit 规则同步属于后续阶段。
+- iPhone/iPad 与 macOS 是同一产品；移动端 target 已加入工程。Simulator、真机、TestFlight 与 Production CloudKit 仍需在 Xcode 中验收。

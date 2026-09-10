@@ -9,4 +9,13 @@ extension View {
     func appActionFocusEffectDisabled() -> some View {
         focusEffectDisabled()
     }
+
+    @ViewBuilder
+    func appBorderlessMenuStyle() -> some View {
+        #if os(macOS)
+        self.menuStyle(.borderlessButton)
+        #else
+        self
+        #endif
+    }
 }

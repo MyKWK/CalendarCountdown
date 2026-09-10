@@ -1,5 +1,7 @@
-import AppKit
+#if canImport(CalendarCountdownCore)
 import CalendarCountdownCore
+#endif
+import CoreGraphics
 import EventKit
 import Foundation
 
@@ -1089,7 +1091,7 @@ public actor EventKitRepository {
             sourceTitle: calendar.source.title,
             sourceIdentifier: calendar.source.sourceIdentifier,
             type: calendarTypeName(calendar.type),
-            colorHex: colorHex(calendar.color),
+            colorHex: Self.colorHex(calendar.cgColor),
             allowsContentModifications: calendar.allowsContentModifications
         )
     }
@@ -1116,7 +1118,7 @@ public actor EventKitRepository {
             calendarTitle: event.calendar.title,
             calendarIdentifier: event.calendar.calendarIdentifier,
             sourceTitle: event.calendar.source.title,
-            colorHex: colorHex(event.calendar.color),
+            colorHex: Self.colorHex(event.calendar.cgColor),
             notes: event.notes,
             url: event.url?.absoluteString
         )
@@ -1136,13 +1138,19 @@ public actor EventKitRepository {
         return "eventkit:\(event.calendar.calendarIdentifier):\(eventKitIdentifier)"
     }
 
-    private func colorHex(_ color: NSColor?) -> String {
-        guard let rgb = color?.usingColorSpace(.sRGB) else { return "#8E8E93" }
+    private static func colorHex(_ color: CGColor?) -> String {
+        guard let components = color?.converted(
+            to: CGColorSpaceCreateDeviceRGB(),
+            intent: .defaultIntent,
+            options: nil
+        )?.components, components.count >= 3 else {
+            return "#8E8E93"
+        }
         return String(
             format: "#%02X%02X%02X",
-            Int(round(rgb.redComponent * 255)),
-            Int(round(rgb.greenComponent * 255)),
-            Int(round(rgb.blueComponent * 255))
+            Int(round(components[0] * 255)),
+            Int(round(components[1] * 255)),
+            Int(round(components[2] * 255))
         )
     }
 

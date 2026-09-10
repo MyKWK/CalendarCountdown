@@ -401,6 +401,107 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertEqual(document.events.map(\.recurrence.calendarSystem), [.lunar, .gregorian])
     }
 
+    func testExactEventSelectionReconnectsWithoutLocalEventKitIdentifiers() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let date = try XCTUnwrap(DateSupport.parseDateOnly("2026-09-10", calendar: calendar))
+        let event = makeEvent(
+            id: "local-ek",
+            title: "元旦",
+            date: date,
+            calendarID: "cal-1",
+            calendarTitle: "节日"
+        )
+        let selection = CountdownSelection(
+            mode: .exactEvent,
+            calendarIdentifier: nil,
+            calendarTitle: "节日",
+            eventIdentifier: nil,
+            eventTitle: "元旦",
+            occurrenceDate: date
+        )
+        XCTAssertTrue(selection.matches(event, calendar: calendar))
+    }
+
+    func testManagedEventCloudPayloadStripsCalendarIdentifier() {
+        var draft = try! ManagedEventDraft(
+            title: "生日",
+            calendarIdentifier: "local-calendar",
+            date: "2026-01-01"
+        ).validated()
+        draft.calendarIdentifier = "local-calendar"
+        let record = ManagedEventRecord(
+            draft: draft,
+            modifiedByDevice: UUID()
+        )
+        let payload = CountdownManagedCloudPayload(record)
+        let json = String(decoding: try! JSONCoding.encoder(pretty: false).encode(payload), as: UTF8.self)
+        XCTAssertFalse(json.contains("calendarIdentifier"))
+        XCTAssertFalse(json.contains("local-calendar"))
+    }
+
+    func testCountdownSelectionCloudPayloadOmitsEventKitIdentifiers() {
+        let selection = CountdownSelection(
+            mode: .exactEvent,
+            calendarIdentifier: "cal-1",
+            calendarTitle: "节日",
+            eventIdentifier: "ek-1",
+            eventTitle: "元旦"
+        )
+        let payload = CountdownSelectionCloudPayload(selection)
+        let data = try! JSONCoding.encoder(pretty: false).encode(payload)
+        let json = String(decoding: data, as: UTF8.self)
+        XCTAssertFalse(json.contains("eventIdentifier"))
+        XCTAssertFalse(json.contains("calendarIdentifier"))
+        XCTAssertTrue(json.contains("节日"))
+    }
+
+    func testCountdownPreferencesCloudPayloadOnlyUploadsPin() {
+        let payload = CountdownPreferencesCloudPayload(
+            id: CloudRecordIdentity.countdownPreferences,
+            pinnedSelectionID: UUID(),
+            revision: 1,
+            updatedAt: Date(),
+            modifiedByDevice: UUID()
+        )
+        let data = try! JSONCoding.encoder(pretty: false).encode(payload)
+        let json = String(decoding: data, as: UTF8.self)
+        XCTAssertTrue(json.contains("pinnedSelectionID"))
+        XCTAssertFalse(json.contains("untracked"))
+        XCTAssertFalse(json.contains("hidden"))
+    }
+
+    func testAppRouteParsesModuleDeepLinks() {
+        XCTAssertEqual(AppRoute.parse(URL(string: "calendarcountdown://open")!), .open)
+        XCTAssertEqual(
+            AppRoute.parse(URL(string: "calendarcountdown://task/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee0")!),
+            .task(UUID(uuidString: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeee0")!)
+        )
+        XCTAssertEqual(AppRoute.parse(URL(string: "calendarcountdown://habit")!), .section(.habits))
+    }
+
+    func testMissionProgressDilutesWhenTaskAdded() {
+        let mission = UUID()
+        let first = TaskRecord(title: "A", missionID: mission, workload: 1, modifiedByDevice: UUID())
+        let before = MissionProgress.calculate(missionID: mission, tasks: [first])
+        XCTAssertEqual(before.ratio, 0)
+        var completed = first
+        completed.isCompleted = true
+        let afterComplete = MissionProgress.calculate(missionID: mission, tasks: [completed])
+        XCTAssertEqual(afterComplete.ratio, 1)
+        let extra = TaskRecord(title: "B", missionID: mission, workload: 1, modifiedByDevice: UUID())
+        let diluted = MissionProgress.calculate(missionID: mission, tasks: [completed, extra])
+        XCTAssertEqual(diluted.ratio, 0.5)
+    }
+
+    func testRFC3339RoundTripAndOptionalParse() {
+        let date = Date(timeIntervalSince1970: 1_000_000_000)
+        let encoded = RFC3339.utcString(from: date)
+        XCTAssertEqual(RFC3339.parse(encoded)?.timeIntervalSince1970 ?? 0, 1_000_000_000, accuracy: 0.001)
+        XCTAssertNil(RFC3339.parse(nil))
+        XCTAssertNil(RFC3339.parse(""))
+    }
+
     private func makeEvent(
         id: String,
         title: String,

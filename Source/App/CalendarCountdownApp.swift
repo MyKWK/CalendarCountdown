@@ -3,11 +3,16 @@ import CalendarCountdownCore
 import Combine
 import EventKit
 import SwiftUI
+#if canImport(CalendarCountdownPersistence)
+import CalendarCountdownPersistence
+#endif
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
     let appearanceSettings = AppAppearanceSettings()
+    let workspace: WorkspaceModel
+    let broker: AppBroker
     private var mainWindowController: NSWindowController?
     private var settingsWindowController: NSWindowController?
     private var statusItem: NSStatusItem?
@@ -17,12 +22,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var midnightRefreshTimer: Timer?
     private var calendarDayRefreshPolicy = CalendarDayRefreshPolicy()
 
+    override init() {
+        let broker = (try? AppBroker.openShared(session: CloudProfileSession()))
+            ?? (try! AppBroker.temporary(session: CloudProfileSession()))
+        workspace = WorkspaceModel(database: broker.database)
+        self.broker = broker
+        super.init()
+        model.countdownMirror = { [workspace] selections, preferences in
+            selections.forEach { workspace.mirrorCountdownSelection($0) }
+            workspace.mirrorCountdownPreferences(preferences)
+        }
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         observeAppearance()
         installStatusItem()
         installAutomaticCalendarDayRefresh()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.showMainWindow()
+        }
+        let engine = broker.syncEngine
+        Task {
+            try? await engine.syncNow()
         }
     }
 
@@ -46,6 +67,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if mainWindowController == nil {
             let rootView = MainWindowRootView(
                 model: model,
+                workspace: workspace,
                 appearanceSettings: appearanceSettings
             ) { [weak self] in
                 self?.showAppearanceSettings()
@@ -258,12 +280,14 @@ struct CalendarCountdownApp: App {
 
 private struct MainWindowRootView: View {
     @ObservedObject var model: AppModel
+    @ObservedObject var workspace: WorkspaceModel
     @ObservedObject var appearanceSettings: AppAppearanceSettings
     let openAppearanceSettings: () -> Void
 
     var body: some View {
-        MainView(
+        RootView(
             model: model,
+            workspace: workspace,
             openAppearanceSettings: openAppearanceSettings
         )
             .frame(minWidth: 880, minHeight: 580)

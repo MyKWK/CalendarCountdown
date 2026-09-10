@@ -1,4 +1,6 @@
+#if canImport(CalendarCountdownCore)
 import CalendarCountdownCore
+#endif
 import SwiftUI
 
 struct AddEventView: View {
