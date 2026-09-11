@@ -4,16 +4,19 @@ import SwiftUI
 
 struct MenuBarContentView: View {
     @ObservedObject var model: AppModel
+    @ObservedObject var workspace: WorkspaceModel
     @ObservedObject var appearanceSettings: AppAppearanceSettings
     let openMainWindow: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("置顶与最近倒数").font(.headline)
+                Text("今天 · 任务 \(workspace.openTasks.count)")
+                    .font(.headline)
                 Spacer()
                 Button {
                     Task { await model.refresh() }
+                    workspace.reload()
                 } label: {
                     Image(systemName: "arrow.clockwise")
                 }
@@ -21,10 +24,29 @@ struct MenuBarContentView: View {
                 .appActionFocusEffectDisabled()
             }
 
+            if !workspace.todayTasks.isEmpty {
+                ForEach(workspace.todayTasks.prefix(3)) { view in
+                    HStack {
+                        Button {
+                            workspace.complete(view)
+                        } label: {
+                            Image(systemName: "circle")
+                        }
+                        .buttonStyle(.plain)
+                        .appActionFocusEffectDisabled()
+                        Text(view.title).lineLimit(1)
+                        Spacer()
+                    }
+                }
+                Divider()
+            }
+
+            Text("置顶与最近倒数").font(.headline)
+
             if model.selectedEvents.isEmpty {
                 Text("尚未选择倒数事件")
                     .foregroundStyle(.secondary)
-                    .padding(.vertical, 18)
+                    .padding(.vertical, 8)
             } else {
                 ForEach(menuEvents) { event in
                     HStack(spacing: 8) {
@@ -57,6 +79,7 @@ struct MenuBarContentView: View {
         .frame(width: 340)
         .tint(appearanceSettings.accentColor)
         .preferredColorScheme(appearanceSettings.appearanceMode.colorScheme)
+        .onAppear { workspace.reload() }
     }
 
     private var menuEvents: [CountdownEvent] {

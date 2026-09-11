@@ -8,7 +8,7 @@
 "操作失败" = "操作失败";
 "好" = "好";
 "需要访问 Apple 日历" = "需要访问 Apple 日历";
-"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。";
+"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "知行读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。";
 "授权日历访问" = "授权日历访问";
 "倒数展示" = "倒数展示";
 "Apple 日历" = "Apple 日历";
@@ -17,7 +17,7 @@
 "每年追踪该日历中的同名事件" = "每年追踪该日历中的同名事件";
 "置顶与最近倒数" = "置顶与最近倒数";
 "尚未选择倒数事件" = "尚未选择倒数事件";
-"打开日历倒数" = "打开日历倒数";
+"打开日历倒数" = "打开知行";
 "退出" = "退出";
 
 /* Add event */
@@ -65,12 +65,13 @@
 
 /* Widget */
 "最近倒数" = "最近倒数";
-"日历倒数" = "日历倒数";
+"日历倒数" = "知行";
 "显示你从 Apple 日历中选中的下一批倒数事件。" = "显示你从 Apple 日历中选中的下一批倒数事件。";
 
 /* Shared dynamic text */
-"app.name" = "日历倒数";
+"app.name" = "知行";
 "window.appearance_settings" = "外观设置";
+"window.settings" = "设置";
 "common.not_provided" = "未提供";
 "calendar_system.gregorian" = "公历";
 "calendar_system.lunar" = "农历";
@@ -79,9 +80,9 @@
 "countdown.today" = "今天";
 "countdown.tomorrow" = "明天";
 "countdown.remaining_days" = "还有 %lld 天";
-"status_item.no_events" = "日历倒数 · 尚无追踪事件";
+"status_item.no_events" = "知行 · 尚无追踪事件";
 "status_item.event_tooltip" = "%@ · %@ · %@";
-"status_item.accessibility_label" = "日历倒数，%@，%@";
+"status_item.accessibility_label" = "知行，%@，%@";
 "event.untitled" = "未命名事件";
 "widget.preview_title" = "示例生日";
 "widget.preview_calendar" = "生日";

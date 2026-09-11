@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "title": "阅读",
+  "markdownDescription": "每天阅读 30 分钟。",
+  "metric": "quantity",
+  "targetValue": 30,
+  "unit": "分钟",
+  "schedule": {
+    "kind": "daily",
+    "weekdays": [],
+    "timesPerPeriod": 1
+  },
+  "activeFrom": "2026-09-01",
+  "reminderTimes": [],
+  "allowBackfillDays": 2,
+  "completionPolicy": "reachTarget",
+  "projectionPolicy": "none"
+}

@@ -13,10 +13,12 @@
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.2</string>
+	<string>1.0.3</string>
 	<key>CFBundleVersion</key>
-	<string>3</string>
+	<string>4</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>calcount 需要读取 Apple 日历并管理你明确指定的日历事件。</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>calcount 需要访问提醒事项，以便诊断和预演任务投影。</string>
 </dict>
 </plist>

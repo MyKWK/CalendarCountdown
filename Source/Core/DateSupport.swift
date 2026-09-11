@@ -61,6 +61,38 @@ public enum DateSupport {
         )
     }
 
+    /// Returns the first valid yearly occurrence on or after `now`, without
+    /// allowing the original occurrence to move before its start year.
+    public static func nextYearlyOccurrence(
+        matching originalDate: Date,
+        onOrAfter now: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Date? {
+        let original = calendar.dateComponents([.year, .month, .day], from: originalDate)
+        let currentYear = calendar.component(.year, from: now)
+        guard let originalYear = original.year,
+              let month = original.month,
+              let day = original.day else {
+            return nil
+        }
+
+        let lowerBound = calendar.startOfDay(for: now)
+        for year in max(originalYear, currentYear)...9999 {
+            var components = DateComponents()
+            components.calendar = calendar
+            components.timeZone = calendar.timeZone
+            components.year = year
+            components.month = month
+            components.day = day
+            guard let candidate = calendar.date(from: components) else { continue }
+            let verified = calendar.dateComponents([.year, .month, .day], from: candidate)
+            guard verified.year == year, verified.month == month, verified.day == day else { continue }
+            let occurrence = calendar.startOfDay(for: candidate)
+            if occurrence >= lowerBound { return occurrence }
+        }
+        return nil
+    }
+
     public static func nextMidnight(after date: Date = Date(), calendar: Calendar = .current) -> Date {
         let start = calendar.startOfDay(for: date)
         return calendar.date(byAdding: .day, value: 1, to: start) ?? date.addingTimeInterval(86_400)

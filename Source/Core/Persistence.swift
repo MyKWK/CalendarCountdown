@@ -2,34 +2,42 @@ import Foundation
 
 public enum SharedContainer {
     public static func rootURL(fileManager: FileManager = .default) throws -> URL {
+        #if os(iOS)
+        return try requiredAppGroupRootURL(fileManager: fileManager)
+        #else
         // Local packages are ad-hoc signed and therefore have no Apple Team ID.
-        // A non-sandboxed host can keep using the established group-container
-        // folder directly, while the sandboxed widget uses its own container.
+        // Keep their data in the app's own Application Support directory. Direct
+        // access to Library/Group Containers is treated by macOS as access to
+        // another app's data and prompts again when an ad-hoc build changes.
         if ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] == nil {
-            let url = fileManager.homeDirectoryForCurrentUser
-                .appendingPathComponent("Library/Group Containers", isDirectory: true)
-                .appendingPathComponent(ProductConstants.appGroupIdentifier, isDirectory: true)
-                .appendingPathComponent("CalendarCountdown", isDirectory: true)
-            try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
-            try migrateLegacySharedFilesIfNeeded(to: url, fileManager: fileManager)
+            let url = try applicationSupportRootURL(fileManager: fileManager)
+            try migrateLocalPackageFilesIfNeeded(to: url, fileManager: fileManager)
             return url
         }
 
-        if let groupURL = fileManager.containerURL(
+        return try requiredAppGroupRootURL(fileManager: fileManager)
+        #endif
+    }
+
+    public static func requiredAppGroupRootURL(fileManager: FileManager = .default) throws -> URL {
+        guard let groupURL = fileManager.containerURL(
             forSecurityApplicationGroupIdentifier: ProductConstants.appGroupIdentifier
-        ) {
-            let url = groupURL.appendingPathComponent("CalendarCountdown", isDirectory: true)
-            try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
-            return url
+        ) else {
+            throw DomainError(
+                code: .databaseUnavailable,
+                message: "无法访问 App Group 容器 \(ProductConstants.appGroupIdentifier)。App 与 Widget 必须使用同一正式 App Group，不能回退到 Application Support。"
+            )
         }
-
-        return try applicationSupportRootURL(fileManager: fileManager)
+        let url = groupURL.appendingPathComponent("CalendarCountdown", isDirectory: true)
+        try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
     }
 
     private static func migrateLegacySharedFilesIfNeeded(
         to destinationRoot: URL,
         fileManager: FileManager
     ) throws {
+        #if os(macOS)
         let legacyRoot = fileManager.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Group Containers", isDirectory: true)
             .appendingPathComponent(ProductConstants.legacyAppGroupIdentifier, isDirectory: true)
@@ -41,7 +49,8 @@ public enum SharedContainer {
             "countdown-selections.json",
             "display-preferences.json",
             "tracked-events.json",
-            "widget-snapshot.json"
+            "widget-snapshot.json",
+            "widget-snapshot-v2.json"
         ]
         for filename in filenames {
             let source = legacyRoot.appendingPathComponent(filename)
@@ -52,6 +61,50 @@ public enum SharedContainer {
             }
             try fileManager.copyItem(at: source, to: destination)
         }
+        #endif
+    }
+
+    private static func migrateLocalPackageFilesIfNeeded(
+        to destinationRoot: URL,
+        fileManager: FileManager
+    ) throws {
+        #if os(macOS)
+        let marker = destinationRoot.appendingPathComponent("local-store-migration-v1")
+        guard !fileManager.fileExists(atPath: marker.path) else { return }
+
+        let sourceRoot = fileManager.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Group Containers", isDirectory: true)
+            .appendingPathComponent(ProductConstants.appGroupIdentifier, isDirectory: true)
+            .appendingPathComponent("CalendarCountdown", isDirectory: true)
+        if fileManager.fileExists(atPath: sourceRoot.path) {
+            let names = [
+                "calendarcountdown-v2.sqlite",
+                "calendarcountdown-v2.sqlite-wal",
+                "calendarcountdown-v2.sqlite-shm",
+                "cloud-profile-catalog.json",
+                "managed-events.json",
+                "countdown-selections.json",
+                "display-preferences.json",
+                "tracked-events.json",
+                "widget-snapshot.json",
+                "widget-snapshot-v2.json",
+                "broker.token",
+                "countdown-legacy-imported",
+                "Backups",
+                "Profiles"
+            ]
+            for name in names {
+                let source = sourceRoot.appendingPathComponent(name)
+                let destination = destinationRoot.appendingPathComponent(name)
+                guard fileManager.fileExists(atPath: source.path),
+                      !fileManager.fileExists(atPath: destination.path) else {
+                    continue
+                }
+                try fileManager.copyItem(at: source, to: destination)
+            }
+        }
+        try Data().write(to: marker, options: .atomic)
+        #endif
     }
 
     public static func applicationSupportRootURL(fileManager: FileManager = .default) throws -> URL {
@@ -67,11 +120,31 @@ public enum SharedContainer {
     }
 
     public static func widgetExtensionSnapshotURL(fileManager: FileManager = .default) -> URL {
+        widgetExtensionSupportDirectory(fileManager: fileManager)
+            .appendingPathComponent("widget-snapshot.json")
+    }
+
+    public static func widgetExtensionSnapshotV2URL(fileManager: FileManager = .default) -> URL {
+        widgetExtensionSupportDirectory(fileManager: fileManager)
+            .appendingPathComponent("widget-snapshot-v2.json")
+    }
+
+    public static func widgetExtensionSupportDirectory(fileManager: FileManager = .default) -> URL {
+        #if os(macOS)
         fileManager.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Containers", isDirectory: true)
             .appendingPathComponent(ProductConstants.widgetBundleIdentifier, isDirectory: true)
             .appendingPathComponent("Data/Library/Application Support/CalendarCountdown", isDirectory: true)
-            .appendingPathComponent("widget-snapshot.json")
+        #else
+        fileManager.temporaryDirectory.appendingPathComponent(
+            "CalendarCountdown-unused-mac-widget-container",
+            isDirectory: true
+        )
+        #endif
+    }
+
+    public static func cloudProfileCatalogURL(fileManager: FileManager = .default) throws -> URL {
+        try rootURL(fileManager: fileManager).appendingPathComponent("cloud-profile-catalog.json")
     }
 
     public static func managedEventsURL(fileManager: FileManager = .default) throws -> URL {
@@ -92,6 +165,50 @@ public enum SharedContainer {
 
     public static func displayPreferencesURL(fileManager: FileManager = .default) throws -> URL {
         try rootURL(fileManager: fileManager).appendingPathComponent("display-preferences.json")
+    }
+
+    public static func sqliteDatabaseURL(fileManager: FileManager = .default) throws -> URL {
+        try rootURL(fileManager: fileManager).appendingPathComponent("calendarcountdown-v2.sqlite")
+    }
+
+    public static func sqliteBackupDirectoryURL(fileManager: FileManager = .default) throws -> URL {
+        let url = try rootURL(fileManager: fileManager).appendingPathComponent("Backups", isDirectory: true)
+        try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
+        return url
+    }
+
+    public static func widgetSnapshotV2URL(fileManager: FileManager = .default) throws -> URL {
+        try rootURL(fileManager: fileManager).appendingPathComponent("widget-snapshot-v2.json")
+    }
+
+    public static func brokerSocketURL(fileManager: FileManager = .default) throws -> URL {
+        #if os(macOS)
+        let directory = fileManager.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Caches/CalendarCountdown", isDirectory: true)
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory.appendingPathComponent("broker.sock")
+        #else
+        throw DomainError(code: .brokerUnavailable, message: "iOS 不提供本地 Broker。")
+        #endif
+    }
+
+    public static func brokerTokenURL(fileManager: FileManager = .default) throws -> URL {
+        try rootURL(fileManager: fileManager).appendingPathComponent("broker.token")
+    }
+
+    public static func cloudProfileDatabaseURL(
+        accountHash: String,
+        fileManager: FileManager = .default
+    ) throws -> URL {
+        let directory = try rootURL(fileManager: fileManager)
+            .appendingPathComponent("Profiles", isDirectory: true)
+            .appendingPathComponent(accountHash, isDirectory: true)
+        try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
+        return directory.appendingPathComponent("calendarcountdown-v2.sqlite")
+    }
+
+    public static func countdownLegacyImportedFlagURL(fileManager: FileManager = .default) throws -> URL {
+        try rootURL(fileManager: fileManager).appendingPathComponent("countdown-legacy-imported")
     }
 }
 

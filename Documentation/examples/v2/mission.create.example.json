@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 2,
+  "title": "学会钢琴曲《致爱丽丝》",
+  "markdownDescription": "有边界的长期成果，不是每天练琴本身。",
+  "color": "#5B8DEF",
+  "icon": "flag.fill",
+  "status": "active",
+  "targetDate": "2027-03-31",
+  "defaultWorkload": 1
+}

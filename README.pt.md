@@ -123,7 +123,7 @@ xcodebuild -project CalendarCountdown.xcodeproj -scheme CalendarCountdown \
 
 ## Escopo atual
 
-- O macOS é suportado atualmente. App para iPhone, widgets do iPhone e sincronização de regras via CloudKit são trabalhos futuros.
+- O macOS é suportado atualmente. Mac, iPhone e iPad são o mesmo app; o macOS é a plataforma principal. O target iOS ainda não existe.
 - Este projeto não é um servidor CalDAV e não duplica a hierarquia de contas ou categorias do Apple Calendar.
 - Consulte [Documentation/PRODUCT.md](Documentation/PRODUCT.md) para o contrato detalhado de produto e dados.
 

@@ -126,7 +126,7 @@ xcodebuild -project CalendarCountdown.xcodeproj \
 
 ## Текущие границы
 
-- Сейчас поддерживается macOS. Приложение для iPhone, виджеты iPhone и синхронизация правил через CloudKit относятся к будущим этапам.
+- Сейчас поддерживается macOS. Mac, iPhone и iPad — одно приложение; macOS — основная платформа. iOS-цель ещё не реализована.
 - Проект не является сервером CalDAV и не копирует структуру учётных записей и категорий Календаря Apple.
 - Подробный контракт продукта и данных: [Documentation/PRODUCT.md](Documentation/PRODUCT.md).
 

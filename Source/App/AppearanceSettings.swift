@@ -158,7 +158,34 @@ final class AppAppearanceSettings: ObservableObject {
     }
 }
 
-struct AppearanceSettingsView: View {
+private enum AppSettingsSection: String, Identifiable {
+    case appearance
+
+    var id: String { rawValue }
+}
+
+struct AppSettingsView: View {
+    @ObservedObject var settings: AppAppearanceSettings
+    @State private var selection: AppSettingsSection? = .appearance
+
+    var body: some View {
+        NavigationSplitView {
+            List(selection: $selection) {
+                Label("外观与主题", systemImage: "paintpalette")
+                    .tag(AppSettingsSection.appearance)
+            }
+            .navigationTitle("设置")
+            .navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 210)
+        } detail: {
+            AppearanceSettingsPane(settings: settings)
+        }
+        .frame(width: 720, height: 440)
+        .tint(settings.accentColor)
+        .preferredColorScheme(settings.appearanceMode.colorScheme)
+    }
+}
+
+private struct AppearanceSettingsPane: View {
     @ObservedObject var settings: AppAppearanceSettings
 
     var body: some View {
@@ -221,7 +248,7 @@ struct AppearanceSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 610, height: 390)
+        .navigationTitle("外观与主题")
         .tint(settings.accentColor)
         .preferredColorScheme(settings.appearanceMode.colorScheme)
     }
@@ -296,17 +323,5 @@ private struct ThemeSwatch: View {
             + 0.7152 * rgb.greenComponent
             + 0.0722 * rgb.blueComponent
         return perceivedBrightness > 0.6 ? .black.opacity(0.72) : .white
-    }
-}
-
-extension Color {
-    init(hex: String) {
-        let value = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        let number = UInt64(value, radix: 16) ?? 0x8E8E93
-        self.init(
-            red: Double((number >> 16) & 0xFF) / 255,
-            green: Double((number >> 8) & 0xFF) / 255,
-            blue: Double(number & 0xFF) / 255
-        )
     }
 }

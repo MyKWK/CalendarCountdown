@@ -4,7 +4,8 @@ options:
   createIntermediateGroups: true
   developmentLanguage: zh-Hans
   deploymentTarget:
-    macOS: "14.0"
+    macOS: "15.0"
+    iOS: "18.0"
   groupSortPosition: top
   generateEmptyDirectories: true
 
@@ -15,7 +16,7 @@ configs:
 settings:
   base:
     SWIFT_VERSION: "6.0"
-    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
     CLANG_ENABLE_MODULES: YES
     SWIFT_STRICT_CONCURRENCY: complete
   configs:
@@ -23,6 +24,11 @@ settings:
       SWIFT_OPTIMIZATION_LEVEL: "-Onone"
     Release:
       SWIFT_OPTIMIZATION_LEVEL: "-O"
+
+packages:
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    exactVersion: 7.11.1
 
 targets:
   CalendarCountdownCore:
@@ -36,6 +42,24 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         SKIP_INSTALL: YES
 
+  CalendarCountdownPersistence:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: Persistence
+      - path: Services
+    dependencies:
+      - target: CalendarCountdownCore
+      - package: GRDB
+        product: GRDB
+      - sdk: CryptoKit.framework
+      - sdk: CloudKit.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.Persistence
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+
   CalendarCountdownCalendar:
     type: library.static
     platform: macOS
@@ -44,7 +68,7 @@ targets:
     dependencies:
       - target: CalendarCountdownCore
       - sdk: EventKit.framework
-      - sdk: AppKit.framework
+      - sdk: CoreGraphics.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.Calendar
@@ -61,11 +85,14 @@ targets:
     info:
       path: Config/App-Info.plist
       properties:
-        CFBundleDisplayName: 日历倒数
-        CFBundleShortVersionString: 1.0.2
-        CFBundleVersion: "3"
+        CFBundleDisplayName: 知行
+        CFBundleShortVersionString: 1.0.3
+        CFBundleVersion: "4"
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
-        NSCalendarsFullAccessUsageDescription: “日历倒数”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。
+        NSCalendarsFullAccessUsageDescription: “知行”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。
+        NSRemindersFullAccessUsageDescription: “知行”需要访问提醒事项，以便把任务投影为可完成的系统提醒；不会在你关闭投影时写入。
+        UIBackgroundModes:
+          - remote-notification
         CFBundleURLTypes:
           - CFBundleURLName: CalendarCountdown Event
             CFBundleURLSchemes:
@@ -74,13 +101,23 @@ targets:
       path: Config/App.entitlements
       properties:
         com.apple.security.personal-information.calendars: true
+        com.apple.security.personal-information.reminders: true
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.app.calendarcountdown.CalendarCountdown
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.developer.aps-environment: development
+        com.apple.security.application-groups:
+          - group.app.calendarcountdown.CalendarCountdown
     dependencies:
       - target: CalendarCountdownCore
+      - target: CalendarCountdownPersistence
       - target: CalendarCountdownCalendar
       - target: CalendarCountdownWidget
         embed: true
       - sdk: EventKit.framework
       - sdk: WidgetKit.framework
+      - sdk: CloudKit.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown
@@ -99,15 +136,17 @@ targets:
     info:
       path: Config/Widget-Info.plist
       properties:
-        CFBundleDisplayName: 日历倒数
-        CFBundleShortVersionString: 1.0.2
-        CFBundleVersion: "3"
+        CFBundleDisplayName: 知行
+        CFBundleShortVersionString: 1.0.3
+        CFBundleVersion: "4"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
       path: Config/Widget.entitlements
       properties:
         com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - group.app.calendarcountdown.CalendarCountdown
     dependencies:
       - target: CalendarCountdownCore
       - sdk: WidgetKit.framework
@@ -129,17 +168,21 @@ targets:
     info:
       path: Config/CLI-Info.plist
       properties:
-        CFBundleShortVersionString: 1.0.2
-        CFBundleVersion: "3"
+        CFBundleShortVersionString: 1.0.3
+        CFBundleVersion: "4"
         NSCalendarsFullAccessUsageDescription: calcount 需要读取 Apple 日历并管理你明确指定的日历事件。
+        NSRemindersFullAccessUsageDescription: calcount 需要访问提醒事项，以便诊断和预演任务投影。
     entitlements:
       path: Config/CLI.entitlements
       properties:
         com.apple.security.personal-information.calendars: true
+        com.apple.security.personal-information.reminders: true
     dependencies:
       - target: CalendarCountdownCore
+      - target: CalendarCountdownPersistence
       - target: CalendarCountdownCalendar
       - sdk: EventKit.framework
+      - sdk: CloudKit.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.CLI
@@ -160,6 +203,206 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.CoreTests
         GENERATE_INFOPLIST_FILE: YES
 
+  CalendarCountdownPersistenceTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: PersistenceTests
+    dependencies:
+      - target: CalendarCountdownCore
+      - target: CalendarCountdownPersistence
+      - sdk: CloudKit.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.PersistenceTests
+        GENERATE_INFOPLIST_FILE: YES
+
+  CalendarCountdownCoreiOS:
+    type: library.static
+    platform: iOS
+    sources:
+      - path: Core
+    settings:
+      base:
+        PRODUCT_MODULE_NAME: CalendarCountdownCore
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.Core.ios
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+
+  CalendarCountdownPersistenceiOS:
+    type: library.static
+    platform: iOS
+    sources:
+      - path: Persistence
+      - path: Services
+    dependencies:
+      - target: CalendarCountdownCoreiOS
+      - package: GRDB
+        product: GRDB
+      - sdk: CryptoKit.framework
+      - sdk: CloudKit.framework
+    settings:
+      base:
+        PRODUCT_MODULE_NAME: CalendarCountdownPersistence
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.Persistence.ios
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+
+  CalendarCountdownCalendariOS:
+    type: library.static
+    platform: iOS
+    sources:
+      - path: CalendarBridge
+    dependencies:
+      - target: CalendarCountdownCoreiOS
+      - sdk: EventKit.framework
+      - sdk: CoreGraphics.framework
+    settings:
+      base:
+        PRODUCT_MODULE_NAME: CalendarCountdownCalendar
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.Calendar.ios
+        GENERATE_INFOPLIST_FILE: YES
+        SKIP_INSTALL: YES
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+
+  CalendarCountdownMobile:
+    type: application
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: App
+        excludes:
+          - CalendarCountdownApp.swift
+          - AppBroker.swift
+          - MenuBarContentView.swift
+          - AppearanceSettings.swift
+          - RootView.swift
+      - path: Platforms/iOS
+      - path: Localization
+      - path: Resources
+    info:
+      path: Config/iOS/Mobile-Info.plist
+      properties:
+        CFBundleDisplayName: 知行
+        CFBundleShortVersionString: 1.0.3
+        CFBundleVersion: "4"
+        LSRequiresIPhoneOS: true
+        NSCalendarsFullAccessUsageDescription: “知行”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。
+        NSRemindersFullAccessUsageDescription: “知行”需要访问提醒事项，以便把任务投影为可完成的系统提醒；不会在你关闭投影时写入。
+        UILaunchScreen:
+          UIColorName: AccentColor
+        CFBundleURLTypes:
+          - CFBundleURLName: CalendarCountdown Event
+            CFBundleURLSchemes:
+              - calendarcountdown
+        UIBackgroundModes:
+          - remote-notification
+    entitlements:
+      path: Config/iOS/Mobile.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.app.calendarcountdown.CalendarCountdown
+        com.apple.developer.icloud-services:
+          - CloudKit
+        com.apple.developer.aps-environment: development
+        com.apple.security.application-groups:
+          - group.app.calendarcountdown.CalendarCountdown
+    dependencies:
+      - target: CalendarCountdownCoreiOS
+      - target: CalendarCountdownPersistenceiOS
+      - target: CalendarCountdownCalendariOS
+      - target: CalendarCountdownMobileWidget
+        embed: true
+      - sdk: EventKit.framework
+      - sdk: WidgetKit.framework
+      - sdk: CloudKit.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.ios
+        PRODUCT_NAME: CalendarCountdownMobile
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_DEBUG_DYLIB: NO
+
+  CalendarCountdownMobileWidget:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: Widget
+      - path: Localization
+    info:
+      path: Config/iOS/MobileWidget-Info.plist
+      properties:
+        CFBundleDisplayName: 知行
+        CFBundleShortVersionString: 1.0.3
+        CFBundleVersion: "4"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Config/iOS/MobileWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.app.calendarcountdown.CalendarCountdown
+    dependencies:
+      - target: CalendarCountdownCoreiOS
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.ios.Widget
+        PRODUCT_NAME: CalendarCountdownMobileWidget
+        APPLICATION_EXTENSION_API_ONLY: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+        SKIP_INSTALL: YES
+        CODE_SIGN_STYLE: Automatic
+
+  CalendarCountdownMobileTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: Tests
+      - path: PersistenceTests
+    dependencies:
+      - target: CalendarCountdownMobile
+      - target: CalendarCountdownCoreiOS
+      - target: CalendarCountdownPersistenceiOS
+      - package: GRDB
+        product: GRDB
+      - sdk: CloudKit.framework
+      - sdk: CryptoKit.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.MobileTests
+        GENERATE_INFOPLIST_FILE: YES
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  CalendarCountdownMobileUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    deploymentTarget: "18.0"
+    sources:
+      - path: UITests/Mobile
+    dependencies:
+      - target: CalendarCountdownMobile
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.calendarcountdown.CalendarCountdown.MobileUITests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: CalendarCountdownMobile
+        IPHONEOS_DEPLOYMENT_TARGET: "18.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
 schemes:
   CalendarCountdown:
     build:
@@ -168,9 +411,11 @@ schemes:
         CalendarCountdownWidget: all
         calcount: all
         CalendarCountdownCoreTests: [test]
+        CalendarCountdownPersistenceTests: [test]
     test:
       targets:
         - CalendarCountdownCoreTests
+        - CalendarCountdownPersistenceTests
     run:
       config: Debug
     archive:
@@ -181,3 +426,18 @@ schemes:
         calcount: all
     run:
       config: Debug
+  CalendarCountdownMobile:
+    build:
+      targets:
+        CalendarCountdownMobile: all
+        CalendarCountdownMobileWidget: all
+        CalendarCountdownMobileTests: [test]
+        CalendarCountdownMobileUITests: [test]
+    test:
+      targets:
+        - CalendarCountdownMobileTests
+        - CalendarCountdownMobileUITests
+    run:
+      config: Debug
+    archive:
+      config: Release

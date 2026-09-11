@@ -251,12 +251,41 @@ public struct ManagedEventRecord: Codable, Identifiable, Equatable, Sendable {
     public var draft: ManagedEventDraft
     public let createdAt: Date
     public var updatedAt: Date
+    public var revision: Int64
+    public var modifiedByDevice: UUID
+    public var deletedAt: Date?
 
-    public init(id: UUID = UUID(), draft: ManagedEventDraft, createdAt: Date = Date(), updatedAt: Date = Date()) {
+    public init(
+        id: UUID = UUID(),
+        draft: ManagedEventDraft,
+        createdAt: Date = Date(),
+        updatedAt: Date = Date(),
+        revision: Int64 = 1,
+        modifiedByDevice: UUID = UUID(),
+        deletedAt: Date? = nil
+    ) {
         self.id = id
         self.draft = draft
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.revision = revision
+        self.modifiedByDevice = modifiedByDevice
+        self.deletedAt = deletedAt
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, draft, createdAt, updatedAt, revision, modifiedByDevice, deletedAt
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        draft = try container.decode(ManagedEventDraft.self, forKey: .draft)
+        createdAt = try container.decode(Date.self, forKey: .createdAt)
+        updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+        revision = try container.decodeIfPresent(Int64.self, forKey: .revision) ?? 1
+        modifiedByDevice = try container.decodeIfPresent(UUID.self, forKey: .modifiedByDevice) ?? UUID()
+        deletedAt = try container.decodeIfPresent(Date.self, forKey: .deletedAt)
     }
 }
 
@@ -435,7 +464,11 @@ public struct CountdownSelection: Codable, Identifiable, Equatable, Sendable {
     public var managedRecordID: UUID?
     public var eventTitle: String
     public var occurrenceDate: Date?
-    public let selectedAt: Date
+    public var selectedAt: Date
+    public var updatedAt: Date
+    public var revision: Int64
+    public var modifiedByDevice: UUID
+    public var deletedAt: Date?
 
     public init(
         id: UUID = UUID(),
@@ -447,7 +480,11 @@ public struct CountdownSelection: Codable, Identifiable, Equatable, Sendable {
         managedRecordID: UUID? = nil,
         eventTitle: String,
         occurrenceDate: Date? = nil,
-        selectedAt: Date = Date()
+        selectedAt: Date = Date(),
+        updatedAt: Date? = nil,
+        revision: Int64 = 1,
+        modifiedByDevice: UUID = UUID(),
+        deletedAt: Date? = nil
     ) {
         self.id = id
         self.mode = mode
@@ -459,6 +496,34 @@ public struct CountdownSelection: Codable, Identifiable, Equatable, Sendable {
         self.eventTitle = eventTitle
         self.occurrenceDate = occurrenceDate
         self.selectedAt = selectedAt
+        self.updatedAt = updatedAt ?? selectedAt
+        self.revision = revision
+        self.modifiedByDevice = modifiedByDevice
+        self.deletedAt = deletedAt
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, mode, calendarIdentifier, calendarTitle, eventIdentifier
+        case externalIdentifier, managedRecordID, eventTitle, occurrenceDate
+        case selectedAt, updatedAt, revision, modifiedByDevice, deletedAt
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        mode = try container.decode(SelectionMode.self, forKey: .mode)
+        calendarIdentifier = try container.decodeIfPresent(String.self, forKey: .calendarIdentifier)
+        calendarTitle = try container.decode(String.self, forKey: .calendarTitle)
+        eventIdentifier = try container.decodeIfPresent(String.self, forKey: .eventIdentifier)
+        externalIdentifier = try container.decodeIfPresent(String.self, forKey: .externalIdentifier)
+        managedRecordID = try container.decodeIfPresent(UUID.self, forKey: .managedRecordID)
+        eventTitle = try container.decode(String.self, forKey: .eventTitle)
+        occurrenceDate = try container.decodeIfPresent(Date.self, forKey: .occurrenceDate)
+        selectedAt = try container.decode(Date.self, forKey: .selectedAt)
+        updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt) ?? selectedAt
+        revision = try container.decodeIfPresent(Int64.self, forKey: .revision) ?? 1
+        modifiedByDevice = try container.decodeIfPresent(UUID.self, forKey: .modifiedByDevice) ?? UUID()
+        deletedAt = try container.decodeIfPresent(Date.self, forKey: .deletedAt)
     }
 
     public func matches(_ event: CountdownEvent, calendar: Calendar = .current) -> Bool {
@@ -470,9 +535,16 @@ public struct CountdownSelection: Codable, Identifiable, Equatable, Sendable {
         switch mode {
         case .exactEvent:
             if let eventIdentifier, eventIdentifier == event.calendarItemIdentifier { return true }
-            if let externalIdentifier, externalIdentifier == event.externalIdentifier,
-               let occurrenceDate {
-                return calendar.isDate(occurrenceDate, inSameDayAs: event.eventDate)
+            if let externalIdentifier, externalIdentifier == event.externalIdentifier {
+                if let occurrenceDate {
+                    return calendar.isDate(occurrenceDate, inSameDayAs: event.eventDate)
+                }
+                return true
+            }
+            if eventIdentifier == nil, let occurrenceDate {
+                return eventTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                    == event.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                    && calendar.isDate(occurrenceDate, inSameDayAs: event.eventDate)
             }
             return false
         case .annualTitle:

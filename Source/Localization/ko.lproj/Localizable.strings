@@ -8,7 +8,7 @@
 "操作失败" = "작업 실패";
 "好" = "확인";
 "需要访问 Apple 日历" = "Apple 캘린더 접근 권한 필요";
-"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "캘린더 카운트다운은 기존 캘린더와 이벤트를 읽습니다. 사용자가 직접 추가하거나 가져올 때만 선택한 캘린더에 기록합니다.";
+"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "Motive는 기존 캘린더와 이벤트를 읽습니다. 사용자가 직접 추가하거나 가져올 때만 선택한 캘린더에 기록합니다.";
 "授权日历访问" = "캘린더 접근 허용";
 "倒数展示" = "카운트다운";
 "Apple 日历" = "Apple 캘린더";
@@ -17,7 +17,7 @@
 "每年追踪该日历中的同名事件" = "같은 이름의 이벤트를 매년 추적";
 "置顶与最近倒数" = "고정 및 예정 카운트다운";
 "尚未选择倒数事件" = "선택한 카운트다운 이벤트가 없습니다";
-"打开日历倒数" = "캘린더 카운트다운 열기";
+"打开日历倒数" = "Motive 열기";
 "退出" = "종료";
 
 /* Add event */
@@ -65,12 +65,13 @@
 
 /* Widget */
 "最近倒数" = "예정 카운트다운";
-"日历倒数" = "캘린더 카운트다운";
+"日历倒数" = "Motive";
 "显示你从 Apple 日历中选中的下一批倒数事件。" = "Apple 캘린더에서 선택한 다음 카운트다운 이벤트를 표시합니다.";
 
 /* Shared dynamic text */
-"app.name" = "캘린더 카운트다운";
+"app.name" = "Motive";
 "window.appearance_settings" = "모양 설정";
+"window.settings" = "설정";
 "common.not_provided" = "제공되지 않음";
 "calendar_system.gregorian" = "양력";
 "calendar_system.lunar" = "중국 음력";
@@ -79,9 +80,9 @@
 "countdown.today" = "오늘";
 "countdown.tomorrow" = "내일";
 "countdown.remaining_days" = "%lld일 남음";
-"status_item.no_events" = "캘린더 카운트다운 · 추적 중인 이벤트 없음";
+"status_item.no_events" = "Motive · 추적 중인 이벤트 없음";
 "status_item.event_tooltip" = "%@ · %@ · %@";
-"status_item.accessibility_label" = "캘린더 카운트다운, %@, %@";
+"status_item.accessibility_label" = "Motive, %@, %@";
 "event.untitled" = "제목 없는 이벤트";
 "widget.preview_title" = "예시 생일";
 "widget.preview_calendar" = "생일";

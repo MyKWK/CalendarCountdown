@@ -3,7 +3,7 @@ import XCTest
 
 final class CalendarCountdownCoreTests: XCTestCase {
     func testReleaseVersion() {
-        XCTAssertEqual(ProductConstants.version, "1.0.2")
+        XCTAssertEqual(ProductConstants.version, "1.0.3")
     }
 
     func testCalendarDayCountdown() throws {
@@ -111,7 +111,9 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertNotNil(reference["status.tracked_events_exported"])
         XCTAssertEqual(Set(referenceInfo.keys), [
             "CFBundleDisplayName",
-            "NSCalendarsFullAccessUsageDescription"
+            "CFBundleName",
+            "NSCalendarsFullAccessUsageDescription",
+            "NSRemindersFullAccessUsageDescription"
         ])
 
         for locale in locales {
@@ -185,6 +187,24 @@ final class CalendarCountdownCoreTests: XCTestCase {
         )
         XCTAssertTrue(selection.matches(matching))
         XCTAssertFalse(selection.matches(wrongTitle))
+    }
+
+    func testExactEventSelectionReconnectsWithoutLocalEventKitIdentifiers() {
+        let date = Date()
+        let selection = CountdownSelection(
+            mode: .exactEvent,
+            calendarTitle: "生日",
+            eventTitle: "李四",
+            occurrenceDate: date
+        )
+        let matching = makeEvent(
+            id: "one",
+            title: "李四",
+            date: date,
+            calendarID: "birthday",
+            calendarTitle: "生日"
+        )
+        XCTAssertTrue(selection.matches(matching))
     }
 
     func testImportDefaultsAndValidation() throws {
@@ -315,6 +335,74 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertEqual(visible.map(\.id), ["birthday-2026", "one-off"])
     }
 
+    func testNextYearlyOccurrenceUsesThisYearBeforeRollingForward() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "Asia/Shanghai"))
+        let original = try XCTUnwrap(DateSupport.parseDateOnly("1990-09-20", calendar: calendar))
+        let beforeBirthday = try XCTUnwrap(DateSupport.parseDateOnly("2026-09-10", calendar: calendar))
+        let afterBirthday = try XCTUnwrap(DateSupport.parseDateOnly("2026-09-21", calendar: calendar))
+
+        XCTAssertEqual(
+            DateSupport.nextYearlyOccurrence(matching: original, onOrAfter: beforeBirthday, calendar: calendar)
+                .map { DateSupport.dateOnlyString($0, calendar: calendar) },
+            "2026-09-20"
+        )
+        XCTAssertEqual(
+            DateSupport.nextYearlyOccurrence(matching: original, onOrAfter: afterBirthday, calendar: calendar)
+                .map { DateSupport.dateOnlyString($0, calendar: calendar) },
+            "2027-09-20"
+        )
+    }
+
+    func testSelectedRecurringEventsUseNearestOccurrenceAndGlobalDateOrder() throws {
+        let nearDate = try XCTUnwrap(DateSupport.parseDateOnly("2026-09-20"))
+        let middleDate = try XCTUnwrap(DateSupport.parseDateOnly("2026-10-11"))
+        let staleFutureDate = try XCTUnwrap(DateSupport.parseDateOnly("2027-09-20"))
+        let near = makeEvent(
+            id: "birthday-near",
+            title: "甲",
+            date: nearDate,
+            calendarID: "birthday",
+            calendarTitle: "生日",
+            seriesIdentifier: "managed:person-a"
+        )
+        let staleFuture = makeEvent(
+            id: "birthday-next-year",
+            title: "甲",
+            date: staleFutureDate,
+            calendarID: "birthday",
+            calendarTitle: "生日",
+            seriesIdentifier: "managed:person-a"
+        )
+        let middle = makeEvent(
+            id: "birthday-middle",
+            title: "乙",
+            date: middleDate,
+            calendarID: "birthday",
+            calendarTitle: "生日",
+            seriesIdentifier: "managed:person-b"
+        )
+        let selectionA = CountdownSelection(
+            mode: .annualTitle,
+            calendarIdentifier: "birthday",
+            calendarTitle: "生日",
+            eventTitle: "甲"
+        )
+        let selectionB = CountdownSelection(
+            mode: .annualTitle,
+            calendarIdentifier: "birthday",
+            calendarTitle: "生日",
+            eventTitle: "乙"
+        )
+
+        let visible = CountdownSelectionStore.nextSelectedEvents(
+            from: [staleFuture, middle, near],
+            selections: [selectionB, selectionA]
+        )
+
+        XCTAssertEqual(visible.map(\.id), ["birthday-near", "birthday-middle"])
+    }
+
     func testTrackedEventsDocumentKeepsStartDateAndRecurrenceCalendar() throws {
         let trackedSince = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-08-31T00:00:00Z"))
         let record = TrackedEventRecord(
@@ -425,6 +513,95 @@ final class CalendarCountdownCoreTests: XCTestCase {
             notes: nil,
             url: nil
         )
+    }
+}
+
+final class DiagnosticLoggingTests: XCTestCase {
+    func testDefaultRootUsesLocalApplicationSupportRatherThanCloudOrAppGroupStorage() throws {
+        let path = try DiagnosticLogStore.defaultRootURL().standardizedFileURL.path
+
+        XCTAssertTrue(path.contains("/Library/Application Support/CalendarCountdown/Diagnostics"))
+        XCTAssertFalse(path.contains("/Mobile Documents/"))
+        XCTAssertFalse(path.contains(ProductConstants.appGroupIdentifier))
+    }
+
+    func testJSONLIsPrivateLocalAndStructured() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("diagnostic-log-test-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = try DiagnosticLogStore(rootURL: root, component: "unit test")
+        let entry = DiagnosticLogEntry(
+            timestamp: "2026-09-10T08:00:00.000Z",
+            level: .notice,
+            category: .sync,
+            event: "sync.completed",
+            component: "unit-test",
+            processID: 42,
+            sessionID: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
+            installationID: store.installationID,
+            localDeviceID: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
+            correlationID: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!,
+            metadata: ["records": "3"]
+        )
+        let date = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-09-10T08:00:00Z"))
+
+        try store.append(entry, at: date)
+
+        let status = try store.status()
+        XCTAssertTrue(status.localOnly)
+        XCTAssertTrue(status.excludedFromBackup)
+        XCTAssertEqual(status.retentionDays, 30)
+        XCTAssertEqual(status.files.count, 1)
+        let data = try Data(contentsOf: root.appendingPathComponent(status.files[0].name))
+        let line = try XCTUnwrap(String(data: data, encoding: .utf8)?.split(separator: "\n").first)
+        let decoded = try JSONDecoder().decode(DiagnosticLogEntry.self, from: Data(line.utf8))
+        XCTAssertEqual(decoded, entry)
+        let permissions = try FileManager.default.attributesOfItem(atPath: root.appendingPathComponent(status.files[0].name).path)[.posixPermissions] as? NSNumber
+        XCTAssertEqual(permissions?.intValue, 0o600)
+    }
+
+    func testCleanupRetainsExactlyThirtyCalendarDays() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("diagnostic-retention-test-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let store = try DiagnosticLogStore(rootURL: root, component: "retention")
+        let formatter = ISO8601DateFormatter()
+        let reference = try XCTUnwrap(formatter.date(from: "2026-09-10T12:00:00Z"))
+        let dates = [
+            reference,
+            try XCTUnwrap(formatter.date(from: "2026-08-11T23:59:00Z")),
+            try XCTUnwrap(formatter.date(from: "2026-08-12T00:00:00Z"))
+        ]
+        for (index, date) in dates.enumerated() {
+            try store.append(
+                DiagnosticLogEntry(
+                    timestamp: RFC3339.utcString(from: date),
+                    level: .info,
+                    category: .maintenance,
+                    event: "retention.\(index)",
+                    component: "retention",
+                    processID: 1,
+                    sessionID: UUID(),
+                    installationID: store.installationID
+                ),
+                at: date
+            )
+        }
+
+        XCTAssertEqual(try store.cleanup(referenceDate: reference), 1)
+        XCTAssertEqual(try store.files().map(\.name).sorted(), [
+            "calendarcountdown-retention-2026-08-12.jsonl",
+            "calendarcountdown-retention-2026-09-10.jsonl"
+        ])
+    }
+
+    func testSensitiveMetadataIsRedactedAndTruncated() {
+        XCTAssertEqual(DiagnosticLogger.sanitize("secret-value", key: "authorizationToken"), "<redacted>")
+        XCTAssertEqual(
+            DiagnosticLogger.sanitize("request Bearer abc.def-123 finished", key: "message"),
+            "request <redacted> finished"
+        )
+        XCTAssertEqual(DiagnosticLogger.sanitize(String(repeating: "x", count: 3_000), key: "note").count, 2_048)
     }
 }
 

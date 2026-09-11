@@ -1,2 +1,4 @@
-"CFBundleDisplayName" = "Календарный отсчёт";
+"CFBundleDisplayName" = "Motive";
+"CFBundleName" = "Motive";
 "NSCalendarsFullAccessUsageDescription" = "Приложению нужен доступ на чтение календарей для расчёта отсчётов. События записываются только в выбранный календарь после подтверждения.";
+"NSRemindersFullAccessUsageDescription" = "Для проекции задач в системные напоминания нужен доступ к Напоминаниям. Запись выполняется только после включения проекции.";

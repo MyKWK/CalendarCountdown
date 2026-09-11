@@ -2,6 +2,8 @@
 
 > 一个原生 macOS 重要日期追踪工具：以 Apple 日历为事实源，同时为用户、小组件和 AI Agent 提供清晰、可移植的倒数与纪念日能力。
 
+运行期排查、跨端关联字段与 30 天本地保留策略见 [诊断日志说明](Documentation/DIAGNOSTIC_LOGGING.md)。
+
 [中文](README.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Español](README.es.md) · [Русский](README.ru.md) · [Português](README.pt.md) · [Deutsch](README.de.md) · [Français](README.fr.md)
 
 ## 产品截图
@@ -119,14 +121,14 @@ xcodebuild -project CalendarCountdown.xcodeproj \
 
 ## 数据与隐私边界
 
-- 日历事件保存在 Apple 日历中，项目不运行自建云端日历服务。
-- 追踪选择和 `tracked-events.json` 保存在本机，用于展示与用户主动导出。
+- 日历事件保存在 Apple 日历中，项目不运行自建云端日历服务。倒数规则、追踪选择和置顶进入用户自己的 CloudKit private database，不上传 EventKit identifier。
+- 每台设备一份 SQLite；库文件、WAL、SHM 与备份排除 iCloud 备份。`tracked-events.json` 仍可用于展示与用户主动导出。
 - 写操作只作用于用户明确指定的 Apple 日历。
 - 真实用户纪念日文件已通过 `.gitignore` 排除，不应提交到公开仓库或发布包。
 
 ## 当前边界
 
-- 当前支持 macOS；iPhone App、iPhone 小组件和 CloudKit 规则同步属于后续阶段。
+- Mac、iPhone、iPad 是同一个 App，macOS 为主力与先发端。iOS target 尚未落地。
 - 本项目不是 CalDAV 服务器，不复制 Apple 日历的账户与分类体系。
 - 详细产品和数据合同见 [Documentation/PRODUCT.md](Documentation/PRODUCT.md)。
 
