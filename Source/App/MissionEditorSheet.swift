@@ -174,21 +174,13 @@ struct MissionEditorSheet: View {
     }
 
     private var footerBar: some View {
-        HStack {
-            Button("取消") { dismiss() }
-                .accessibilityIdentifier("mission-editor-cancel")
-                .appActionFocusEffectDisabled()
-            Spacer()
-            Button("保存", action: submit)
-                .buttonStyle(.borderedProminent)
-                .disabled(!canSubmit)
-                .accessibilityIdentifier("mission-editor-save")
-                .appActionFocusEffectDisabled()
-        }
-        .padding(.horizontal, MissionEditorLayout.horizontalInset)
-        .padding(.vertical, 12)
-        .frame(minHeight: MissionEditorLayout.footerHeight)
-        .background(.bar)
+        SheetActionBar(
+            cancelIdentifier: "mission-editor-cancel",
+            primaryIdentifier: "mission-editor-save",
+            canSubmit: canSubmit,
+            onCancel: { dismiss() },
+            onSubmit: submit
+        )
     }
 
     private func editorCard<Content: View>(

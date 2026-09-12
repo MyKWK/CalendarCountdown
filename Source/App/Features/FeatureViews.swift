@@ -84,83 +84,206 @@ struct TaskListView: View {
     let title: String
     let views: [TaskOccurrenceView]
     @ObservedObject var workspace: WorkspaceModel
+    var onCreate: (() -> Void)? = nil
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var viewport = TaskListViewportSnapshot()
+
+    private var partitioned: (open: [TaskOccurrenceView], completed: [TaskOccurrenceView]) {
+        CompletedTrailPresentation.partition(views) { $0.occurrence.status == .completed }
+    }
 
     var body: some View {
         Group {
             if views.isEmpty {
-                ContentUnavailableView(title, systemImage: "checkmark.circle", description: Text("没有符合条件的任务。"))
+                ZhixingEmptyState(
+                    systemImage: AppSection.tasks.emptySymbol,
+                    title: title,
+                    description: AppSection.tasks.emptyDescription,
+                    actionTitle: onCreate == nil ? nil : AppSection.tasks.createActionTitle,
+                    actionIdentifier: "task-create",
+                    action: onCreate
+                )
             } else {
-                List(views) { view in
-                    TaskRowView(view: view, workspace: workspace)
+                List {
+                    Section {
+                        ModuleHeader(
+                            title: title,
+                            subtitle: AppSection.tasks.subtitle,
+                            summary: taskSummary
+                        )
+                        .zhixingListRow()
+                    }
+                    Section {
+                        ForEach(partitioned.open) { view in
+                            TaskRowView(view: view, workspace: workspace)
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(
+                                    EdgeInsets(
+                                        top: ZhixingMetrics.space4,
+                                        leading: ZhixingMetrics.pageInset,
+                                        bottom: ZhixingMetrics.space4,
+                                        trailing: ZhixingMetrics.pageInset
+                                    )
+                                )
+                                .listRowBackground(Color.clear)
+                        }
+                    }
+                    if !partitioned.completed.isEmpty {
+                        Section {
+                            ForEach(Array(partitioned.completed.enumerated()), id: \.element.id) { index, view in
+                                TaskRowView(
+                                    view: view,
+                                    workspace: workspace,
+                                    trailIndex: index
+                                )
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(
+                                    EdgeInsets(
+                                        top: ZhixingMetrics.space4,
+                                        leading: ZhixingMetrics.pageInset,
+                                        bottom: ZhixingMetrics.space4,
+                                        trailing: ZhixingMetrics.pageInset
+                                    )
+                                )
+                                .listRowBackground(Color.clear)
+                            }
+                        }
+                    }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
                 .appGlassScrollBackground()
+                .coordinateSpace(name: "zhixing.tasks")
+                .environment(\.taskListViewport, viewport)
+                .onScrollGeometryChange(for: CGRect.self) { geometry in
+                    geometry.visibleRect
+                } action: { _, rect in
+                    viewport.visibleRect = rect
+                }
+                .background {
+                    GeometryReader { proxy in
+                        Color.clear
+                            .onAppear { viewport.globalFrame = proxy.frame(in: .global) }
+                            .onChange(of: proxy.frame(in: .global)) { _, frame in
+                                viewport.globalFrame = frame
+                            }
+                    }
+                }
+                .animation(
+                    reduceMotion ? nil : .snappy(duration: ZhixingMetrics.motionStandard),
+                    value: partitioned.open.map(\.id)
+                )
             }
         }
+        .background(ZhixingColor.contentBackground)
         .navigationTitle(title)
+    }
+
+    private var taskSummary: String {
+        let open = partitioned.open.count
+        let overdue = partitioned.open.filter(\.isOverdue).count
+        let done = partitioned.completed.count
+        if overdue > 0 {
+            return "\(open) 个待办 · \(overdue) 个逾期 · \(done) 个已完成"
+        }
+        return "\(open) 个待办 · \(done) 个已完成"
     }
 }
 
 struct TaskRowView: View {
     let view: TaskOccurrenceView
     @ObservedObject var workspace: WorkspaceModel
+    var trailIndex: Int? = nil
     @State private var showingEditor = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var isCompleted: Bool {
+        view.occurrence.status == .completed
+    }
 
     var body: some View {
-        HStack(spacing: 10) {
-            Button {
-                if view.occurrence.status == .completed {
-                    workspace.reopen(view)
-                } else {
-                    workspace.complete(view)
-                }
-            } label: {
-                Image(systemName: view.occurrence.status == .completed ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(view.isOverdue ? .red : .accentColor)
-                    .font(.title3)
-            }
-            .buttonStyle(.plain)
-            .appActionFocusEffectDisabled()
-
-            VStack(alignment: .leading, spacing: 3) {
-                Text(view.title).font(.headline)
-                    .strikethrough(view.occurrence.status == .completed)
-                if let markdown = view.markdownDescription, !markdown.isEmpty {
-                    MarkdownBodyView(text: markdown)
-                        .font(.caption)
-                        .lineLimit(3)
-                }
-                HStack(spacing: 6) {
-                    if let mission = workspace.mission(for: view.series.missionID) {
-                        MissionTagLabel(title: mission.title, icon: mission.icon, colorHex: mission.color)
+        TaskBarCard {
+            HStack(alignment: .center, spacing: ZhixingMetrics.space12) {
+                CompletionRingButton(
+                    isCompleted: isCompleted,
+                    tint: .accentColor,
+                    accessibilityLabel: isCompleted ? "标记为未完成" : "完成任务"
+                ) {
+                    let animation = ZhixingMotion.standard(reduceMotion: reduceMotion)
+                    withAnimation(animation) {
+                        if isCompleted {
+                            workspace.reopen(view)
+                        } else {
+                            workspace.complete(view)
+                        }
                     }
-                    Group {
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(view.title)
+                        .font(.headline)
+                        .strikethrough(isCompleted)
+                        .foregroundStyle(.primary)
+                    if let markdown = view.markdownDescription, !markdown.isEmpty {
+                        MarkdownBodyView(text: markdown)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                    HStack(spacing: 6) {
+                        if let mission = workspace.mission(for: view.series.missionID) {
+                            MetaTag(
+                                title: mission.title,
+                                systemImage: MissionSymbolCatalog.resolved(mission.icon),
+                                tint: Color.missionIdentity(mission.color),
+                                emphasized: true,
+                                identifier: "task-mission-tag"
+                            )
+                        }
                         if let due = view.occurrence.plannedDue {
                             Text(due, format: .dateTime.month().day().hour().minute())
+                                .foregroundStyle(view.isOverdue && !isCompleted ? Color.orange : Color.secondary)
                         } else {
                             Text("收集箱")
+                                .foregroundStyle(.secondary)
                         }
-                        Text("·")
-                        Text("\(view.workload.rawValue) 点")
+                        MetaTag(title: "\(view.workload.rawValue) 点")
                         if view.series.isInfinite {
                             Image(systemName: "repeat")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                         }
-                        if view.isOverdue {
-                            Text("逾期").foregroundStyle(.red)
+                        if view.isOverdue, !isCompleted {
+                            MetaTag(title: "逾期", tint: .orange, emphasized: true)
                         }
                     }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                if view.series.recurrence != nil, view.occurrence.status == .open {
+                    Button("跳过") { workspace.skip(view) }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .buttonStyle(.plain)
+                        .appActionFocusEffectDisabled()
+                        .zhixingHoverOpacity(isPersistent: false, idleOpacity: 0.4)
                 }
             }
-            Spacer()
-            if view.series.recurrence != nil, view.occurrence.status == .open {
-                Button("跳过") { workspace.skip(view) }
-                    .appActionFocusEffectDisabled()
-            }
         }
-        .padding(.vertical, 4)
+        .modifier(OptionalCompletedTrailModifier(index: trailIndex))
+        .accessibilityHint(isCompleted ? "已完成。滚动到阅读区域、悬停或聚焦后可清晰查看。" : "")
         .contextMenu {
             Button("编辑") { showingEditor = true }
+            if isCompleted {
+                Button("重新打开") {
+                    withAnimation(ZhixingMotion.standard(reduceMotion: reduceMotion)) {
+                        workspace.reopen(view)
+                    }
+                }
+            }
+            if view.series.recurrence != nil, view.occurrence.status == .open {
+                Button("跳过") { workspace.skip(view) }
+            }
             Button("归档") { workspace.archiveTask(view) }
             Button("删除", role: .destructive) { workspace.deleteTask(view, permanent: true) }
         }
@@ -175,8 +298,42 @@ struct TaskRowView: View {
     }
 }
 
+private struct OptionalCompletedTrailModifier: ViewModifier {
+    var index: Int?
+
+    func body(content: Content) -> some View {
+        if let index {
+            content.modifier(TaskCompletedTrailChrome(index: index))
+        } else {
+            content
+        }
+    }
+}
+
 private struct MissionComposerTarget: Identifiable, Hashable {
     let id: UUID
+}
+
+private struct MissionCreateToolbarModifier: ViewModifier {
+    @Binding var showingAddMission: Bool
+
+    func body(content: Content) -> some View {
+        #if os(iOS)
+        content.toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    showingAddMission = true
+                } label: {
+                    Label("新建使命", systemImage: "plus")
+                }
+                .accessibilityIdentifier("mission-create-toolbar")
+                .appActionFocusEffectDisabled()
+            }
+        }
+        #else
+        content
+        #endif
+    }
 }
 
 struct MissionListView: View {
@@ -194,20 +351,24 @@ struct MissionListView: View {
         }
         Group {
             if items.isEmpty {
-                ContentUnavailableView {
-                    Label("使命", systemImage: "flag")
-                } description: {
-                    Text("创建一个有边界、最终可以完成的长期结果。")
-                } actions: {
-                    Button("新建使命") {
-                        showingAddMission = true
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier("mission-create")
-                    .appActionFocusEffectDisabled()
-                }
+                ZhixingEmptyState(
+                    systemImage: AppSection.missions.emptySymbol,
+                    title: AppSection.missions.title,
+                    description: AppSection.missions.emptyDescription,
+                    actionTitle: AppSection.missions.createActionTitle,
+                    actionIdentifier: "mission-create",
+                    action: { showingAddMission = true }
+                )
             } else {
                 List {
+                    Section {
+                        ModuleHeader(
+                            title: AppSection.missions.title,
+                            subtitle: AppSection.missions.subtitle,
+                            summary: "\(items.count) 项使命"
+                        )
+                        .zhixingListRow()
+                    }
                     ForEach(items, id: \.mission.id) { item in
                         MissionCardView(
                             item: item,
@@ -218,6 +379,7 @@ struct MissionListView: View {
                         )
                         .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                         .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
                         .swipeActions(edge: .leading, allowsFullSwipe: false) {
                             Button {
                                 editingMission = item.mission
@@ -248,21 +410,13 @@ struct MissionListView: View {
                     }
                 }
                 .listStyle(.plain)
+                .scrollContentBackground(.hidden)
                 .appGlassScrollBackground()
             }
         }
+        .background(ZhixingColor.contentBackground)
         .navigationTitle("使命")
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    showingAddMission = true
-                } label: {
-                    Label("新建使命", systemImage: "plus")
-                }
-                .accessibilityIdentifier("mission-create-toolbar")
-                .appActionFocusEffectDisabled()
-            }
-        }
+        .modifier(MissionCreateToolbarModifier(showingAddMission: $showingAddMission))
         .sheet(isPresented: $showingAddMission) {
             AddMissionSheet(initialColor: workspace.suggestedMissionColor.rawValue) { command in
                 workspace.createMission(command)
@@ -370,34 +524,44 @@ struct MissionCardView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
+        VStack(alignment: .leading, spacing: ZhixingMetrics.space12) {
+            HStack(alignment: .center, spacing: ZhixingMetrics.space8) {
                 Image(systemName: MissionSymbolCatalog.resolved(item.mission.icon))
-                    .font(.title2)
-                    .foregroundStyle(.white)
-                    .frame(width: 34, height: 34)
-                    .background(Circle().fill(missionTint))
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(missionTint)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(missionTint.opacity(0.14)))
                     .accessibilityHidden(true)
-                Text(item.mission.title).font(.title3.weight(.semibold))
-                Spacer()
-                if item.mission.status != .active {
-                    Label(missionStatusLabel, systemImage: missionStatusSymbol)
-                        .labelStyle(.titleAndIcon)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                }
-                if let date = item.mission.targetDate {
-                    Text("截止 \(date.isoString)").foregroundStyle(.secondary)
-                }
-                if compact {
-                    Menu {
-                        missionManagementButtons
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.mission.title).font(.title3.weight(.semibold))
+                    HStack(spacing: 6) {
+                        if item.mission.status != .active {
+                            MetaTag(
+                                title: missionStatusLabel,
+                                systemImage: missionStatusSymbol,
+                                tint: .secondary,
+                                emphasized: true
+                            )
+                        }
+                        if let date = item.mission.targetDate {
+                            Text("截止 \(date.isoString)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                    .accessibilityIdentifier("mission-overflow")
-                    .appActionFocusEffectDisabled()
                 }
+                Spacer(minLength: 0)
+                Menu {
+                    missionManagementButtons
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundStyle(.secondary)
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
+                }
+                .menuStyle(.borderlessButton)
+                .accessibilityIdentifier("mission-overflow")
+                .appActionFocusEffectDisabled()
             }
             if let markdown = item.mission.markdownDescription, !markdown.isEmpty {
                 MarkdownBodyView(text: markdown)
@@ -406,18 +570,18 @@ struct MissionCardView: View {
                     .lineLimit(compact || isCollapsed ? 2 : 6)
             }
             if item.progress.isUnplanned {
-                Text("尚未规划").foregroundStyle(.secondary)
+                Text("尚未规划").font(.callout).foregroundStyle(.secondary)
             } else {
                 ProgressView(value: item.progress.progress ?? 0)
                     .tint(missionTint)
-                if !isCollapsed {
-                    HStack {
-                        Text("成果进度 \(item.progress.displayPercent.map { String(format: "%.1f%%", $0) } ?? "—")")
-                        Spacer()
-                        Text("\(item.progress.donePoints) / \(item.progress.totalPoints) 点")
-                            .monospacedDigit()
-                    }
-                    .font(.callout)
+                    .scaleEffect(x: 1, y: 0.72, anchor: .center)
+                HStack {
+                    Text("成果进度 \(item.progress.displayPercent.map { String(format: "%.1f%%", $0) } ?? "—")")
+                        .font(.callout.monospacedDigit().weight(.medium))
+                    Spacer()
+                    Text("\(item.progress.donePoints) / \(item.progress.totalPoints) 点")
+                        .font(.callout.monospacedDigit())
+                        .foregroundStyle(.secondary)
                 }
             }
             if !isCollapsed, let continuity = item.progress.continuity, let rate = continuity.rate {
@@ -426,7 +590,7 @@ struct MissionCardView: View {
                     .foregroundStyle(.secondary)
             }
             if compact, !isCollapsed, !visibleLinkedTasks.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: ZhixingMetrics.space8) {
                     ForEach(visibleLinkedTasks) { view in
                         MissionLinkedTaskRow(
                             view: view,
@@ -439,7 +603,7 @@ struct MissionCardView: View {
             }
             if !compact, !isCollapsed {
                 if !visibleLinkedTasks.isEmpty {
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: ZhixingMetrics.space8) {
                         ForEach(visibleLinkedTasks) { view in
                             MissionLinkedTaskRow(
                                 view: view,
@@ -454,6 +618,7 @@ struct MissionCardView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .padding(.leading, ZhixingMetrics.space8)
                 }
                 if item.mission.status != .archived {
                     addTaskControls
@@ -465,44 +630,24 @@ struct MissionCardView: View {
                     .buttonStyle(.borderedProminent)
                     .appActionFocusEffectDisabled()
                 }
-                HStack {
-                    Button("编辑") { showingEditor = true }
-                        .accessibilityIdentifier("mission-edit")
-                        .appActionFocusEffectDisabled()
-                    if item.mission.status == .active {
-                        Button("暂停") { workspace.pauseMission(item.mission) }
-                            .appActionFocusEffectDisabled()
-                    }
-                    Spacer()
-                    Button("归档") { workspace.archiveMission(item.mission) }
-                        .appActionFocusEffectDisabled()
-                    Button("删除", role: .destructive) { workspace.deleteMission(item.mission) }
-                        .accessibilityIdentifier("mission-delete")
-                        .appActionFocusEffectDisabled()
-                }
             }
         }
-        .padding(compact ? 0 : 16)
+        .padding(compact ? 0 : ZhixingMetrics.space16)
+        .padding(.leading, compact ? 0 : ZhixingMetrics.space8)
         .background {
             if !compact {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.primary.opacity(0.035))
+                RoundedRectangle(cornerRadius: ZhixingMetrics.cornerContainer, style: .continuous)
+                    .fill(ZhixingColor.groupedBackground.opacity(0.94))
                     .overlay {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(missionTint.opacity(0.055))
-                    }
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 12)
-                            .strokeBorder(missionTint.opacity(0.18), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: ZhixingMetrics.cornerContainer, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: ZhixingMetrics.glassStrokeWidth)
                     }
             }
         }
         .overlay(alignment: .leading) {
             if !compact {
-                Capsule()
-                    .fill(missionTint)
-                    .frame(width: 3)
-                    .padding(.vertical, 12)
+                IdentityMark(color: missionTint)
+                    .padding(.vertical, ZhixingMetrics.space12)
             }
         }
         .contextMenu {
@@ -577,6 +722,7 @@ struct MissionCardView: View {
     @ViewBuilder
     private var missionManagementButtons: some View {
         Button("编辑使命") { showingEditor = true }
+            .accessibilityIdentifier("mission-edit")
         Button("使命历程") { showingActivity = true }
         if item.mission.status != .archived {
             Button("添加任务") { requestAddTask() }
@@ -589,11 +735,12 @@ struct MissionCardView: View {
         }
         Button("归档") { workspace.archiveMission(item.mission) }
         Button("删除", role: .destructive) { workspace.deleteMission(item.mission) }
+            .accessibilityIdentifier("mission-delete")
     }
 
     @ViewBuilder
     private var addTaskControls: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        HStack(spacing: ZhixingMetrics.space8) {
             Button {
                 requestAddTask()
             } label: {
@@ -602,7 +749,7 @@ struct MissionCardView: View {
                     systemImage: "plus"
                 )
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.bordered)
             .accessibilityIdentifier("mission-add-task")
             .appActionFocusEffectDisabled()
 
@@ -748,47 +895,52 @@ private struct MissionLinkedTaskRow: View {
     let onEdit: () -> Void
 
     var body: some View {
-        HStack(spacing: 8) {
-            Button {
+        HStack(spacing: ZhixingMetrics.space8) {
+            CompletionRingButton(
+                isCompleted: view.occurrence.status == .completed,
+                tint: Color.missionIdentity(mission.color),
+                accessibilityLabel: view.occurrence.status == .completed ? "标记为未完成" : "完成任务"
+            ) {
                 if view.occurrence.status == .completed {
                     workspace.reopen(view)
                 } else {
                     workspace.complete(view)
                 }
-            } label: {
-                Image(systemName: view.occurrence.status == .completed ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(view.isOverdue ? .red : Color.missionIdentity(mission.color))
             }
-            .buttonStyle(.plain)
-            .appActionFocusEffectDisabled()
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(view.title)
-                    .font(.subheadline.weight(.medium))
+                    .font(.subheadline)
                     .strikethrough(view.occurrence.status == .completed)
+                    .foregroundStyle(.primary)
                 HStack(spacing: 6) {
                     if let due = view.occurrence.plannedDue {
                         Text(due, format: .dateTime.month().day().hour().minute())
+                            .foregroundStyle(view.isOverdue && view.occurrence.status == .open ? Color.orange : Color.secondary)
                     } else {
                         Text("收集箱")
+                            .foregroundStyle(.secondary)
                     }
-                    Text("·")
                     Text("\(view.workload.rawValue) 点")
+                        .foregroundStyle(.secondary)
                     if view.series.isInfinite {
                         Text("∞")
+                            .foregroundStyle(.secondary)
                     }
                     if view.isOverdue, view.occurrence.status == .open {
-                        Text("逾期").foregroundStyle(.red)
+                        MetaTag(title: "逾期", tint: .orange, emphasized: true)
                     }
                 }
                 .font(.caption)
-                .foregroundStyle(.secondary)
             }
             Spacer()
             Button("编辑") { onEdit() }
                 .font(.caption)
+                .foregroundStyle(.secondary)
+                .buttonStyle(.plain)
                 .accessibilityIdentifier("mission-edit-task")
                 .appActionFocusEffectDisabled()
+                .zhixingHoverOpacity(isPersistent: false, idleOpacity: 0.45)
         }
         .contextMenu {
             Button("编辑") { onEdit() }
@@ -805,6 +957,7 @@ private struct MissionLinkedTaskRow: View {
 struct HabitListView: View {
     @ObservedObject var workspace: WorkspaceModel
     var searchText: String
+    var onCreate: (() -> Void)? = nil
 
     var body: some View {
         let items = workspace.habits.filter {
@@ -812,17 +965,50 @@ struct HabitListView: View {
         }
         Group {
             if items.isEmpty {
-                ContentUnavailableView("打卡", systemImage: "flame", description: Text("习惯关注一致性，而不是最终做完。"))
+                ZhixingEmptyState(
+                    systemImage: AppSection.habits.emptySymbol,
+                    title: AppSection.habits.title,
+                    description: AppSection.habits.emptyDescription,
+                    actionTitle: onCreate == nil ? nil : AppSection.habits.createActionTitle,
+                    actionIdentifier: "habit-create",
+                    action: onCreate
+                )
             } else {
                 List {
-                    ForEach(items, id: \.habit.id) { item in
-                        HabitRowView(item: item, workspace: workspace)
+                    Section {
+                        ModuleHeader(
+                            title: AppSection.habits.title,
+                            subtitle: AppSection.habits.subtitle,
+                            summary: habitSummary(items)
+                        )
+                        .zhixingListRow()
+                    }
+                    Section {
+                        ForEach(items, id: \.habit.id) { item in
+                            HabitRowView(item: item, workspace: workspace)
+                                .zhixingListRow()
+                                .overlay(alignment: .bottom) {
+                                    Divider().padding(.leading, 48)
+                                }
+                        }
                     }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
                 .appGlassScrollBackground()
             }
         }
+        .background(ZhixingColor.contentBackground)
         .navigationTitle("打卡")
+    }
+
+    private func habitSummary(_ items: [HabitWriteResult]) -> String {
+        let done = items.filter { isCompletedToday($0) }.count
+        return "今日 \(done) / \(items.count) 已打卡"
+    }
+
+    private func isCompletedToday(_ item: HabitWriteResult) -> Bool {
+        item.period?.disposition == .completed || item.checkIn != nil
     }
 }
 
@@ -831,59 +1017,113 @@ struct HabitRowView: View {
     @ObservedObject var workspace: WorkspaceModel
     @State private var showingBackfill = false
     @State private var backfillDate = Date()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var identity: Color {
+        ZhixingIdentity.color(for: item.habit.id).swiftUIColor
+    }
+
+    private var isCompletedToday: Bool {
+        item.period?.disposition == .completed || item.checkIn != nil
+    }
+
+    private var isSkipped: Bool {
+        item.period?.disposition == .skipped
+    }
 
     var body: some View {
-        HStack {
+        HStack(alignment: .center, spacing: ZhixingMetrics.space12) {
+            IdentityMark(color: identity, height: 36)
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.habit.title).font(.headline)
-                if let stats = item.stats {
-                    Text("连续 \(stats.currentStreak) · 最长 \(stats.longestStreak) · 累计 \(stats.totalValue)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
+                    MetaTag(
+                        title: isSkipped ? "今日已跳过" : (isCompletedToday ? "今日已打卡" : "今日未打卡"),
+                        tint: isCompletedToday ? identity : .secondary,
+                        emphasized: isCompletedToday
+                    )
+                    if let stats = item.stats {
+                        Text("连续 \(stats.currentStreak)")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                        Text("本周 \(weekLabel(stats))")
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
-            Spacer()
-            Button("打卡") {
+            Spacer(minLength: 0)
+            Button {
                 workspace.checkIn(item.habit)
+            } label: {
+                Image(systemName: isCompletedToday ? "checkmark" : "plus")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(isCompletedToday ? identity : Color.primary)
+                    .frame(width: 36, height: 36)
+                    .background {
+                        Circle()
+                            .fill(isCompletedToday ? identity.opacity(0.14) : Color.primary.opacity(0.05))
+                        Circle()
+                            .strokeBorder(isCompletedToday ? identity.opacity(0.4) : Color.secondary.opacity(0.35), lineWidth: 1)
+                    }
             }
+            .buttonStyle(.plain)
             .appActionFocusEffectDisabled()
-            if item.habit.metric != .binary {
-                Button("达标") {
-                    workspace.checkIn(item.habit, fillToTarget: true)
+            .accessibilityLabel("打卡")
+            .animation(ZhixingMotion.fast(reduceMotion: reduceMotion), value: isCompletedToday)
+
+            Menu {
+                if item.habit.metric != .binary {
+                    Button("达标") {
+                        workspace.checkIn(item.habit, fillToTarget: true)
+                    }
                 }
+                Button("补打") { showingBackfill = true }
+                Button("撤销") { workspace.undoCheckIn(item) }
+                    .disabled(item.checkIn == nil)
+                Button("跳过") { workspace.skipHabit(item.habit) }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
+            }
+            .menuStyle(.borderlessButton)
+            .appActionFocusEffectDisabled()
+            .accessibilityLabel("更多打卡操作")
+        }
+        .padding(.vertical, ZhixingMetrics.space4)
+        .popover(isPresented: $showingBackfill) {
+            VStack(alignment: .leading, spacing: ZhixingMetrics.space12) {
+                Text("补打日期").font(.headline)
+                DatePicker("日期", selection: $backfillDate, displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .labelsHidden()
+                Button("确认补打") {
+                    workspace.checkIn(item.habit, at: backfillDate)
+                    showingBackfill = false
+                }
+                .buttonStyle(.borderedProminent)
                 .appActionFocusEffectDisabled()
             }
-            Button("补打") {
-                showingBackfill = true
-            }
-            .popover(isPresented: $showingBackfill) {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("补打日期").font(.headline)
-                    DatePicker("日期", selection: $backfillDate, displayedComponents: .date)
-                        .datePickerStyle(.graphical)
-                        .labelsHidden()
-                    Button("确认补打") {
-                        workspace.checkIn(item.habit, at: backfillDate)
-                        showingBackfill = false
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .appActionFocusEffectDisabled()
-                }
-                .padding()
-                .frame(width: 280)
-            }
-            .appActionFocusEffectDisabled()
-            Button("撤销") {
-                workspace.undoCheckIn(item)
-            }
-            .disabled(item.checkIn == nil)
-            .appActionFocusEffectDisabled()
-            Button("跳过") {
-                workspace.skipHabit(item.habit)
-            }
-            .appActionFocusEffectDisabled()
+            .padding()
+            .frame(width: 280)
         }
-        .padding(.vertical, 4)
+        .contextMenu {
+            Button("打卡") { workspace.checkIn(item.habit) }
+            if item.habit.metric != .binary {
+                Button("达标") { workspace.checkIn(item.habit, fillToTarget: true) }
+            }
+            Button("补打") { showingBackfill = true }
+            Button("撤销") { workspace.undoCheckIn(item) }
+                .disabled(item.checkIn == nil)
+            Button("跳过") { workspace.skipHabit(item.habit) }
+        }
+    }
+
+    private func weekLabel(_ stats: HabitStats) -> String {
+        guard let rate = stats.weekCompletionRate else { return "—" }
+        return "\(Int((rate * 100).rounded()))%"
     }
 }
 
@@ -928,7 +1168,14 @@ struct AddTaskSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        ComposerSheetScaffold(
+            title: "新建任务",
+            canSubmit: canSubmit,
+            width: 520,
+            height: 640,
+            onCancel: { dismiss() },
+            onSubmit: submit
+        ) {
             Form {
                 TextField("标题", text: $title)
                 Picker("类型", selection: $kind) {
@@ -1009,21 +1256,9 @@ struct AddTaskSheet: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .formStyle(.grouped)
             .onSubmit(submit)
-            .navigationTitle("新建任务")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }
-                        .appActionFocusEffectDisabled()
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("保存", action: submit)
-                    .disabled(!canSubmit)
-                    .appActionFocusEffectDisabled()
-                }
-            }
         }
-        .composerSheetFrame(width: 520, height: 640)
     }
 
     private var canSubmit: Bool {
@@ -1158,7 +1393,14 @@ struct EditTaskSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        ComposerSheetScaffold(
+            title: "编辑任务",
+            canSubmit: canSubmit,
+            width: 520,
+            height: 560,
+            onCancel: { dismiss() },
+            onSubmit: submit
+        ) {
             Form {
                 TextField("标题", text: $title)
                 Picker("类型", selection: $kind) {
@@ -1213,21 +1455,9 @@ struct EditTaskSheet: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            .formStyle(.grouped)
             .onSubmit(submit)
-            .navigationTitle("编辑任务")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }
-                        .appActionFocusEffectDisabled()
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("保存", action: submit)
-                    .disabled(!canSubmit)
-                    .appActionFocusEffectDisabled()
-                }
-            }
         }
-        .composerSheetFrame(width: 520, height: 560)
     }
 
     private var canSubmit: Bool {
@@ -1285,13 +1515,21 @@ struct AttachExistingTaskSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
+        ComposerSheetScaffold(
+            title: "关联到「\(missionTitle)」",
+            canSubmit: false,
+            showsPrimary: false,
+            width: 420,
+            height: 480,
+            onCancel: { dismiss() },
+            onSubmit: {}
+        ) {
             Group {
                 if series.isEmpty {
-                    ContentUnavailableView(
-                        "没有可关联的任务",
+                    ZhixingEmptyState(
                         systemImage: "checklist",
-                        description: Text("任务清单里暂时没有未归属使命的任务。")
+                        title: "没有可关联的任务",
+                        description: "任务清单里暂时没有未归属使命的任务。"
                     )
                 } else {
                     List(series) { item in
@@ -1314,17 +1552,10 @@ struct AttachExistingTaskSheet: View {
                             }
                         }
                     }
-                }
-            }
-            .navigationTitle("关联到「\(missionTitle)」")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }
-                        .appActionFocusEffectDisabled()
+                    .listStyle(.plain)
                 }
             }
         }
-        .composerSheetFrame(width: 420, height: 480)
     }
 }
 
@@ -1347,7 +1578,14 @@ struct AddHabitSheet: View {
     @State private var sunday = false
 
     var body: some View {
-        NavigationStack {
+        ComposerSheetScaffold(
+            title: "新建习惯",
+            canSubmit: canSubmit,
+            width: 420,
+            height: 420,
+            onCancel: { dismiss() },
+            onSubmit: submit
+        ) {
             Form {
                 TextField("标题", text: $title)
                 Picker("类型", selection: $metric) {
@@ -1377,21 +1615,9 @@ struct AddHabitSheet: View {
                 Stepper("允许补打 \(allowBackfill) 天", value: $allowBackfill, in: 0...30)
                 Toggle("投影到提醒事项", isOn: $projectReminders)
             }
+            .formStyle(.grouped)
             .onSubmit(submit)
-            .navigationTitle("新建习惯")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }
-                        .appActionFocusEffectDisabled()
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("保存", action: submit)
-                    .disabled(!canSubmit)
-                    .appActionFocusEffectDisabled()
-                }
-            }
         }
-        .composerSheetFrame(width: 420, height: 420)
     }
 
     private var canSubmit: Bool {
@@ -1427,43 +1653,6 @@ struct AddHabitSheet: View {
             )
         )
         dismiss()
-    }
-}
-
-private extension View {
-    @ViewBuilder
-    func composerSheetFrame(width: CGFloat, height: CGFloat) -> some View {
-        #if os(macOS)
-        frame(width: width, height: height)
-        #else
-        self
-        #endif
-    }
-}
-
-private struct MissionTagLabel: View {
-    let title: String
-    var icon: String = MissionSymbolCatalog.defaultSystemName
-    var colorHex: String?
-
-    private var tint: Color {
-        colorHex.map(Color.missionIdentity) ?? Color.accentColor
-    }
-
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: MissionSymbolCatalog.resolved(icon))
-                .imageScale(.small)
-            Text(title)
-        }
-        .font(.caption2.weight(.semibold))
-        .padding(.horizontal, 6)
-        .padding(.vertical, 1)
-        .foregroundStyle(tint)
-        .background(tint.opacity(0.14), in: Capsule())
-        .lineLimit(1)
-        .accessibilityIdentifier("task-mission-tag")
-        .accessibilityLabel("使命 \(title)")
     }
 }
 

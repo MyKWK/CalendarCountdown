@@ -210,7 +210,7 @@ private struct ShortcutRow: View {
                 .font(.body.monospaced().weight(.medium))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSmall, style: .continuous))
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title)，\(scope)，\(shortcut)")
@@ -284,7 +284,7 @@ private struct AppearanceSettingsPane: View {
             Section(AppLocalization.text("appearance.design_language", defaultValue: "设计语言")) {
                 HStack(spacing: 12) {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 10)
+                        RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSmall, style: .continuous)
                             .fill(Color.primary.opacity(0.08))
                             .frame(width: 48, height: 48)
                         Circle()

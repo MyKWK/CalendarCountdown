@@ -90,19 +90,13 @@ struct AddEventView: View {
             .onSubmit(submit)
 
             Divider()
-            HStack {
-                Button("取消", role: .cancel) { dismiss() }
-                    .appActionFocusEffectDisabled()
-                Spacer()
-                if isSaving {
-                    ProgressView().controlSize(.small)
-                }
-                Button("同步到 Apple 日历") { submit() }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!canSave)
-                    .appActionFocusEffectDisabled()
-            }
-            .padding()
+            SheetActionBar(
+                primaryTitle: "同步到 Apple 日历",
+                canSubmit: canSave,
+                isBusy: isSaving,
+                onCancel: { dismiss() },
+                onSubmit: submit
+            )
         }
         .frame(width: 560, height: 680)
         .onAppear { selectSuggestedCalendar(for: entryKind, force: false) }

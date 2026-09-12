@@ -31,7 +31,12 @@ struct PhoneTabRoot: View {
     var body: some View {
         TabView(selection: $session.section) {
             NavigationStack(path: $countdownPath) {
-                CountdownModuleView(model: session.model, searchText: "", selectedCalendarID: nil)
+                CountdownModuleView(
+                    model: session.model,
+                    searchText: "",
+                    selectedCalendarID: nil,
+                    onCreate: { session.showingAddEvent = true }
+                )
                     .modifier(MobileModuleToolbar(session: session))
             }
             .tabItem {
@@ -61,7 +66,11 @@ struct PhoneTabRoot: View {
             .accessibilityIdentifier(AppSection.missions.accessibilityIdentifier)
 
             NavigationStack(path: $habitsPath) {
-                HabitListView(workspace: session.workspace, searchText: "")
+                HabitListView(
+                    workspace: session.workspace,
+                    searchText: "",
+                    onCreate: { session.showingAddHabit = true }
+                )
                     .modifier(MobileModuleToolbar(session: session))
             }
             .tabItem {
@@ -89,7 +98,8 @@ struct PhoneTabRoot: View {
             TaskListView(
                 title: AppSection.tasks.title,
                 views: taskViews,
-                workspace: session.workspace
+                workspace: session.workspace,
+                onCreate: { session.showingAddTask = true }
             )
         }
     }
@@ -122,7 +132,7 @@ struct PadSplitRoot: View {
                         }
                         .foregroundStyle(.primary)
                         .listRowBackground(
-                            session.section == section ? Color.accentColor.opacity(0.12) : Color.clear
+                            SidebarSelectionBackground(isSelected: session.section == section)
                         )
                         .accessibilityAddTraits(session.section == section ? .isSelected : [])
                         .accessibilityIdentifier(section.accessibilityIdentifier)
@@ -162,7 +172,12 @@ struct PadSplitRoot: View {
     private var contentColumn: some View {
         switch session.section {
         case .countdown:
-            CountdownModuleView(model: session.model, searchText: "", selectedCalendarID: nil)
+            CountdownModuleView(
+                model: session.model,
+                searchText: "",
+                selectedCalendarID: nil,
+                onCreate: { session.showingAddEvent = true }
+            )
         case .tasks:
             VStack(spacing: 0) {
                 Picker("任务筛选", selection: $taskFilter) {
@@ -175,13 +190,18 @@ struct PadSplitRoot: View {
                 TaskListView(
                     title: AppSection.tasks.title,
                     views: padTaskViews,
-                    workspace: session.workspace
+                    workspace: session.workspace,
+                    onCreate: { session.showingAddTask = true }
                 )
             }
         case .missions:
             MissionListView(workspace: session.workspace, searchText: "")
         case .habits:
-            HabitListView(workspace: session.workspace, searchText: "")
+            HabitListView(
+                workspace: session.workspace,
+                searchText: "",
+                onCreate: { session.showingAddHabit = true }
+            )
         }
     }
 

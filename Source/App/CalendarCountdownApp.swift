@@ -414,9 +414,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let store = workspace.workspace else { return }
         guard CloudKitSyncEngine.hasRequiredContainerEntitlement else {
             try? store.cloud.setMode(.localOnly)
-            workspace.reload()
+            workspace.markCloudSyncFinished(
+                error: "当前安装包没有 iCloud 容器权限，无法开启同步。你的本机数据没有变化；请使用带正式 iCloud 签名的安装包。"
+            )
             workspace.statusMessage = nil
-            workspace.errorMessage = "当前安装包没有 iCloud 容器权限，无法开启同步。你的本机数据没有变化；请使用带正式 iCloud 签名的安装包。"
             DiagnosticLogger.shared.log(
                 .warning,
                 category: .sync,
@@ -453,9 +454,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 broker?.attachCloudEngine(engine)
                 cloudEngine = engine
             }
+            workspace.isCloudSyncing = true
             Task {
                 do {
                     _ = try await self.cloudEngine?.syncNow()
+                    self.workspace.markCloudSyncFinished(error: nil)
                 } catch {
                     DiagnosticLogger.shared.log(
                         .error,
@@ -463,11 +466,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         event: "sync.background.failed",
                         metadata: DiagnosticLogger.errorMetadata(error)
                     )
+                    self.workspace.markCloudSyncFinished(error: error.localizedDescription)
                 }
             }
         } catch {
             try? store.cloud.setMode(.localOnly)
-            workspace.reload()
             workspace.statusMessage = nil
             DiagnosticLogger.shared.log(
                 .error,
@@ -475,7 +478,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 event: "sync.enable.failed",
                 metadata: DiagnosticLogger.errorMetadata(error)
             )
-            workspace.errorMessage = error.localizedDescription
+            workspace.markCloudSyncFinished(error: error.localizedDescription)
         }
     }
 

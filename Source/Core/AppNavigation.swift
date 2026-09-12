@@ -33,6 +33,76 @@ public enum AppSection: String, CaseIterable, Hashable, Identifiable, Sendable {
     public var accessibilityIdentifier: String {
         "tab-\(rawValue)"
     }
+
+    public var subtitle: String {
+        switch self {
+        case .countdown:
+            AppLocalization.text("nav.countdown.subtitle", defaultValue: "关注最近要到来的日子")
+        case .tasks:
+            AppLocalization.text("nav.tasks.subtitle", defaultValue: "完成当下最重要的事")
+        case .missions:
+            AppLocalization.text("nav.missions.subtitle", defaultValue: "推进有边界的长期结果")
+        case .habits:
+            AppLocalization.text("nav.habits.subtitle", defaultValue: "用连续性保持节奏")
+        }
+    }
+
+    public var createActionTitle: String {
+        switch self {
+        case .countdown:
+            AppLocalization.text("action.create_countdown", defaultValue: "新建倒数")
+        case .tasks:
+            AppLocalization.text("action.create_task", defaultValue: "新建任务")
+        case .missions:
+            AppLocalization.text("action.create_mission", defaultValue: "新建使命")
+        case .habits:
+            AppLocalization.text("action.create_habit", defaultValue: "新建打卡")
+        }
+    }
+
+    public var createHelp: String {
+        switch self {
+        case .countdown:
+            AppLocalization.text("help.create_countdown", defaultValue: "新建倒数日（⇧⌘D）")
+        case .tasks:
+            AppLocalization.text("help.create_task", defaultValue: "新建任务（⇧⌘N）")
+        case .missions:
+            AppLocalization.text("help.create_mission", defaultValue: "新建使命（⇧⌘M）")
+        case .habits:
+            AppLocalization.text("help.create_habit", defaultValue: "新建打卡（⇧⌘H）")
+        }
+    }
+
+    public var emptySymbol: String {
+        switch self {
+        case .countdown: "calendar"
+        case .tasks: "checkmark.circle"
+        case .missions: "flag"
+        case .habits: "flame"
+        }
+    }
+
+    public var emptyDescription: String {
+        switch self {
+        case .countdown:
+            AppLocalization.text(
+                "empty.select_event_description",
+                defaultValue: "从任意 Apple 日历中选择具体事件加入倒数。"
+            )
+        case .tasks:
+            AppLocalization.text("empty.tasks_description", defaultValue: "没有符合条件的任务。")
+        case .missions:
+            AppLocalization.text(
+                "empty.missions_description",
+                defaultValue: "创建一个有边界、最终可以完成的长期结果。"
+            )
+        case .habits:
+            AppLocalization.text(
+                "empty.habits_description",
+                defaultValue: "习惯关注一致性，而不是最终做完。"
+            )
+        }
+    }
 }
 
 public enum AppRoute: Hashable, Sendable {
