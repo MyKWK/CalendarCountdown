@@ -79,6 +79,61 @@ final class AppDatabaseAndServiceTests: XCTestCase {
         XCTAssertEqual(latest.donePoints, 4)
     }
 
+    func testMissionActivityShowsMissionAndLinkedTaskLifecycleInTimeOrder() throws {
+        let workspace = try Workspace(db: AppDatabase.openTemporary())
+        let start = Date(timeIntervalSince1970: 1_788_912_000)
+        let mission = try workspace.missions.create(
+            CreateMissionCommand(title: "完成作品集"),
+            options: WriteOptions(now: start)
+        ).mission
+        let task = try workspace.tasks.create(
+            CreateTaskCommand(
+                title: "整理案例",
+                missionID: mission.id,
+                schedule: TaskSchedule(timeZoneIdentifier: "Asia/Shanghai")
+            ),
+            options: WriteOptions(now: start.addingTimeInterval(60))
+        )
+        _ = try workspace.tasks.complete(
+            occurrenceID: try XCTUnwrap(task.occurrences.first?.id),
+            options: WriteOptions(now: start.addingTimeInterval(120))
+        )
+
+        let entries = try workspace.missions.activity(id: mission.id)
+
+        XCTAssertEqual(entries.map(\.command), ["tasks.complete", "tasks.create", "missions.create"])
+        XCTAssertEqual(entries.map(\.occurredAt), [
+            start.addingTimeInterval(120),
+            start.addingTimeInterval(60),
+            start
+        ])
+        XCTAssertEqual(entries.first?.summary, "完成任务：整理案例")
+        XCTAssertEqual(entries.last?.summary, "新建使命：完成作品集")
+    }
+
+    func testMissionWithMostRecentLinkedTaskActivitySortsFirst() throws {
+        let workspace = try Workspace(db: AppDatabase.openTemporary())
+        let start = Date(timeIntervalSince1970: 1_788_912_000)
+        let first = try workspace.missions.create(
+            CreateMissionCommand(title: "先创建的使命"),
+            options: WriteOptions(now: start)
+        ).mission
+        _ = try workspace.missions.create(
+            CreateMissionCommand(title: "后创建的使命"),
+            options: WriteOptions(now: start.addingTimeInterval(60))
+        )
+        _ = try workspace.tasks.create(
+            CreateTaskCommand(
+                title: "刚处理的任务",
+                missionID: first.id,
+                schedule: TaskSchedule(timeZoneIdentifier: "Asia/Shanghai")
+            ),
+            options: WriteOptions(now: start.addingTimeInterval(120))
+        )
+
+        XCTAssertEqual(try workspace.missions.list().first?.mission.id, first.id)
+    }
+
     func testRevisionConflictAndIdempotency() throws {
         let workspace = try Workspace(db: AppDatabase.openTemporary())
         let key = "idem-create-1"
@@ -259,6 +314,206 @@ final class AppDatabaseAndServiceTests: XCTestCase {
         )
         XCTAssertEqual(created.occurrences.count, 6)
         XCTAssertEqual(created.occurrences.filter { $0.status == .open }.count, 6)
+    }
+
+    func testMissionDeleteRemovesFromList() throws {
+        let workspace = try Workspace(db: AppDatabase.openTemporary())
+        let created = try workspace.missions.create(CreateMissionCommand(title: "可删除使命"))
+        XCTAssertEqual(try workspace.missions.list().count, 1)
+
+        _ = try workspace.missions.delete(id: created.mission.id, permanent: false, confirmID: nil)
+
+        XCTAssertEqual(try workspace.missions.list().count, 0)
+        XCTAssertThrowsError(try workspace.missions.get(id: created.mission.id)) { error in
+            XCTAssertEqual((error as? DomainError)?.code, .missionNotFound)
+        }
+
+        let archived = try workspace.missions.create(CreateMissionCommand(title: "可归档使命"))
+        _ = try workspace.missions.archive(id: archived.mission.id)
+        let listed = try workspace.missions.list()
+        XCTAssertEqual(listed.count, 1)
+        XCTAssertEqual(listed[0].mission.status, .archived)
+        XCTAssertNil(listed[0].mission.deletedAt)
+    }
+
+    func testMissionAddAndRemoveTaskUpdatesProgress() throws {
+        let workspace = try Workspace(db: AppDatabase.openTemporary())
+        let mission = try workspace.missions.create(CreateMissionCommand(title: "可规划使命")).mission
+        XCTAssertTrue(try workspace.missions.get(id: mission.id).progress.isUnplanned)
+
+        let created = try workspace.tasks.create(
+            CreateTaskCommand(
+                title: "独立任务",
+                schedule: TaskSchedule(
+                    timeZoneIdentifier: "Asia/Shanghai",
+                    plannedDue: Date(timeIntervalSince1970: 1_788_912_000)
+                )
+            )
+        )
+        XCTAssertNil(created.series.missionID)
+        XCTAssertTrue(try workspace.missions.get(id: mission.id).progress.isUnplanned)
+
+        _ = try workspace.missions.addTask(missionID: mission.id, seriesID: created.series.id)
+        let attached = try workspace.missions.get(id: mission.id)
+        XCTAssertEqual(attached.progress.totalPoints, 1)
+        XCTAssertEqual(attached.progress.donePoints, 0)
+        XCTAssertEqual(try workspace.tasks.get(seriesID: created.series.id).series.missionID, mission.id)
+
+        let bound = try workspace.tasks.create(
+            CreateTaskCommand(
+                title: "直接归属使命",
+                missionID: mission.id,
+                schedule: TaskSchedule(
+                    timeZoneIdentifier: "Asia/Shanghai",
+                    plannedDue: Date(timeIntervalSince1970: 1_788_998_400)
+                )
+            )
+        )
+        XCTAssertEqual(bound.series.missionID, mission.id)
+        let twoTasks = try workspace.missions.get(id: mission.id)
+        XCTAssertEqual(twoTasks.progress.totalPoints, 2)
+
+        _ = try workspace.missions.removeTask(missionID: mission.id, seriesID: created.series.id)
+        let remaining = try workspace.missions.get(id: mission.id)
+        XCTAssertEqual(remaining.progress.totalPoints, 1)
+        XCTAssertNil(try workspace.tasks.get(seriesID: created.series.id).series.missionID)
+    }
+
+    func testMissionTaskCanBeCreatedWithoutDueDate() throws {
+        let workspace = try Workspace(db: AppDatabase.openTemporary())
+        let mission = try workspace.missions.create(CreateMissionCommand(title: "管道检测")).mission
+        let created = try workspace.tasks.create(
+            CreateTaskCommand(
+                title: "优先解决外壁数字孪生问题",
+                markdownDescription: "1. 调研现有数字孪生问题\n2. 下一步",
+                missionID: mission.id,
+                schedule: TaskSchedule(timeZoneIdentifier: "Asia/Shanghai")
+            )
+        )
+
+        XCTAssertTrue(created.series.schedule.isUndated)
+        XCTAssertNil(created.occurrences.first?.plannedDue)
+        XCTAssertEqual(created.series.missionID, mission.id)
+        XCTAssertEqual(
+            try workspace.tasks.list(TaskListFilter(limit: 10)).first?.series.missionID,
+            mission.id
+        )
+    }
+
+    func testMissionLinkedTaskPatchUpdatesTitleAndWorkload() throws {
+        let workspace = try Workspace(db: AppDatabase.openTemporary())
+        let mission = try workspace.missions.create(CreateMissionCommand(title: "可编辑规划")).mission
+        let created = try workspace.tasks.create(
+            CreateTaskCommand(
+                title: "原稿任务",
+                missionID: mission.id,
+                workload: .one,
+                schedule: TaskSchedule(
+                    timeZoneIdentifier: "Asia/Shanghai",
+                    plannedDue: Date(timeIntervalSince1970: 1_788_912_000)
+                )
+            )
+        )
+        let occurrenceID = try XCTUnwrap(created.occurrences.first?.id)
+        let patched = try workspace.tasks.patch(
+            occurrenceID: occurrenceID,
+            command: PatchTaskCommand(
+                title: "改过的任务",
+                workload: .five,
+                scope: .series
+            )
+        )
+        XCTAssertEqual(patched.series.title, "改过的任务")
+        XCTAssertEqual(patched.series.workload, .five)
+        XCTAssertEqual(patched.series.missionID, mission.id)
+        XCTAssertEqual(try workspace.missions.get(id: mission.id).progress.totalPoints, 5)
+    }
+
+    func testMissionPatchUpdatesTitleDescriptionAndTargetDate() throws {
+        let workspace = try Workspace(db: AppDatabase.openTemporary())
+        let created = try workspace.missions.create(
+            CreateMissionCommand(
+                title: "原稿标题",
+                markdownDescription: "旧说明",
+                targetDate: LocalDate(year: 2026, month: 12, day: 31)
+            )
+        )
+
+        let patched = try workspace.missions.patch(
+            id: created.mission.id,
+            command: PatchMissionCommand(
+                title: "新标题",
+                markdownDescription: "新说明",
+                targetDate: LocalDate(year: 2027, month: 1, day: 15)
+            )
+        )
+        XCTAssertEqual(patched.mission.title, "新标题")
+        XCTAssertEqual(patched.mission.markdownDescription, "新说明")
+        XCTAssertEqual(patched.mission.targetDate, LocalDate(year: 2027, month: 1, day: 15))
+
+        let cleared = try workspace.missions.patch(
+            id: created.mission.id,
+            command: PatchMissionCommand(clearTargetDate: true)
+        )
+        XCTAssertNil(cleared.mission.targetDate)
+        XCTAssertEqual(try workspace.missions.get(id: created.mission.id).mission.title, "新标题")
+    }
+
+    func testMissionCreateAndPatchPersistIcon() throws {
+        let workspace = try Workspace(db: AppDatabase.openTemporary())
+        let created = try workspace.missions.create(
+            CreateMissionCommand(title: "管道检测", icon: "wrench.fill")
+        )
+        XCTAssertEqual(created.mission.icon, "wrench.fill")
+
+        let patched = try workspace.missions.patch(
+            id: created.mission.id,
+            command: PatchMissionCommand(icon: "hammer.fill")
+        )
+        XCTAssertEqual(patched.mission.icon, "hammer.fill")
+        XCTAssertEqual(try workspace.missions.get(id: created.mission.id).mission.icon, "hammer.fill")
+    }
+
+    func testMissionCreateAndPatchPersistPaletteColor() throws {
+        let workspace = try Workspace(db: AppDatabase.openTemporary())
+        let created = try workspace.missions.create(
+            CreateMissionCommand(title: "品牌改造", color: MissionColor.purple.rawValue)
+        )
+        XCTAssertEqual(created.mission.color, "purple")
+
+        let patched = try workspace.missions.patch(
+            id: created.mission.id,
+            command: PatchMissionCommand(color: "#34C759")
+        )
+        XCTAssertEqual(patched.mission.color, "green")
+        XCTAssertEqual(try workspace.missions.get(id: created.mission.id).mission.color, "green")
+
+        let snapshot = try workspace.widgetSnapshotV2()
+        XCTAssertEqual(snapshot.missions.first?.color, "green")
+    }
+
+    func testDeletingSelectedMissionFallsBackForUIAndWidgetSnapshot() throws {
+        let workspace = try Workspace(db: AppDatabase.openTemporary())
+        let selected = try workspace.missions.create(
+            CreateMissionCommand(title: "先选中", color: MissionColor.purple.rawValue)
+        )
+        let kept = try workspace.missions.create(
+            CreateMissionCommand(title: "保留", color: MissionColor.teal.rawValue)
+        )
+        let selectedID = selected.mission.id
+        _ = try workspace.missions.delete(id: selectedID, permanent: false, confirmID: nil)
+
+        let remaining = try workspace.missions.list().map(\.mission)
+        XCTAssertNil(MissionSelection.resolvedID(selectedID, among: remaining))
+        XCTAssertEqual(MissionSelection.featured(among: remaining)?.id, kept.mission.id)
+        XCTAssertEqual(
+            MissionSelection.resolvedRoute(.mission(selectedID), among: remaining),
+            .section(.missions)
+        )
+
+        let snapshot = try workspace.widgetSnapshotV2()
+        XCTAssertEqual(snapshot.missions.map(\.id), [kept.mission.id])
+        XCTAssertEqual(snapshot.missions.first?.color, "teal")
     }
 
     func testPermanentDeleteExportsTombstoneAndAckDoesNotDropIt() throws {

@@ -54,11 +54,38 @@ public struct WidgetMissionItem: Codable, Equatable, Identifiable, Sendable {
     public var id: UUID
     public var title: String
     public var progress: Double?
+    public var icon: String
+    public var color: String
 
-    public init(id: UUID, title: String, progress: Double?) {
+    public init(
+        id: UUID,
+        title: String,
+        progress: Double?,
+        icon: String = MissionSymbolCatalog.defaultSystemName,
+        color: String = MissionColor.defaultValue.rawValue
+    ) {
         self.id = id
         self.title = title
         self.progress = progress
+        self.icon = icon
+        self.color = MissionColor.canonicalStorageValue(color)
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, progress, icon, color
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        progress = try container.decodeIfPresent(Double.self, forKey: .progress)
+        icon = try container.decodeIfPresent(String.self, forKey: .icon)
+            ?? MissionSymbolCatalog.defaultSystemName
+        color = MissionColor.canonicalStorageValue(
+            try container.decodeIfPresent(String.self, forKey: .color)
+                ?? MissionColor.defaultValue.rawValue
+        )
     }
 }
 

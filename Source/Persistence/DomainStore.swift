@@ -161,6 +161,43 @@ enum DomainWriter {
         try row.insert(db)
     }
 
+    static func missionActivity(_ db: Database, missionID: UUID) throws -> [MissionActivityEntry] {
+        let missionIDString = SQLValue.uuid(missionID)
+        let seriesIDs = Set(
+            try TaskSeriesRow
+                .filter(Column("mission_id") == missionIDString)
+                .fetchAll(db)
+                .map(\.id)
+        )
+        let occurrenceIDs = Set(
+            try TaskOccurrenceRow.fetchAll(db)
+                .filter { seriesIDs.contains($0.seriesId) }
+                .map(\.id)
+        )
+
+        return try OperationJournalRow
+            .order(Column("created_at").desc)
+            .fetchAll(db)
+            .compactMap { row in
+                let belongsToMission =
+                    (row.objectType == "mission" && row.objectId == missionIDString)
+                    || (row.objectType == "task_series" && seriesIDs.contains(row.objectId))
+                    || (row.objectType == "task_occurrence" && occurrenceIDs.contains(row.objectId))
+                guard belongsToMission,
+                      let objectID = UUID(uuidString: row.objectId),
+                      let occurredAt = try? SQLValue.requiredDate(row.createdAt) else {
+                    return nil
+                }
+                return MissionActivityEntry(
+                    command: row.command,
+                    objectType: row.objectType,
+                    objectID: objectID,
+                    summary: row.effectSummary,
+                    occurredAt: occurredAt
+                )
+            }
+    }
+
     static func pendingProjection(
         _ db: Database,
         options: WriteOptions,

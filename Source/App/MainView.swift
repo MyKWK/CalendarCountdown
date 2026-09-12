@@ -128,12 +128,7 @@ struct MainView: View {
         } description: {
             Text("日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。")
         } actions: {
-            Button("授权日历访问") {
-                Task { await model.requestAccess() }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(model.isLoading)
-            .appActionFocusEffectDisabled()
+            CalendarAccessActions(model: model)
         }
     }
 
@@ -183,31 +178,48 @@ struct MainView: View {
         }
     }
 
+    private var countdownEmptyTitle: String {
+        if selectedCalendarID == "__countdown__", !model.selections.isEmpty {
+            return AppLocalization.text(
+                "empty.countdown_unresolved",
+                defaultValue: "已保存的倒数选择尚未匹配到日历事件"
+            )
+        }
+        if selectedCalendarID == "__countdown__" {
+            return AppLocalization.text(
+                "empty.no_countdown_events",
+                defaultValue: "尚未选择倒数事件"
+            )
+        }
+        return AppLocalization.text("empty.no_future_events", defaultValue: "没有未来事件")
+    }
+
+    private var countdownEmptyDescription: String {
+        if selectedCalendarID == "__countdown__", !model.selections.isEmpty {
+            return AppLocalization.text(
+                "empty.countdown_unresolved_description",
+                defaultValue: "选择仍保留在本机，不会被清空。授权恢复或刷新后会按稳定标识重新匹配年度和重复事件。"
+            )
+        }
+        if selectedCalendarID == "__countdown__" {
+            return AppLocalization.text(
+                "empty.select_event_description",
+                defaultValue: "从任意 Apple 日历中选择具体事件加入倒数。"
+            )
+        }
+        return AppLocalization.text(
+            "empty.future_events_description",
+            defaultValue: "尝试扩大时间范围或检查该日历是否包含未来事件。"
+        )
+    }
+
     private var eventList: some View {
         Group {
             if displayedEvents.isEmpty {
                 ContentUnavailableView(
-                    selectedCalendarID == "__countdown__"
-                        ? AppLocalization.text(
-                            "empty.no_countdown_events",
-                            defaultValue: "尚未选择倒数事件"
-                        )
-                        : AppLocalization.text(
-                            "empty.no_future_events",
-                            defaultValue: "没有未来事件"
-                        ),
+                    countdownEmptyTitle,
                     systemImage: "calendar",
-                    description: Text(
-                        selectedCalendarID == "__countdown__"
-                            ? AppLocalization.text(
-                                "empty.select_event_description",
-                                defaultValue: "从任意 Apple 日历中选择具体事件加入倒数。"
-                            )
-                            : AppLocalization.text(
-                                "empty.future_events_description",
-                                defaultValue: "尝试扩大时间范围或检查该日历是否包含未来事件。"
-                            )
-                    )
+                    description: Text(countdownEmptyDescription)
                 )
             } else {
                 List(displayedEvents) { event in
@@ -221,6 +233,7 @@ struct MainView: View {
                         onUnselect: { Task { await model.unselect(event) } }
                     )
                 }
+                .appGlassScrollBackground()
             }
         }
         .navigationTitle(selectedTitle)
@@ -393,30 +406,13 @@ struct CountdownModuleView: View {
                 } description: {
                     Text("日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。")
                 } actions: {
-                    Button("授权日历访问") {
-                        Task { await model.requestAccess() }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(model.isLoading)
-                    .appActionFocusEffectDisabled()
+                    CalendarAccessActions(model: model)
                 }
             } else if displayedEvents.isEmpty {
                 ContentUnavailableView(
-                    selectedCalendarID == nil
-                        ? AppLocalization.text("empty.no_countdown_events", defaultValue: "尚未选择倒数事件")
-                        : AppLocalization.text("empty.no_future_events", defaultValue: "没有未来事件"),
+                    countdownEmptyTitle,
                     systemImage: "calendar",
-                    description: Text(
-                        selectedCalendarID == nil
-                            ? AppLocalization.text(
-                                "empty.select_event_description",
-                                defaultValue: "从任意 Apple 日历中选择具体事件加入倒数。"
-                            )
-                            : AppLocalization.text(
-                                "empty.future_events_description",
-                                defaultValue: "尝试扩大时间范围或检查该日历是否包含未来事件。"
-                            )
-                    )
+                    description: Text(countdownEmptyDescription)
                 )
             } else {
                 List(displayedEvents) { event in
@@ -430,9 +426,45 @@ struct CountdownModuleView: View {
                         onUnselect: { Task { await model.unselect(event) } }
                     )
                 }
+                .appGlassScrollBackground()
             }
         }
         .navigationTitle(selectedTitle)
+    }
+
+    private var countdownEmptyTitle: String {
+        if selectedCalendarID == nil, !model.selections.isEmpty {
+            return AppLocalization.text(
+                "empty.countdown_unresolved",
+                defaultValue: "已保存的倒数选择尚未匹配到日历事件"
+            )
+        }
+        if selectedCalendarID == nil {
+            return AppLocalization.text(
+                "empty.no_countdown_events",
+                defaultValue: "尚未选择倒数事件"
+            )
+        }
+        return AppLocalization.text("empty.no_future_events", defaultValue: "没有未来事件")
+    }
+
+    private var countdownEmptyDescription: String {
+        if selectedCalendarID == nil, !model.selections.isEmpty {
+            return AppLocalization.text(
+                "empty.countdown_unresolved_description",
+                defaultValue: "选择仍保留在本机，不会被清空。授权恢复或刷新后会按稳定标识重新匹配年度和重复事件。"
+            )
+        }
+        if selectedCalendarID == nil {
+            return AppLocalization.text(
+                "empty.select_event_description",
+                defaultValue: "从任意 Apple 日历中选择具体事件加入倒数。"
+            )
+        }
+        return AppLocalization.text(
+            "empty.future_events_description",
+            defaultValue: "尝试扩大时间范围或检查该日历是否包含未来事件。"
+        )
     }
 
     private var displayedEvents: [CountdownEvent] {

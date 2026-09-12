@@ -43,7 +43,11 @@ struct MenuBarContentView: View {
 
             Text("置顶与最近倒数").font(.headline)
 
-            if model.selectedEvents.isEmpty {
+            if model.accessState != .fullAccess {
+                CalendarAccessActions(model: model)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 4)
+            } else if model.selectedEvents.isEmpty {
                 Text("尚未选择倒数事件")
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 8)
@@ -66,6 +70,30 @@ struct MenuBarContentView: View {
                 }
             }
 
+            if !workspace.missions.isEmpty {
+                Divider()
+                Text(AppLocalization.text("menubar.missions", defaultValue: "使命")).font(.headline)
+                ForEach(workspace.missions.prefix(3), id: \.mission.id) { item in
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(Color.missionIdentity(item.mission.color))
+                            .frame(width: 10, height: 10)
+                            .accessibilityLabel(MissionColor.resolve(item.mission.color).title)
+                        Image(systemName: MissionSymbolCatalog.resolved(item.mission.icon))
+                            .foregroundStyle(Color.missionIdentity(item.mission.color))
+                            .accessibilityHidden(true)
+                        Text(item.mission.title).lineLimit(1)
+                        Spacer()
+                        if let percent = item.progress.displayPercent {
+                            Text(String(format: "%.0f%%", percent))
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .accessibilityIdentifier("menubar-mission-\(item.mission.id.uuidString)")
+                }
+            }
+
             Divider()
             HStack {
                 Button("打开日历倒数", action: openMainWindow)
@@ -80,6 +108,9 @@ struct MenuBarContentView: View {
         .tint(appearanceSettings.accentColor)
         .preferredColorScheme(appearanceSettings.appearanceMode.colorScheme)
         .onAppear { workspace.reload() }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await model.recoverAuthorization() }
+        }
     }
 
     private var menuEvents: [CountdownEvent] {

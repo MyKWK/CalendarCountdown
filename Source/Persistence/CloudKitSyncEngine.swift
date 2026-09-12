@@ -9,6 +9,7 @@ public final class CloudKitSyncEngine: NSObject, CKSyncEngineDelegate, @unchecke
     public static let zone = CKRecordZone(zoneName: CloudKitSchema.zoneName)
 
     public static var hasRequiredContainerEntitlement: Bool {
+        #if os(macOS)
         guard let task = SecTaskCreateFromSelf(nil),
               let value = SecTaskCopyValueForEntitlement(
                   task,
@@ -18,6 +19,12 @@ public final class CloudKitSyncEngine: NSObject, CKSyncEngineDelegate, @unchecke
             return false
         }
         return value.contains(ProductConstants.cloudKitContainerIdentifier)
+        #else
+        // SecTask entitlement inspection isn't available in the iOS SDK.
+        // iOS validates the configured container through code signing and the
+        // CKContainer operation itself reports a missing entitlement.
+        return true
+        #endif
     }
 
     private static func entitledContainer() throws -> CKContainer {

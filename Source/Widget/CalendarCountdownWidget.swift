@@ -146,6 +146,23 @@ private enum WidgetColor {
             blue: Double(number & 0xFF) / 255
         )
     }
+
+    static func mission(_ value: String) -> Color {
+        switch MissionColor.resolve(value) {
+        case .blue: .blue
+        case .indigo: .indigo
+        case .purple: .purple
+        case .pink: .pink
+        case .red: .red
+        case .orange: .orange
+        case .yellow: .yellow
+        case .green: .green
+        case .mint: .mint
+        case .teal: .teal
+        case .cyan: .cyan
+        case .brown: .brown
+        }
+    }
 }
 
 struct CalendarCountdownWidget: Widget {
@@ -288,8 +305,18 @@ struct MissionsWidget: Widget {
                 } else {
                     ForEach(entry.snapshot.missions.prefix(3)) { mission in
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(mission.title).lineLimit(1)
+                            Label(mission.title, systemImage: MissionSymbolCatalog.resolved(mission.icon))
+                                .labelStyle(.titleAndIcon)
+                                .lineLimit(1)
+                                .foregroundStyle(WidgetColor.mission(mission.color))
                             ProgressView(value: mission.progress ?? 0)
+                                .tint(WidgetColor.mission(mission.color))
+                        }
+                        .padding(.leading, 7)
+                        .overlay(alignment: .leading) {
+                            Capsule()
+                                .fill(WidgetColor.mission(mission.color))
+                                .frame(width: 3)
                         }
                     }
                 }

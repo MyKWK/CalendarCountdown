@@ -1,9 +1,13 @@
 import Foundation
 
 public enum ProductConstants {
-    public static let version = "1.0.3"
+    public static let version = "1.0.9"
     public static let appGroupIdentifier = "group.app.calendarcountdown.CalendarCountdown"
     public static let legacyAppGroupIdentifier = "group.com.hashxjhuang.CalendarCountdown"
+    /// Historical macOS app IDs that still identify 知行 and must not bypass the single-instance guard.
+    public static let legacyMacAppBundleIdentifiers: Set<String> = [
+        "com.hashxjhuang.CalendarCountdown"
+    ]
     public static let widgetBundleIdentifier = "app.calendarcountdown.CalendarCountdown.Widget"
     public static let widgetKind = "CalendarCountdownWidget"
     public static let taskWidgetKind = "CalendarCountdownTasksWidget"

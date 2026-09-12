@@ -6,6 +6,7 @@ import SwiftUI
 @main
 struct CalendarCountdownMobileApp: App {
     @StateObject private var session = MobileAppSession()
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         DiagnosticLogger.shared.configure(component: "mobile")
@@ -17,6 +18,11 @@ struct CalendarCountdownMobileApp: App {
             MobileRootView(session: session)
                 .onAppear { session.bootstrap() }
                 .onOpenURL { session.open($0) }
+                .onChange(of: scenePhase) { _, phase in
+                    if phase == .active {
+                        session.refresh()
+                    }
+                }
         }
     }
 }

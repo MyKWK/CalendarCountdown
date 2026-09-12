@@ -23,6 +23,9 @@ final class PhoneNavigationUITests: XCTestCase {
         tabBar.buttons["任务清单"].tap()
         XCTAssertTrue(app.segmentedControls["task-inbox-filter"].waitForExistence(timeout: 5))
         tabBar.buttons["使命清单"].tap()
+        XCTAssertTrue(app.buttons["mobile-add"].waitForExistence(timeout: 5))
+        let emptyStateCreate = app.buttons["mission-create"].waitForExistence(timeout: 2)
+        XCTAssertTrue(emptyStateCreate || app.buttons["mission-add-task"].exists)
         tabBar.buttons["打卡"].tap()
         tabBar.buttons["倒数日"].tap()
     }

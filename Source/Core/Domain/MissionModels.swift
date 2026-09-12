@@ -8,6 +8,33 @@ public enum MissionStatus: String, Codable, CaseIterable, Sendable {
     case archived
 }
 
+/// A user-facing, local activity entry for reviewing the life of a mission.
+/// It intentionally stays separate from diagnostic logging and CloudKit data.
+public struct MissionActivityEntry: Equatable, Codable, Identifiable, Sendable {
+    public var id: UUID
+    public var command: String
+    public var objectType: String
+    public var objectID: UUID
+    public var summary: String?
+    public var occurredAt: Date
+
+    public init(
+        id: UUID = UUID(),
+        command: String,
+        objectType: String,
+        objectID: UUID,
+        summary: String? = nil,
+        occurredAt: Date
+    ) {
+        self.id = id
+        self.command = command
+        self.objectType = objectType
+        self.objectID = objectID
+        self.summary = summary
+        self.occurredAt = occurredAt
+    }
+}
+
 public struct MissionDefinition: Equatable, Codable, Identifiable, Sendable {
     public var id: UUID
     public var title: String
@@ -28,7 +55,7 @@ public struct MissionDefinition: Equatable, Codable, Identifiable, Sendable {
         id: UUID = UUID(),
         title: String,
         markdownDescription: String? = nil,
-        color: String = "#5B8DEF",
+        color: String = MissionColor.defaultValue.rawValue,
         icon: String = "flag.fill",
         status: MissionStatus = .active,
         targetDate: LocalDate? = nil,
@@ -60,8 +87,8 @@ public struct MissionDefinition: Equatable, Codable, Identifiable, Sendable {
         var copy = self
         copy.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         copy.markdownDescription = markdownDescription?.trimmingCharacters(in: .whitespacesAndNewlines)
-        copy.color = color.trimmingCharacters(in: .whitespacesAndNewlines)
-        copy.icon = icon.trimmingCharacters(in: .whitespacesAndNewlines)
+        copy.color = MissionColor.canonicalStorageValue(color)
+        copy.icon = MissionSymbolCatalog.resolved(icon)
         guard !copy.title.isEmpty else {
             throw DomainError.validation("使命标题不能为空。")
         }

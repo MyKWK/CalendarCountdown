@@ -7,6 +7,7 @@ struct RootView: View {
     @ObservedObject var model: AppModel
     @ObservedObject var workspace: WorkspaceModel
     let openSettings: () -> Void
+    @ObservedObject var shortcuts: AppShortcutCoordinator
     @State private var selection: AppSection? = .countdown
     @State private var searchText = ""
     @State private var showingAddEvent = false
@@ -29,8 +30,10 @@ struct RootView: View {
             }
             .navigationTitle("日历倒数")
             .navigationSplitViewColumnWidth(min: 220, ideal: 270)
+            .appGlassScrollBackground()
         } detail: {
             detail
+                .appGlassScrollBackground()
         }
         .toolbar {
             ToolbarItemGroup {
@@ -125,7 +128,7 @@ struct RootView: View {
             }
         }
         .sheet(isPresented: $showingAddMission) {
-            AddMissionSheet { command in
+            AddMissionSheet(initialColor: workspace.suggestedMissionColor.rawValue) { command in
                 workspace.createMission(command)
             }
         }
@@ -197,6 +200,9 @@ struct RootView: View {
             }
         }
         .onAppear { workspace.reload() }
+        .onReceive(shortcuts.$request.compactMap { $0 }) { request in
+            performShortcut(request.action)
+        }
     }
 
     @ViewBuilder
@@ -231,6 +237,27 @@ struct RootView: View {
         return views.filter {
             $0.title.localizedCaseInsensitiveContains(searchText)
                 || ($0.markdownDescription?.localizedCaseInsensitiveContains(searchText) ?? false)
+                || (workspace.missionTitle(for: $0.series.missionID)?
+                    .localizedCaseInsensitiveContains(searchText) ?? false)
+        }
+    }
+
+    private func performShortcut(_ action: AppShortcutAction) {
+        switch action {
+        case .addCountdown:
+            selection = .countdown
+            showingAddEvent = true
+        case .addTask:
+            selection = .tasks
+            showingAddTask = true
+        case .addMission:
+            selection = .missions
+            showingAddMission = true
+        case .addHabit:
+            selection = .habits
+            showingAddHabit = true
+        case let .selectSection(section):
+            selection = section
         }
     }
 

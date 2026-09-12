@@ -3,7 +3,368 @@ import XCTest
 
 final class CalendarCountdownCoreTests: XCTestCase {
     func testReleaseVersion() {
-        XCTAssertEqual(ProductConstants.version, "1.0.3")
+        XCTAssertEqual(ProductConstants.version, "1.0.9")
+    }
+
+    func testStatusBarOverviewMigratesLegacyUsersToCountdownOnly() {
+        XCTAssertEqual(
+            StatusBarOverviewState.migrated(
+                countdown: nil,
+                mission: nil,
+                tasks: nil,
+                selectedMissionID: nil
+            ),
+            .legacyCountdownOnly
+        )
+        let kept = UUID()
+        let migrated = StatusBarOverviewState.migrated(
+            countdown: nil,
+            mission: nil,
+            tasks: nil,
+            selectedMissionID: kept
+        )
+        XCTAssertEqual(migrated.enabledKinds, [.countdown])
+        XCTAssertEqual(migrated.selectedMissionID, kept)
+        XCTAssertFalse(migrated.showMissionProgress)
+        XCTAssertFalse(migrated.showTodayTasks)
+    }
+
+    func testStatusBarOverviewToggleCombinationsEnableIndependentKinds() {
+        let combos: [(Bool, Bool, Bool, [StatusBarOverviewKind])] = [
+            (false, false, false, []),
+            (true, false, false, [.countdown]),
+            (false, true, false, [.mission]),
+            (false, false, true, [.todayTasks]),
+            (true, true, false, [.countdown, .mission]),
+            (true, false, true, [.countdown, .todayTasks]),
+            (false, true, true, [.mission, .todayTasks]),
+            (true, true, true, [.countdown, .mission, .todayTasks])
+        ]
+        for combo in combos {
+            let state = StatusBarOverviewState(
+                showCountdown: combo.0,
+                showMissionProgress: combo.1,
+                showTodayTasks: combo.2
+            )
+            XCTAssertEqual(state.enabledKinds, combo.3)
+        }
+        XCTAssertEqual(
+            StatusBarOverviewState.migrated(
+                countdown: false,
+                mission: true,
+                tasks: true,
+                selectedMissionID: nil
+            ).enabledKinds,
+            [.mission, .todayTasks]
+        )
+    }
+
+    func testStatusBarItemRegistryNeverDuplicatesAKind() {
+        let all = Set(StatusBarOverviewKind.allCases)
+        let created = StatusBarItemRegistry.reconcile(desired: all, existingCounts: [:])
+        XCTAssertEqual(Set(created.create), all)
+        XCTAssertTrue(created.remove.isEmpty)
+
+        let extras = StatusBarItemRegistry.reconcile(
+            desired: [.countdown],
+            existingCounts: [.countdown: 2, .mission: 1, .todayTasks: 1]
+        )
+        XCTAssertTrue(extras.create.isEmpty)
+        XCTAssertEqual(extras.remove[.countdown], 1)
+        XCTAssertEqual(extras.remove[.mission], 1)
+        XCTAssertEqual(extras.remove[.todayTasks], 1)
+
+        let off = StatusBarItemRegistry.reconcile(
+            desired: [],
+            existingCounts: Dictionary(uniqueKeysWithValues: StatusBarOverviewKind.allCases.map { ($0, 1) })
+        )
+        XCTAssertTrue(off.create.isEmpty)
+        XCTAssertEqual(off.remove.count, 3)
+    }
+
+    func testStatusBarTodayRemainingCountExcludesInboxAndCompleted() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(secondsFromGMT: 0))
+        let now = try XCTUnwrap(
+            DateComponents(
+                calendar: calendar,
+                timeZone: calendar.timeZone,
+                year: 2026,
+                month: 9,
+                day: 12,
+                hour: 15
+            ).date
+        )
+        let today = try XCTUnwrap(
+            DateComponents(
+                calendar: calendar,
+                timeZone: calendar.timeZone,
+                year: 2026,
+                month: 9,
+                day: 12,
+                hour: 18
+            ).date
+        )
+        let yesterday = try XCTUnwrap(
+            DateComponents(
+                calendar: calendar,
+                timeZone: calendar.timeZone,
+                year: 2026,
+                month: 9,
+                day: 11,
+                hour: 10
+            ).date
+        )
+        let tomorrow = try XCTUnwrap(
+            DateComponents(
+                calendar: calendar,
+                timeZone: calendar.timeZone,
+                year: 2026,
+                month: 9,
+                day: 13,
+                hour: 10
+            ).date
+        )
+        let views = [
+            statusBarTaskView(status: .open, due: today, start: nil),
+            statusBarTaskView(status: .open, due: yesterday, start: nil),
+            statusBarTaskView(status: .open, due: nil, start: today),
+            statusBarTaskView(status: .open, due: nil, start: nil),
+            statusBarTaskView(status: .completed, due: today, start: nil),
+            statusBarTaskView(status: .open, due: tomorrow, start: nil)
+        ]
+        XCTAssertEqual(
+            StatusBarTodaySemantics.remainingCount(views: views, now: now, calendar: calendar),
+            3
+        )
+    }
+
+    func testStatusBarMissionPresentationClearsDeletedSelection() {
+        let device = UUID()
+        let kept = MissionDefinition(title: "保留", color: "teal", modifiedByDevice: device)
+        var removed = MissionDefinition(title: "已删", color: "purple", modifiedByDevice: device)
+        removed.deletedAt = Date()
+        XCTAssertEqual(StatusBarMissionPresentation.resolvedID(kept.id, among: [kept, removed]), kept.id)
+        XCTAssertNil(StatusBarMissionPresentation.resolvedID(removed.id, among: [kept, removed]))
+        XCTAssertEqual(StatusBarMissionPresentation.percentText(progress: 0.4), "40%")
+        XCTAssertEqual(StatusBarMissionPresentation.percentText(progress: nil), "—")
+    }
+
+    func testStatusBarMissionArtworkUsesMonochromeWaterFromBottomAtMenuBarSize() {
+        for side in StatusBarMissionArtworkSpec.menuBarSides {
+            let empty = StatusBarMissionArtworkSpec.make(progress: nil, side: side)
+            XCTAssertEqual(empty.style, .waterOrb)
+            XCTAssertEqual(empty.fillRatio, 0)
+            XCTAssertTrue(empty.usesTemplateRendering)
+            XCTAssertFalse(empty.usesMissionColor)
+            XCTAssertEqual(empty.waterRect.height, 0, accuracy: 0.001)
+            XCTAssertEqual(empty.waterRect.y, empty.contentInset, accuracy: 0.001)
+
+            let half = StatusBarMissionArtworkSpec.make(progress: 0.5, side: side)
+            XCTAssertEqual(half.style, .waterOrb)
+            XCTAssertEqual(half.fillRatio, 0.5, accuracy: 0.0001)
+            XCTAssertFalse(half.usesMissionColor)
+            XCTAssertEqual(half.waterRect.y, half.contentInset, accuracy: 0.001)
+            XCTAssertEqual(half.waterFillHeight, half.innerSide * 0.5, accuracy: 0.001)
+            XCTAssertGreaterThan(half.waterFillHeight, 4)
+            XCTAssertLessThan(half.waterRect.y + half.waterFillHeight, half.side - 0.5)
+
+            let full = StatusBarMissionArtworkSpec.make(progress: 1, side: side)
+            XCTAssertEqual(full.waterFillHeight, full.innerSide, accuracy: 0.001)
+            XCTAssertEqual(StatusBarMissionArtworkSpec.make(progress: 1.4, side: side).fillRatio, 1)
+            XCTAssertEqual(StatusBarMissionArtworkSpec.make(progress: -0.2, side: side).fillRatio, 0)
+        }
+
+        let ring = StatusBarMissionArtworkSpec.make(progress: 0.25, side: 16)
+        XCTAssertEqual(ring.style, .progressRing)
+        XCTAssertFalse(ring.usesMissionColor)
+        XCTAssertTrue(ring.usesTemplateRendering)
+        XCTAssertEqual(ring.ringSweepDegrees, 90, accuracy: 0.001)
+        XCTAssertEqual(StatusBarMissionPresentation.percentText(progress: 0.25), "25%")
+    }
+
+    func testMissionColorPaletteUsesStableIdentifiersAndMigratesLegacyHex() {
+        XCTAssertEqual(MissionColor.allCases.count, 12)
+        XCTAssertEqual(Set(MissionColor.allCases.map(\.rawValue)).count, 12)
+        XCTAssertEqual(MissionColor.resolve("teal"), .teal)
+        XCTAssertEqual(MissionColor.resolve("#5B8DEF"), .blue)
+        XCTAssertEqual(MissionColor.resolve("#34C759"), .green)
+        XCTAssertEqual(MissionColor.canonicalStorageValue("not-a-color"), "blue")
+    }
+
+    func testMissionEditorLayoutFitsNormalAndNarrowWorkAreas() {
+        let normal = MissionEditorLayout.fittingSize(available: CGSize(width: 1_440, height: 900))
+        XCTAssertEqual(normal.width, MissionEditorLayout.idealWidth)
+        XCTAssertEqual(normal.height, MissionEditorLayout.idealHeight)
+        XCTAssertGreaterThan(normal.width, MissionEditorLayout.horizontalInset * 2)
+
+        let compact = MissionEditorLayout.fittingSize(available: CGSize(width: 700, height: 520))
+        XCTAssertEqual(compact.width, MissionEditorLayout.idealWidth)
+        XCTAssertEqual(compact.height, 520 - MissionEditorLayout.chromeMargin * 2)
+
+        let narrow = MissionEditorLayout.fittingSize(available: CGSize(width: 500, height: 520))
+        XCTAssertEqual(narrow.width, 500 - MissionEditorLayout.chromeMargin * 2)
+        XCTAssertEqual(narrow.height, 520 - MissionEditorLayout.chromeMargin * 2)
+        XCTAssertLessThan(narrow.width, MissionEditorLayout.idealWidth)
+        XCTAssertGreaterThanOrEqual(narrow.width, MissionEditorLayout.minimumReadableContentWidth)
+        XCTAssertGreaterThan(MissionEditorLayout.contentScrollHeight(windowHeight: narrow.height), 120)
+
+        let tiny = MissionEditorLayout.fittingSize(available: CGSize(width: 400, height: 360))
+        XCTAssertLessThanOrEqual(tiny.width, 400)
+        XCTAssertLessThanOrEqual(tiny.height, 360)
+        XCTAssertGreaterThan(tiny.width, 0)
+        XCTAssertGreaterThan(tiny.height, 0)
+    }
+
+    func testCalendarAccessRecoveryPromptsThenOpensSettingsAfterDenial() {
+        XCTAssertEqual(CalendarAccessRecovery.action(for: .notDetermined), .requestPrompt)
+        XCTAssertEqual(CalendarAccessRecovery.action(for: .writeOnly), .requestPrompt)
+        XCTAssertEqual(CalendarAccessRecovery.action(for: .denied), .openSystemSettings)
+        XCTAssertEqual(CalendarAccessRecovery.action(for: .restricted), .openSystemSettings)
+        XCTAssertEqual(CalendarAccessRecovery.action(for: .fullAccess), .none)
+        XCTAssertEqual(
+            CalendarAccessRecovery.transition(from: .denied, to: .fullAccess),
+            .gainedAccess
+        )
+        XCTAssertEqual(
+            CalendarAccessRecovery.transition(from: .fullAccess, to: .denied),
+            .lostAccess
+        )
+        XCTAssertEqual(
+            CalendarAccessRecovery.transition(from: .denied, to: .denied),
+            .unchanged
+        )
+        XCTAssertTrue(CalendarAccessRecovery.shouldLoadCalendarData(.fullAccess))
+        XCTAssertFalse(CalendarAccessRecovery.shouldLoadCalendarData(.denied))
+        XCTAssertEqual(
+            CalendarAccessRecovery.macOSCalendarPrivacyURL.scheme,
+            "x-apple.systempreferences"
+        )
+    }
+
+    func testMissionSelectionFallsBackWhenSelectedMissionIsDeleted() {
+        let device = UUID()
+        let kept = MissionDefinition(title: "保留", color: "teal", modifiedByDevice: device)
+        var removed = MissionDefinition(title: "已删", color: "purple", modifiedByDevice: device)
+        removed.deletedAt = Date()
+        XCTAssertEqual(MissionSelection.resolvedID(kept.id, among: [kept, removed]), kept.id)
+        XCTAssertNil(MissionSelection.resolvedID(removed.id, among: [kept, removed]))
+        XCTAssertEqual(MissionSelection.featured(among: [removed, kept])?.id, kept.id)
+        XCTAssertEqual(
+            MissionSelection.resolvedRoute(.mission(removed.id), among: [kept]),
+            .section(.missions)
+        )
+        XCTAssertEqual(
+            MissionSelection.resolvedRoute(.mission(kept.id), among: [kept]),
+            .mission(kept.id)
+        )
+    }
+
+    func testLegacyWidgetMissionDecodesWithDefaultIdentityColor() throws {
+        let json = """
+        {
+          "id": "00000000-0000-0000-0000-000000000001",
+          "title": "Legacy Mission",
+          "progress": 0.5,
+          "icon": "flag.fill"
+        }
+        """
+        let item = try JSONCoding.decoder().decode(WidgetMissionItem.self, from: Data(json.utf8))
+        XCTAssertEqual(item.color, MissionColor.defaultValue.rawValue)
+    }
+
+    func testWindowGlassAppearanceClampsTransparency() {
+        XCTAssertEqual(WindowGlassAppearance.clamped(0), 0, accuracy: 0.000_1)
+        XCTAssertEqual(WindowGlassAppearance.clamped(0.4), 0.4, accuracy: 0.000_1)
+        XCTAssertEqual(
+            WindowGlassAppearance.clamped(0.95),
+            WindowGlassAppearance.maximumTransparency,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            WindowGlassAppearance.clamped(-0.2),
+            WindowGlassAppearance.minimumTransparency,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            WindowGlassAppearance.clamped(.nan),
+            WindowGlassAppearance.defaultTransparency,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            WindowGlassAppearance.clamped(.infinity),
+            WindowGlassAppearance.maximumTransparency,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(WindowGlassAppearance.percent(0.401), 40)
+        XCTAssertEqual(
+            WindowGlassAppearance.percent(WindowGlassAppearance.maximumTransparency),
+            90
+        )
+        XCTAssertEqual(WindowGlassAppearance.minimumFillOpacity, 0.10, accuracy: 0.000_1)
+        XCTAssertEqual(
+            WindowGlassAppearance.maximumTransparency,
+            1 - WindowGlassAppearance.minimumFillOpacity,
+            accuracy: 0.000_1
+        )
+        XCTAssertFalse(WindowGlassAppearance.userFacingEnabled)
+    }
+
+    func testWindowGlassFillOpacityKeepsReadableFloor() {
+        XCTAssertEqual(WindowGlassAppearance.fillOpacity(transparency: 0), 1, accuracy: 0.000_1)
+        XCTAssertEqual(
+            WindowGlassAppearance.fillOpacity(transparency: WindowGlassAppearance.maximumTransparency),
+            WindowGlassAppearance.minimumFillOpacity,
+            accuracy: 0.000_1
+        )
+        XCTAssertGreaterThanOrEqual(
+            WindowGlassAppearance.fillOpacity(transparency: 1),
+            WindowGlassAppearance.minimumFillOpacity
+        )
+    }
+
+    func testWindowGlassUserFacingPreferenceIsRetiredEvenWhenStoredEnabled() {
+        let suiteName = "test.window-glass.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+        defaults.set(true, forKey: WindowGlassAppearance.enabledDefaultsKey)
+        XCTAssertTrue(defaults.bool(forKey: WindowGlassAppearance.enabledDefaultsKey))
+
+        WindowGlassAppearance.retireUserFacingPreference(in: defaults)
+
+        XCTAssertFalse(defaults.bool(forKey: WindowGlassAppearance.enabledDefaultsKey))
+        XCTAssertFalse(
+            WindowGlassAppearance.isUserFacingGlassActive(
+                enabledFlag: true,
+                reduceTransparency: false
+            )
+        )
+        XCTAssertFalse(
+            WindowGlassAppearance.isUserFacingGlassActive(
+                enabledFlag: false,
+                reduceTransparency: false
+            )
+        )
+    }
+
+    func testComposerReturnInsertsNewlineUnlessCommandReturnSaves() {
+        XCTAssertEqual(ComposerReturnAction.fromReturn(commandPressed: false), .insertNewline)
+        XCTAssertEqual(ComposerReturnAction.fromReturn(commandPressed: true), .submit)
+    }
+
+    func testMissionSymbolCatalogHasUniqueSystemNames() {
+        let names = MissionSymbolCatalog.all.map(\.systemName)
+        XCTAssertFalse(names.isEmpty)
+        XCTAssertEqual(Set(names).count, names.count)
+        XCTAssertTrue(names.contains(MissionSymbolCatalog.defaultSystemName))
+        XCTAssertEqual(MissionSymbolCatalog.resolved("  "), MissionSymbolCatalog.defaultSystemName)
+        XCTAssertEqual(MissionSymbolCatalog.title(for: "wrench.fill"), "扳手")
+        XCTAssertEqual(MissionSymbolCatalog.groups(matching: "扳手").flatMap(\.symbols).map(\.systemName), ["wrench.fill"])
+    }
+
+    func testDeadlineScheduleCanBeUndated() throws {
+        let schedule = try TaskSchedule(timeZoneIdentifier: "Asia/Shanghai").validated(kind: .deadline)
+        XCTAssertTrue(schedule.isUndated)
     }
 
     func testCalendarDayCountdown() throws {
@@ -187,6 +548,285 @@ final class CalendarCountdownCoreTests: XCTestCase {
         )
         XCTAssertTrue(selection.matches(matching))
         XCTAssertFalse(selection.matches(wrongTitle))
+    }
+
+    func testExactEventRematchesNextYearViaStableExternalIdentifier() throws {
+        let lastYear = try XCTUnwrap(DateSupport.parseDateOnly("2025-09-20"))
+        let thisYear = try XCTUnwrap(DateSupport.parseDateOnly("2026-09-20"))
+        let selection = CountdownSelection(
+            mode: .exactEvent,
+            calendarIdentifier: "birthday",
+            calendarTitle: "生日",
+            eventIdentifier: "old-occurrence-id",
+            externalIdentifier: "series-stable",
+            eventTitle: "李四",
+            occurrenceDate: lastYear
+        )
+        let nextOccurrence = makeEvent(
+            id: "birthday-2026",
+            title: "李四",
+            date: thisYear,
+            calendarID: "birthday",
+            calendarTitle: "生日",
+            calendarItemIdentifier: "new-occurrence-id",
+            externalIdentifier: "series-stable"
+        )
+        XCTAssertTrue(selection.matches(nextOccurrence))
+        XCTAssertEqual(
+            CountdownSelectionStore.nextSelectedEvents(
+                from: [nextOccurrence],
+                selections: [selection]
+            ).map(\.id),
+            ["birthday-2026"]
+        )
+    }
+
+    func testExactEventRematchesAfterCalendarIdentifierDrift() throws {
+        let date = try XCTUnwrap(DateSupport.parseDateOnly("2026-10-01"))
+        let selection = CountdownSelection(
+            mode: .exactEvent,
+            calendarIdentifier: "stale-calendar-id",
+            calendarTitle: "生日",
+            eventIdentifier: "gone",
+            externalIdentifier: "gone-external",
+            eventTitle: "王五",
+            occurrenceDate: date
+        )
+        let rematched = makeEvent(
+            id: "now",
+            title: "王五",
+            date: date,
+            calendarID: "new-calendar-id",
+            calendarTitle: "生日"
+        )
+        XCTAssertTrue(selection.belongsToSameCalendar(as: rematched))
+        XCTAssertTrue(selection.matches(rematched))
+    }
+
+    func testAnnualTitleRematchesAfterCalendarIdentifierDrift() {
+        let date = Date()
+        let selection = CountdownSelection(
+            mode: .annualTitle,
+            calendarIdentifier: "old-holidays",
+            calendarTitle: "中国大陆节假日",
+            eventTitle: "元旦"
+        )
+        let rematched = makeEvent(
+            id: "holiday",
+            title: "元旦",
+            date: date,
+            calendarID: "new-holidays",
+            calendarTitle: "中国大陆节假日"
+        )
+        XCTAssertTrue(selection.matches(rematched))
+    }
+
+    func testYearByYearQueryWindowCoversDefaultFetchRange() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let start = try XCTUnwrap(
+            DateComponents(calendar: calendar, year: 2026, month: 9, day: 12).date
+        )
+        let end = try XCTUnwrap(calendar.date(byAdding: .day, value: ProductConstants.defaultFetchDays, to: start))
+        let slices = EventKitQueryWindow.yearSlices(from: start, to: end, calendar: calendar)
+        XCTAssertGreaterThanOrEqual(slices.count, 5)
+        XCTAssertEqual(slices.first?.start, start)
+        XCTAssertEqual(slices.last?.end, end)
+        for index in 1..<slices.count {
+            XCTAssertEqual(slices[index].start, slices[index - 1].end)
+        }
+    }
+
+    func testCountdownPresentationRecoveryKeepsTrackedDocumentWhenSelectionsExist() {
+        XCTAssertFalse(
+            CountdownPresentationRecovery.shouldReplaceTrackedDocument(
+                visibleEventCount: 0,
+                selectionCount: 25
+            )
+        )
+        XCTAssertTrue(
+            CountdownPresentationRecovery.shouldReplaceTrackedDocument(
+                visibleEventCount: 23,
+                selectionCount: 25
+            )
+        )
+        XCTAssertTrue(
+            CountdownPresentationRecovery.shouldReplaceTrackedDocument(
+                visibleEventCount: 0,
+                selectionCount: 0
+            )
+        )
+    }
+
+    func testFullAccessStillLoadsCalendarDataAfterUnchangedRecovery() {
+        XCTAssertTrue(CalendarAccessRecovery.shouldLoadCalendarData(.fullAccess))
+        XCTAssertEqual(
+            CalendarAccessRecovery.transition(from: .fullAccess, to: .fullAccess),
+            .unchanged
+        )
+        XCTAssertEqual(
+            CalendarAccessRecovery.transition(from: .denied, to: .fullAccess),
+            .gainedAccess
+        )
+    }
+
+    func testSingleInstanceDerivedDataYieldsToOfficialInstall() {
+        let official = AppInstanceSnapshot(
+            pid: 38384,
+            bundleIdentifier: ProductConstants.appBundleIdentifier,
+            executablePath: "/Applications/知行.app/Contents/MacOS/CalendarCountdown",
+            bundlePath: "/Applications/知行.app"
+        )
+        let derived = AppInstanceSnapshot(
+            pid: 40394,
+            bundleIdentifier: ProductConstants.appBundleIdentifier,
+            executablePath: "/Users/hashxjhuang/Library/Developer/Xcode/DerivedData/CalendarCountdown-buvinsbkcwybrweyhjwzbkzpxdqh/Build/Products/Release/CalendarCountdown.app/Contents/MacOS/CalendarCountdown",
+            bundlePath: "/Users/hashxjhuang/Library/Developer/Xcode/DerivedData/CalendarCountdown-buvinsbkcwybrweyhjwzbkzpxdqh/Build/Products/Release/CalendarCountdown.app"
+        )
+        XCTAssertTrue(AppInstanceIdentity.isOfficialInstall(bundlePath: official.bundlePath))
+        XCTAssertTrue(AppInstanceIdentity.isDerivedDataProduct(path: derived.executablePath))
+        XCTAssertEqual(
+            SingleInstancePolicy.decide(current: derived, others: [official]),
+            .yieldToExisting(pid: 38384)
+        )
+        XCTAssertEqual(
+            SingleInstancePolicy.decide(current: official, others: [derived]),
+            .becomeHolder
+        )
+    }
+
+    func testSingleInstanceClaimReleaseAndSecondInstanceTransfers() {
+        let lock = MemorySingleInstanceLock()
+        let first = SingleInstanceClaim(
+            pid: 10,
+            executablePath: "/Applications/知行.app/Contents/MacOS/CalendarCountdown",
+            bundleIdentifier: ProductConstants.appBundleIdentifier
+        )
+        let second = SingleInstanceClaim(
+            pid: 11,
+            executablePath: "/Applications/知行.app/Contents/MacOS/CalendarCountdown",
+            bundleIdentifier: ProductConstants.appBundleIdentifier
+        )
+        XCTAssertEqual(lock.tryAcquire(first), .acquired)
+        XCTAssertEqual(lock.tryAcquire(second), .heldByExisting(first))
+        lock.release(pid: 10)
+        XCTAssertNil(lock.inspect())
+        XCTAssertEqual(lock.tryAcquire(second), .acquired)
+        XCTAssertEqual(lock.inspect()?.pid, 11)
+    }
+
+    func testFileSingleInstanceLockAllowsOnlyOneConcurrentClaim() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("single-instance-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("single-instance.lock")
+        let pid = ProcessInfo.processInfo.processIdentifier
+        let lockA = FileSingleInstanceLock(fileURL: url)
+        let lockB = FileSingleInstanceLock(fileURL: url)
+        let claimA = SingleInstanceClaim(
+            pid: pid,
+            executablePath: "/Applications/知行.app/Contents/MacOS/CalendarCountdown",
+            bundleIdentifier: ProductConstants.appBundleIdentifier,
+            bundlePath: "/Applications/知行.app"
+        )
+        let claimB = SingleInstanceClaim(
+            pid: pid,
+            executablePath: "/Applications/知行.app/Contents/MacOS/CalendarCountdown",
+            bundleIdentifier: ProductConstants.appBundleIdentifier,
+            bundlePath: "/Applications/知行.app"
+        )
+        let resultsLock = NSLock()
+        var results: [SingleInstanceLockResult] = []
+        DispatchQueue.concurrentPerform(iterations: 2) { index in
+            let result = index == 0 ? lockA.tryAcquire(claimA) : lockB.tryAcquire(claimB)
+            resultsLock.lock()
+            results.append(result)
+            resultsLock.unlock()
+        }
+        let acquired = results.filter { $0 == .acquired }
+        let rejected = results.filter {
+            if case .heldByExisting = $0 { return true }
+            return false
+        }
+        XCTAssertEqual(acquired.count, 1)
+        XCTAssertEqual(rejected.count, 1)
+        lockA.release(pid: pid)
+        lockB.release(pid: pid)
+    }
+
+    func testFileSingleInstanceLockRecoversStaleLock() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("single-instance-stale-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("single-instance.lock")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/true")
+        try process.run()
+        process.waitUntilExit()
+        let stale = SingleInstanceClaim(
+            pid: process.processIdentifier,
+            executablePath: "/Applications/知行.app/Contents/MacOS/CalendarCountdown",
+            bundleIdentifier: ProductConstants.appBundleIdentifier,
+            bundlePath: "/Applications/知行.app"
+        )
+        XCTAssertFalse(ProcessLiveness.isLiveHolder(stale))
+        try JSONEncoder().encode(stale).write(to: url)
+        let lock = FileSingleInstanceLock(fileURL: url)
+        let live = SingleInstanceClaim(
+            pid: ProcessInfo.processInfo.processIdentifier,
+            executablePath: "/Applications/知行.app/Contents/MacOS/CalendarCountdown",
+            bundleIdentifier: ProductConstants.appBundleIdentifier,
+            bundlePath: "/Applications/知行.app"
+        )
+        XCTAssertEqual(lock.tryAcquire(live), .acquired)
+        XCTAssertEqual(lock.inspect()?.pid, live.pid)
+        lock.release(pid: live.pid)
+        XCTAssertNil(lock.inspect())
+    }
+
+    func testSingleInstanceGateOfficialPreemptsDerivedHolderButYieldsToLockOwnerOtherwise() {
+        let official = AppInstanceSnapshot(
+            pid: 20,
+            bundleIdentifier: ProductConstants.appBundleIdentifier,
+            executablePath: "/Applications/知行.app/Contents/MacOS/CalendarCountdown",
+            bundlePath: "/Applications/知行.app"
+        )
+        let derivedClaim = SingleInstanceClaim(
+            pid: 21,
+            executablePath: "/Users/hashxjhuang/Library/Developer/Xcode/DerivedData/CalendarCountdown-buvinsbkcwybrweyhjwzbkzpxdqh/Build/Products/Release/CalendarCountdown.app/Contents/MacOS/CalendarCountdown",
+            bundleIdentifier: ProductConstants.appBundleIdentifier,
+            bundlePath: "/Users/hashxjhuang/Library/Developer/Xcode/DerivedData/CalendarCountdown-buvinsbkcwybrweyhjwzbkzpxdqh/Build/Products/Release/CalendarCountdown.app"
+        )
+        XCTAssertEqual(
+            SingleInstanceGate.resolve(current: official, lockResult: .acquired),
+            .becomeHolder
+        )
+        XCTAssertEqual(
+            SingleInstanceGate.resolve(current: official, lockResult: .heldByExisting(derivedClaim)),
+            .becomeHolder
+        )
+        XCTAssertEqual(
+            SingleInstanceGate.resolve(
+                current: derivedClaim.snapshot,
+                lockResult: .heldByExisting(SingleInstanceClaim.from(official))
+            ),
+            .yieldToExisting(SingleInstanceClaim.from(official))
+        )
+    }
+
+    func testHistoricalBundleIDIsRecognizedAndUnknownIDsAreRefused() {
+        XCTAssertTrue(AppInstanceIdentity.recognizes(bundleID: ProductConstants.appBundleIdentifier))
+        XCTAssertTrue(AppInstanceIdentity.recognizes(bundleID: "com.hashxjhuang.CalendarCountdown"))
+        XCTAssertFalse(AppInstanceIdentity.recognizes(bundleID: "com.apple.Safari"))
+        XCTAssertFalse(AppInstanceIdentity.shouldManageInstance(bundleID: "com.example.OtherCountdown"))
+        XCTAssertFalse(
+            AppInstanceIdentity.shouldManageInstance(
+                bundleID: nil,
+                executablePath: "/Applications/Other.app/Contents/MacOS/CalendarCountdown"
+            )
+        )
     }
 
     func testExactEventSelectionReconnectsWithoutLocalEventKitIdentifiers() {
@@ -495,13 +1135,15 @@ final class CalendarCountdownCoreTests: XCTestCase {
         date: Date,
         calendarID: String,
         calendarTitle: String,
-        seriesIdentifier: String? = nil
+        seriesIdentifier: String? = nil,
+        calendarItemIdentifier: String? = nil,
+        externalIdentifier: String? = nil
     ) -> CountdownEvent {
         CountdownEvent(
             id: id,
             seriesIdentifier: seriesIdentifier,
-            calendarItemIdentifier: id,
-            externalIdentifier: nil,
+            calendarItemIdentifier: calendarItemIdentifier ?? id,
+            externalIdentifier: externalIdentifier,
             title: title,
             eventDate: date,
             endDate: date,
@@ -603,6 +1245,33 @@ final class DiagnosticLoggingTests: XCTestCase {
         )
         XCTAssertEqual(DiagnosticLogger.sanitize(String(repeating: "x", count: 3_000), key: "note").count, 2_048)
     }
+}
+
+private func statusBarTaskView(
+    status: TaskOccurrenceStatus,
+    due: Date?,
+    start: Date?
+) -> TaskOccurrenceView {
+    let device = UUID()
+    let series = TaskSeries(
+        title: "任务",
+        kind: .deadline,
+        schedule: TaskSchedule(
+            timeZoneIdentifier: "UTC",
+            plannedStart: start,
+            plannedDue: due
+        ),
+        modifiedByDevice: device
+    )
+    let occurrence = TaskOccurrence(
+        seriesID: series.id,
+        occurrenceKey: UUID().uuidString,
+        plannedStart: start,
+        plannedDue: due,
+        status: status,
+        modifiedByDevice: device
+    )
+    return TaskOccurrenceView(occurrence: occurrence, series: series)
 }
 
 private func localizationDictionary(at url: URL) throws -> [String: String] {

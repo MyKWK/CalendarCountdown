@@ -7,12 +7,21 @@ struct MobileSettingsView: View {
 
     var body: some View {
         Form {
+            Section(AppLocalization.text("appearance.design_language", defaultValue: "设计语言")) {
+                LabeledContent(
+                    AppLocalization.text("appearance.title", defaultValue: "外观"),
+                    value: AppLocalization.text("appearance.fixed_theme_name", defaultValue: "钛灰 · 冰川青")
+                )
+                Text(AppLocalization.text(
+                    "appearance.fixed_theme_description",
+                    defaultValue: "知行使用固定的冷灰界面与冰川青交互强调；颜色选择留给每一项使命。"
+                ))
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+            }
             Section("日历与提醒") {
                 LabeledContent("日历权限", value: session.model.accessState.rawValue)
-                Button("请求日历访问") {
-                    Task { await session.model.requestAccess() }
-                }
-                .accessibilityIdentifier("mobile-request-calendar")
+                CalendarAccessActions(model: session.model)
                 Text("提醒事项权限会在你开启任务或习惯投影时再请求，启动时不会同时弹出两个系统框。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)

@@ -11,11 +11,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let model: AppModel
     let workspace: WorkspaceModel
     let appearanceSettings = AppAppearanceSettings()
+    let overviewSettings = StatusBarOverviewSettings()
+    let shortcuts = AppShortcutCoordinator()
     private var mainWindowController: NSWindowController?
     private var settingsWindowController: NSWindowController?
-    private var statusItem: NSStatusItem?
-    private var statusPopover: NSPopover?
-    private var featuredEventCancellable: AnyCancellable?
+    private var statusBarCoordinator: StatusBarCoordinator?
     private var appearanceCancellable: AnyCancellable?
     private var midnightRefreshTimer: Timer?
     private var diagnosticMaintenanceTimer: Timer?
@@ -24,6 +24,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var cloudEngine: CloudKitSyncEngine?
     private var profileSession: CloudProfileSession?
     private let projections = AppleProjectionRuntime()
+    private var instanceLock: FileSingleInstanceLock?
 
     override init() {
         let workspaceModel = WorkspaceModel()
@@ -36,6 +37,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         super.init()
     }
 
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        if ProcessInfo.processInfo.arguments.contains("-ui-test-mission-editor") {
+            return
+        }
+        if ProcessInfo.processInfo.arguments.contains("-calcount-allow-duplicate-instance") {
+            return
+        }
+        acquireSingleInstanceOrExit()
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         DiagnosticLogger.shared.configure(component: "app")
         DiagnosticLogger.shared.log(
@@ -44,11 +55,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             event: "app.launch.completed",
             metadata: ["version": ProductConstants.version]
         )
+        if ProcessInfo.processInfo.arguments.contains("-ui-test-mission-editor") {
+            showMissionEditorHarness(
+                narrow: ProcessInfo.processInfo.arguments.contains("-ui-test-narrow")
+            )
+            return
+        }
         installDiagnosticMaintenance()
         observeAppearance()
-        installStatusItem()
+        installStatusBarOverview()
         installAutomaticCalendarDayRefresh()
         startDomainRuntime()
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(handleSingleInstanceYield(_:)),
+            name: Notification.Name(AppInstanceIdentity.yieldNotificationName),
+            object: ProductConstants.appBundleIdentifier
+        )
+        shortcuts.startGlobalWake { [weak self] in
+            self?.showMainWindow()
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.showMainWindow()
         }
@@ -58,9 +84,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         DiagnosticLogger.shared.log(.notice, category: .lifecycle, event: "app.terminate.started")
         midnightRefreshTimer?.invalidate()
         diagnosticMaintenanceTimer?.invalidate()
+        statusBarCoordinator?.stop()
         broker?.stop()
         NotificationCenter.default.removeObserver(self)
         NSWorkspace.shared.notificationCenter.removeObserver(self)
+        DistributedNotificationCenter.default().removeObserver(self)
+        instanceLock?.release(pid: ProcessInfo.processInfo.processIdentifier)
+    }
+
+    private func acquireSingleInstanceOrExit() {
+        let current = MacAppInstanceProbe.current()
+        let claim = SingleInstanceClaim.from(current)
+        let lock: FileSingleInstanceLock
+        if let product = try? FileSingleInstanceLock.productLock() {
+            lock = product
+        } else {
+            let url = FileManager.default.homeDirectoryForCurrentUser
+                .appendingPathComponent("Library/Application Support/CalendarCountdown/Runtime/single-instance.lock")
+            lock = FileSingleInstanceLock(fileURL: url)
+        }
+        instanceLock = lock
+        for _ in 0..<40 {
+            let result = lock.tryAcquire(claim)
+            switch SingleInstanceGate.resolve(current: current, lockResult: result) {
+            case .becomeHolder:
+                if case .acquired = result {
+                    MacAppInstanceProbe.requestOthersToYield()
+                    return
+                }
+                MacAppInstanceProbe.requestOthersToYield()
+                Thread.sleep(forTimeInterval: 0.05)
+            case let .yieldToExisting(existing):
+                MacAppInstanceProbe.activate(pid: existing.pid)
+                exit(0)
+            }
+        }
+        if case let .heldByExisting(existing) = lock.tryAcquire(claim) {
+            MacAppInstanceProbe.activate(pid: existing.pid)
+        }
+        exit(0)
+    }
+
+    @objc private func handleSingleInstanceYield(_ notification: Notification) {
+        let holderPID = (notification.userInfo?["holderPID"] as? String).flatMap(Int32.init) ?? 0
+        if ProcessInfo.processInfo.processIdentifier == holderPID {
+            return
+        }
+        if AppInstanceIdentity.isOfficialInstall(bundlePath: Bundle.main.bundlePath) {
+            return
+        }
+        DiagnosticLogger.shared.log(
+            .notice,
+            category: .lifecycle,
+            event: "app.instance.yielded",
+            metadata: [
+                "pid": String(ProcessInfo.processInfo.processIdentifier),
+                "executable": Bundle.main.executablePath ?? ""
+            ]
+        )
+        instanceLock?.release(pid: ProcessInfo.processInfo.processIdentifier)
+        statusBarCoordinator?.stop()
+        NSApp.terminate(nil)
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        Task { await model.recoverAuthorization() }
+        workspace.reload()
+        statusBarCoordinator?.refresh()
     }
 
     func applicationShouldHandleReopen(
@@ -71,6 +161,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        // Keep the status item and global wake shortcut available after the user
+        // closes the main window. Choosing "Quit 知行" still terminates the app.
+        false
+    }
+
     func showMainWindow() {
         NSApp.setActivationPolicy(.regular)
 
@@ -78,16 +174,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let rootView = MainWindowRootView(
                 model: model,
                 workspace: workspace,
-                appearanceSettings: appearanceSettings
+                appearanceSettings: appearanceSettings,
+                shortcuts: shortcuts
             ) { [weak self] in
                 self?.showSettings()
             }
             let hostingController = NSHostingController(rootView: rootView)
+            hostingController.view.wantsLayer = true
+            hostingController.view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
             let window = NSWindow(contentViewController: hostingController)
             window.title = AppLocalization.text("app.name", defaultValue: "知行")
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.setContentSize(NSSize(width: 1_040, height: 700))
             window.minSize = NSSize(width: 880, height: 580)
+            window.isOpaque = true
+            window.backgroundColor = .windowBackgroundColor
+            window.titlebarAppearsTransparent = false
+            window.titlebarSeparatorStyle = .automatic
             window.center()
             window.isReleasedWhenClosed = false
             mainWindowController = NSWindowController(window: window)
@@ -101,7 +204,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func showSettings() {
         if settingsWindowController == nil {
             let hostingController = NSHostingController(
-                rootView: AppSettingsView(settings: appearanceSettings)
+                rootView: AppSettingsView(
+                    settings: appearanceSettings,
+                    overview: overviewSettings,
+                    shortcuts: shortcuts,
+                    workspace: workspace
+                )
             )
             let window = NSWindow(contentViewController: hostingController)
             window.title = AppLocalization.text(
@@ -109,7 +217,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 defaultValue: "设置"
             )
             window.styleMask = [.titled, .closable]
-            window.setContentSize(NSSize(width: 720, height: 440))
+            window.setContentSize(NSSize(width: 760, height: 640))
             window.center()
             window.isReleasedWhenClosed = false
             settingsWindowController = NSWindowController(window: window)
@@ -120,41 +228,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    private func installStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.image = NSImage(
-            systemSymbolName: "calendar.badge.clock",
-            accessibilityDescription: AppLocalization.text(
-                "app.name",
-                defaultValue: "知行"
-            )
-        )
-        item.button?.imagePosition = .imageLeading
-        item.button?.imageHugsTitle = true
-        item.button?.font = .monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
-        item.button?.target = self
-        item.button?.action = #selector(toggleStatusPopover(_:))
-
-        let popover = NSPopover()
-        popover.behavior = .transient
-        popover.contentViewController = NSHostingController(
-            rootView: MenuBarContentView(
-                model: model,
-                workspace: workspace,
-                appearanceSettings: appearanceSettings
-            ) { [weak self] in
-                    self?.statusPopover?.performClose(nil)
-                    self?.showMainWindow()
-                }
-        )
-
-        statusItem = item
-        statusPopover = popover
-        featuredEventCancellable = model.$featuredEvent
-            .receive(on: RunLoop.main)
-            .sink { [weak self] event in
-                self?.updateStatusItem(for: event)
-            }
+    private func installStatusBarOverview() {
+        let coordinator = StatusBarCoordinator(
+            overview: overviewSettings,
+            model: model,
+            workspace: workspace
+        ) { [weak self] section in
+            self?.shortcuts.request(.selectSection(section))
+            self?.showMainWindow()
+        }
+        statusBarCoordinator = coordinator
+        coordinator.start()
     }
 
     private func observeAppearance() {
@@ -271,40 +355,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard calendarDayRefreshPolicy.shouldRefresh() else { return }
         Task { [weak self] in
             await self?.model.refresh()
+            self?.workspace.reload()
+            self?.statusBarCoordinator?.refresh()
         }
-    }
-
-    private func updateStatusItem(for event: CountdownEvent?) {
-        guard let button = statusItem?.button else { return }
-        guard let event else {
-            button.title = ""
-            button.toolTip = AppLocalization.text(
-                "status_item.no_events",
-                defaultValue: "知行 · 尚无追踪事件"
-            )
-            return
-        }
-
-        let days = CountdownCalculator.daysRemaining(until: event.eventDate)
-        button.title = days == 0
-            ? AppLocalization.text("countdown.today", defaultValue: "今天")
-            : String(days)
-        let formatter = DateFormatter()
-        formatter.locale = .current
-        formatter.setLocalizedDateFormatFromTemplate("MMMd")
-        button.toolTip = AppLocalization.format(
-            "status_item.event_tooltip",
-            defaultValue: "%@ · %@ · %@",
-            event.title,
-            formatter.string(from: event.eventDate),
-            CountdownCalculator.label(until: event.eventDate)
-        )
-        button.setAccessibilityLabel(AppLocalization.format(
-            "status_item.accessibility_label",
-            defaultValue: "知行，%@，%@",
-            event.title,
-            CountdownCalculator.label(until: event.eventDate)
-        ))
     }
 
     private func startDomainRuntime() {
@@ -431,16 +484,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.workspace.reload()
             await self?.workspace.reconcileProjections()
             await self?.model.refresh()
+            self?.statusBarCoordinator?.refresh()
         }
     }
 
-    @objc private func toggleStatusPopover(_ sender: Any?) {
-        guard let popover = statusPopover, let button = statusItem?.button else { return }
-        if popover.isShown {
-            popover.performClose(sender)
-        } else {
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        }
+    private func showMissionEditorHarness(narrow: Bool) {
+        NSApp.setActivationPolicy(.regular)
+        let size = MissionEditorLayout.fittingSize(
+            available: narrow
+                ? CGSize(width: 700, height: 520)
+                : NSScreen.main?.visibleFrame.size ?? CGSize(width: 1440, height: 900)
+        )
+        let root = MissionEditorSheet { _ in }
+            .frame(width: size.width, height: size.height)
+        let hosting = NSHostingController(rootView: root)
+        let window = NSWindow(contentViewController: hosting)
+        window.title = AppLocalization.text("mission.create.title", defaultValue: "新建使命")
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.setContentSize(NSSize(width: size.width, height: size.height))
+        window.minSize = NSSize(
+            width: min(MissionEditorLayout.minWidth, size.width),
+            height: min(MissionEditorLayout.minHeight, size.height)
+        )
+        window.center()
+        window.isReleasedWhenClosed = false
+        mainWindowController = NSWindowController(window: window)
+        mainWindowController?.showWindow(nil)
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 }
 
@@ -451,7 +522,15 @@ struct CalendarCountdownApp: App {
 
     var body: some Scene {
         Settings {
-            AppSettingsView(settings: appDelegate.appearanceSettings)
+            AppSettingsView(
+                settings: appDelegate.appearanceSettings,
+                overview: appDelegate.overviewSettings,
+                shortcuts: appDelegate.shortcuts,
+                workspace: appDelegate.workspace
+            )
+        }
+        .commands {
+            ShortcutCommandMenu(shortcuts: appDelegate.shortcuts)
         }
     }
 }
@@ -460,24 +539,43 @@ private struct MainWindowRootView: View {
     @ObservedObject var model: AppModel
     @ObservedObject var workspace: WorkspaceModel
     @ObservedObject var appearanceSettings: AppAppearanceSettings
+    @ObservedObject var shortcuts: AppShortcutCoordinator
     let openSettings: () -> Void
+
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    private var glassActive: Bool {
+        WindowGlassAppearance.isUserFacingGlassActive(
+            enabledFlag: appearanceSettings.windowGlassEnabled,
+            reduceTransparency: reduceTransparency
+        )
+    }
 
     var body: some View {
         RootView(
             model: model,
             workspace: workspace,
-            openSettings: openSettings
+            openSettings: openSettings,
+            shortcuts: shortcuts
         )
             .frame(minWidth: 880, minHeight: 580)
             .tint(appearanceSettings.accentColor)
             .preferredColorScheme(appearanceSettings.appearanceMode.colorScheme)
+            .environment(\.appWindowGlassActive, glassActive)
+            .toolbarBackgroundVisibility(.automatic, for: .windowToolbar)
+            .appMainWindowGlass(
+                enabled: glassActive,
+                transparency: appearanceSettings.windowGlassTransparency
+            )
             .task {
                 await model.bootstrap()
                 workspace.reload()
             }
             .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged)) { _ in
-                Task { await model.refresh() }
-                Task { await workspace.reconcileProjections() }
+                Task {
+                    await model.recoverAuthorization()
+                    await workspace.reconcileProjections()
+                }
             }
     }
 }

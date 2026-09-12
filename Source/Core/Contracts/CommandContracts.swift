@@ -194,7 +194,7 @@ public struct CreateMissionCommand: Equatable, Codable, Sendable {
     public init(
         title: String,
         markdownDescription: String? = nil,
-        color: String = "#5B8DEF",
+        color: String = MissionColor.defaultValue.rawValue,
         icon: String = "flag.fill",
         status: MissionStatus = .active,
         targetDate: LocalDate? = nil,

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": "python3 .cursor/hooks/dmg-workflow.py after-edit"
+      }
+    ],
+    "afterShellExecution": [
+      {
+        "command": "python3 .cursor/hooks/dmg-workflow.py after-shell",
+        "matcher": "xcodebuild|Scripts/test\\.sh|Scripts/test-and-install\\.sh|Scripts/release-local\\.sh"
+      }
+    ],
+    "stop": [
+      {
+        "command": "python3 .cursor/hooks/dmg-workflow.py stop",
+        "timeout": 30,
+        "loop_limit": 1
+      }
+    ]
+  }
+}

@@ -40,7 +40,7 @@ final class WorkspaceModel: ObservableObject {
         defer { isLoading = false }
         do {
             taskViews = try workspace.tasks.list(TaskListFilter(limit: 500))
-            missions = try workspace.missions.list()
+            missions = try workspace.missions.list().filter { $0.mission.status != .archived }
             habits = try workspace.habits.list()
             cloudMode = (try? workspace.cloud.mode()) ?? .localOnly
             if let snapshot = try? workspace.widgetSnapshotV2() {
@@ -101,6 +101,76 @@ final class WorkspaceModel: ObservableObject {
             }
             return false
         }
+    }
+
+    var unassignedTaskSeries: [TaskSeries] {
+        var seen = Set<UUID>()
+        var result: [TaskSeries] = []
+        for view in taskViews {
+            let series = view.series
+            guard series.missionID == nil, series.deletedAt == nil else { continue }
+            guard seen.insert(series.id).inserted else { continue }
+            result.append(series)
+        }
+        return result
+    }
+
+    /// Picks the least-used identity color so consecutive missions are easy to distinguish.
+    var suggestedMissionColor: MissionColor {
+        let counts = Dictionary(grouping: missions.map { MissionColor.resolve($0.mission.color) }, by: { $0 })
+            .mapValues(\.count)
+        return MissionColor.allCases.min { lhs, rhs in
+            let left = counts[lhs, default: 0]
+            let right = counts[rhs, default: 0]
+            if left != right { return left < right }
+            let leftIndex = MissionColor.allCases.firstIndex(of: lhs) ?? 0
+            let rightIndex = MissionColor.allCases.firstIndex(of: rhs) ?? 0
+            return leftIndex < rightIndex
+        } ?? .defaultValue
+    }
+
+    func mission(for id: UUID?) -> MissionDefinition? {
+        guard let id else { return nil }
+        return missions.first(where: { $0.mission.id == id })?.mission
+    }
+
+    func missionTitle(for id: UUID?) -> String? {
+        mission(for: id)?.title
+    }
+
+    func missionActivity(for mission: MissionDefinition) -> [MissionActivityEntry] {
+        guard let workspace else { return [] }
+        do {
+            return try workspace.missions.activity(id: mission.id)
+        } catch {
+            DiagnosticLogger.shared.log(
+                .error,
+                category: .lifecycle,
+                event: "mission.activity.load.failed",
+                metadata: DiagnosticLogger.errorMetadata(error)
+            )
+            return []
+        }
+    }
+
+    var featuredMenuMission: MissionWriteResult? {
+        let featured = MissionSelection.featured(among: missions.map(\.mission))
+        guard let featured else { return nil }
+        return missions.first(where: { $0.mission.id == featured.id })
+    }
+
+    func taskViews(forMissionID id: UUID) -> [TaskOccurrenceView] {
+        taskViews
+            .filter { $0.series.missionID == id && $0.series.deletedAt == nil }
+            .sorted { lhs, rhs in
+                let leftOpen = lhs.occurrence.status == .open
+                let rightOpen = rhs.occurrence.status == .open
+                if leftOpen != rightOpen { return leftOpen && !rightOpen }
+                let leftDue = lhs.occurrence.plannedDue ?? .distantFuture
+                let rightDue = rhs.occurrence.plannedDue ?? .distantFuture
+                if leftDue != rightDue { return leftDue < rightDue }
+                return lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
+            }
     }
 
     func createTask(_ command: CreateTaskCommand) {
@@ -170,6 +240,34 @@ final class WorkspaceModel: ObservableObject {
     func archiveMission(_ mission: MissionDefinition) {
         perform("已归档使命") {
             _ = try $0.missions.archive(id: mission.id)
+        }
+    }
+
+    func deleteMission(_ mission: MissionDefinition, permanent: Bool = false) {
+        perform("已删除使命") {
+            _ = try $0.missions.delete(
+                id: mission.id,
+                permanent: permanent,
+                confirmID: permanent ? mission.id : nil
+            )
+        }
+    }
+
+    func reopenMission(_ mission: MissionDefinition) {
+        perform("已重新开启使命") {
+            _ = try $0.missions.setStatus(id: mission.id, status: .active)
+        }
+    }
+
+    func attachTask(_ series: TaskSeries, to mission: MissionDefinition) {
+        perform("已加入使命") {
+            _ = try $0.missions.addTask(missionID: mission.id, seriesID: series.id)
+        }
+    }
+
+    func detachTask(seriesID: UUID, from mission: MissionDefinition) {
+        perform("已移出使命") {
+            _ = try $0.missions.removeTask(missionID: mission.id, seriesID: seriesID)
         }
     }
 

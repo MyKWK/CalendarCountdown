@@ -63,6 +63,47 @@
 "使用自定义颜色" = "カスタムカラーを使用";
 "页面外观" = "外観";
 
+"appearance.title" = "外観";
+"appearance.design_language" = "デザイン言語";
+"appearance.fixed_theme_name" = "チタングレー・グレイシャーシアン";
+"appearance.fixed_theme_description" = "Motiveは固定のクールグレー画面とグレイシャーシアンの操作アクセントを使用します。色はミッションごとに選択できます。";
+"mission.identity" = "アイコンとカラー";
+"mission.preview" = "ミッションプレビュー";
+"mission.color.current" = "現在のカラー";
+"mission.color.picker" = "ミッションカラー";
+"mission.color.blue" = "スカイブルー";
+"mission.color.indigo" = "インディゴ";
+"mission.color.purple" = "バイオレット";
+"mission.color.pink" = "ピンク";
+"mission.color.red" = "コーラルレッド";
+"mission.color.orange" = "サンセットオレンジ";
+"mission.color.yellow" = "アンバーイエロー";
+"mission.color.green" = "リーフグリーン";
+"mission.color.mint" = "ミント";
+"mission.color.teal" = "ティール";
+"mission.color.cyan" = "アイスシアン";
+"mission.color.brown" = "サンドブラウン";
+"mission.color.field" = "カラー";
+"mission.name.field" = "名前";
+"mission.description.field" = "説明";
+"mission.description.placeholder" = "説明";
+"mission.goal.field" = "目標";
+"mission.target_date" = "目標日";
+"mission.due" = "期限";
+"mission.icon.field" = "アイコン";
+"mission.icon.search" = "アイコンを検索";
+"mission.icon.picker" = "ミッションアイコン";
+"mission.create.title" = "ミッションを作成";
+"mission.edit.title" = "ミッションを編集";
+"mission.title.placeholder" = "タイトル";
+"calendar.access.authorize" = "カレンダーへのアクセスを許可";
+"calendar.access.open_settings" = "システム設定を開く";
+"calendar.access.recover_help" = "システム設定でカレンダーへのアクセスをオンにしたら、Motiveに戻るとカウントダウンを読み込みます。";
+"menubar.missions" = "ミッション";
+"status_item.mission_tooltip" = "%@ · %@";
+"status_item.event_mission_tooltip" = "%@ · %@ · %@ · %@";
+"mission.deleted_fallback" = "このミッションはもう存在しません";
+
 /* Widget */
 "最近倒数" = "近日のカウントダウン";
 "日历倒数" = "Motive";
@@ -106,6 +147,8 @@
 "empty.no_countdown_events" = "カウントダウンが選択されていません";
 "empty.no_future_events" = "今後のイベントはありません";
 "empty.select_event_description" = "任意のAppleカレンダーからイベントを選び、カウントダウンへ追加してください。";
+"empty.countdown_unresolved" = "保存済みのカウントダウン選択がカレンダーイベントに未照合です";
+"empty.countdown_unresolved_description" = "選択は本機に残っており、削除されません。アクセス回復や更新後、安定識別子で年次・繰り返しイベントを再照合します。";
 "empty.future_events_description" = "期間を広げるか、このカレンダーに今後のイベントがあるか確認してください。";
 "action.track" = "追跡";
 "action.untrack" = "追跡解除";
@@ -142,6 +185,12 @@
 "appearance.description_light" = "常に明るい背景と暗い文字を使用します。";
 "appearance.description_dark" = "常に暗い背景と明るい文字を使用します。";
 "appearance.theme_accessibility_label" = "アクセントカラー：%@";
+"appearance.glass_enabled" = "ガラス効果を使う";
+"appearance.glass_transparency" = "透明度";
+"appearance.glass_solid" = "不透明寄り";
+"appearance.glass_sheer" = "透明寄り";
+"appearance.glass_limit" = "メインウィンドウは不透明なチタングレーの塗りです。デスクトップの壁紙は透けません。";
+"appearance.glass_reduce_transparency" = "macOS で「透明度を下げる」がオンのため、メインウィンドウは不透明のままです。";
 
 /* Errors */
 "error.unknown" = "不明なエラー";
@@ -208,3 +257,20 @@
 "lunar.day.28" = "28日";
 "lunar.day.29" = "29日";
 "lunar.day.30" = "30日";
+
+"status_bar.open_countdown" = "カウントダウンを開く";
+"status_bar.open_missions" = "ミッションを開く";
+"status_bar.open_tasks" = "タスクを開く";
+"status_bar.countdown.empty" = "カウントダウン、追跡中のイベントなし";
+"status_bar.mission.empty" = "ミッションが未選択";
+"status_bar.mission.accessibility" = "ミッション %@、進捗 %@";
+"status_bar.tasks.tooltip" = "今日の未完了タスクが %lld 件残っています";
+"status_bar.tasks.accessibility" = "今日のタスク、残り %lld 件";
+"settings.status_bar.title" = "メニューバー概要";
+"settings.status_bar.countdown" = "カウントダウン";
+"settings.status_bar.mission" = "ミッション進捗";
+"settings.status_bar.tasks" = "今日のタスク";
+"settings.status_bar.mission_picker" = "表示するミッション";
+"settings.status_bar.mission_none" = "未選択";
+"settings.status_bar.mission_empty" = "まだミッションがありません。作成するとメニューバーに表示できます。";
+"settings.status_bar.help" = "3つ同時にオンにでき、それぞれ独立したメニューバーアイコンになります。オフにするとそのアイコンは消えます。アップグレード後はカウントダウンのみがオンです。";

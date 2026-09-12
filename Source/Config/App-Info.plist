@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.3</string>
+	<string>1.0.9</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -30,9 +30,11 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>4</string>
+	<string>10</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>LSMultipleInstancesProhibited</key>
+	<true/>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>“知行”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。</string>
 	<key>NSRemindersFullAccessUsageDescription</key>

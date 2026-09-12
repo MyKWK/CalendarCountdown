@@ -50,6 +50,8 @@ public struct MissionService: Sendable {
                     values: [
                         "title": mission.title,
                         "description_md": mission.markdownDescription,
+                        "color": mission.color,
+                        "icon": mission.icon,
                         "status": mission.status.rawValue
                     ],
                     deviceID: mission.modifiedByDevice,
@@ -67,7 +69,7 @@ public struct MissionService: Sendable {
                 objectID: mission.id,
                 before: nil,
                 after: mission.revision,
-                summary: "created"
+                summary: "新建使命：\(mission.title)"
             )
             try DomainWriter.rememberIdempotency(
                 db,
@@ -81,7 +83,7 @@ public struct MissionService: Sendable {
                 db,
                 objectType: "mission",
                 objectID: mission.id,
-                fields: ["title", "description_md", "status"],
+                fields: ["title", "description_md", "color", "icon", "status"],
                 deviceID: mission.modifiedByDevice,
                 now: mission.updatedAt
             )
@@ -91,7 +93,23 @@ public struct MissionService: Sendable {
 
     public func list() throws -> [MissionWriteResult] {
         try db.read { db in
-            try DomainQueries.missions(db).map { try Self.result($0, db: db, committed: true) }
+            let missions = try DomainQueries.missions(db)
+            let activities = try Dictionary(
+                uniqueKeysWithValues: missions.compactMap { mission -> (UUID, Date)? in
+                    guard let occurredAt = try DomainWriter.missionActivity(db, missionID: mission.id).first?.occurredAt else {
+                        return nil
+                    }
+                    return (mission.id, occurredAt)
+                }
+            )
+            return try missions
+                .map { try Self.result($0, db: db, committed: true) }
+                .sorted { left, right in
+                    let leftActivity = activities[left.mission.id] ?? left.mission.updatedAt
+                    let rightActivity = activities[right.mission.id] ?? right.mission.updatedAt
+                    if leftActivity != rightActivity { return leftActivity > rightActivity }
+                    return left.mission.sortKey > right.mission.sortKey
+                }
         }
     }
 
@@ -106,6 +124,15 @@ public struct MissionService: Sendable {
 
     public func progress(id: UUID, previous: (done: Int, total: Int)? = nil) throws -> MissionProgressBreakdown {
         try get(id: id).progress
+    }
+
+    public func activity(id: UUID) throws -> [MissionActivityEntry] {
+        try db.read { db in
+            guard let mission = try DomainQueries.mission(db, id: id), mission.deletedAt == nil else {
+                throw DomainError.notFound(.missionNotFound, id: id)
+            }
+            return try DomainWriter.missionActivity(db, missionID: mission.id)
+        }
     }
 
     public func update(
@@ -145,8 +172,14 @@ public struct MissionService: Sendable {
                 mission.markdownDescription = markdownDescription
                 touched.append("description_md")
             }
-            if let color = command.color { mission.color = color }
-            if let icon = command.icon { mission.icon = icon }
+            if let color = command.color {
+                mission.color = color
+                touched.append("color")
+            }
+            if let icon = command.icon {
+                mission.icon = icon
+                touched.append("icon")
+            }
             if let status = command.status {
                 mission.status = status
                 touched.append("status")
@@ -160,7 +193,8 @@ public struct MissionService: Sendable {
             mission.updatedAt = options.now
             mission.revision += 1
             mission.modifiedByDevice = deviceID
-            try MissionRow(try mission.validated()).update(db)
+            mission = try mission.validated()
+            try MissionRow(mission).update(db)
             try DomainWriter.touchFields(
                 db,
                 objectType: "mission",
@@ -183,6 +217,8 @@ public struct MissionService: Sendable {
                     values: [
                         "title": mission.title,
                         "description_md": mission.markdownDescription,
+                        "color": mission.color,
+                        "icon": mission.icon,
                         "status": mission.status.rawValue
                     ],
                     deviceID: deviceID,
@@ -200,7 +236,7 @@ public struct MissionService: Sendable {
                 objectID: mission.id,
                 before: before,
                 after: mission.revision,
-                summary: touched.joined(separator: ",")
+                summary: "编辑使命：\(mission.title)（\(touched.joined(separator: "、"))）"
             )
             return try Self.result(mission, db: db, committed: true)
         }
@@ -261,7 +297,7 @@ public struct MissionService: Sendable {
                 objectID: mission.id,
                 before: before,
                 after: mission.revision,
-                summary: "completed"
+                summary: "完成使命：\(mission.title)"
             )
             return try Self.result(mission, db: db, committed: true)
         }
@@ -316,7 +352,7 @@ public struct MissionService: Sendable {
                 objectID: mission.id,
                 before: before,
                 after: mission.revision,
-                summary: "tombstone"
+                summary: "删除使命：\(mission.title)"
             )
             return try Self.result(mission, db: db, committed: true)
         }
@@ -355,7 +391,7 @@ public struct MissionService: Sendable {
                 objectID: mission.id,
                 before: before,
                 after: mission.revision,
-                summary: status.rawValue
+                summary: "更新使命状态：\(mission.title)（\(status.rawValue)）"
             )
             return try Self.result(mission, db: db, committed: true)
         }
@@ -396,7 +432,7 @@ public struct MissionService: Sendable {
                 objectID: series.id,
                 before: before,
                 after: series.revision,
-                summary: SQLValue.uuid(missionID)
+                summary: remove ? "从使命移出任务：\(series.title)" : "加入任务：\(series.title)"
             )
             return try Self.result(mission, db: db, committed: true)
         }

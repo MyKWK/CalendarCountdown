@@ -96,7 +96,7 @@ public struct TaskService: Sendable {
                 objectID: series.id,
                 before: nil,
                 after: series.revision,
-                summary: "created \(occurrences.count) occurrences"
+                summary: "新建任务：\(series.title)"
             )
             try DomainWriter.pendingProjection(
                 db,
@@ -268,7 +268,7 @@ public struct TaskService: Sendable {
                 objectID: series.id,
                 before: before,
                 after: series.revision,
-                summary: "archived"
+                summary: "归档任务：\(series.title)"
             )
             return TaskWriteResult(
                 series: series,
@@ -353,7 +353,7 @@ public struct TaskService: Sendable {
                 objectID: seriesID,
                 before: before,
                 after: series.revision,
-                summary: "tombstone"
+                summary: "删除任务：\(series.title)"
             )
             try DomainWriter.pendingProjection(
                 db,
@@ -550,7 +550,10 @@ public struct TaskService: Sendable {
                 objectID: occurrence.id,
                 before: before,
                 after: occurrence.revision,
-                summary: command
+                summary: Self.mutationSummary(
+                    command: command,
+                    title: occurrence.displayTitle(seriesTitle: series.title)
+                )
             )
             try DomainWriter.pendingProjection(
                 db,
@@ -609,6 +612,15 @@ public struct TaskService: Sendable {
         let occurrence = Self.occurrence(from: draft, series: series, now: options.now, deviceID: deviceID)
         try TaskOccurrenceRow(occurrence).insert(db)
         try Self.enqueueOccurrence(db, occurrence: occurrence, operation: "upsert", now: options.now)
+    }
+
+    private static func mutationSummary(command: String, title: String) -> String {
+        switch command {
+        case "tasks.complete": "完成任务：\(title)"
+        case "tasks.reopen": "重新打开任务：\(title)"
+        case "tasks.skip": "跳过任务：\(title)"
+        default: "更新任务：\(title)"
+        }
     }
 
     static func materialize(series: TaskSeries, now: Date) throws -> [PlannedOccurrenceDraft] {
@@ -753,7 +765,7 @@ public struct TaskService: Sendable {
             objectID: occurrence.id,
             before: before,
             after: occurrence.revision,
-            summary: "scope=this"
+            summary: "编辑任务：\(occurrence.displayTitle(seriesTitle: series.title))"
         )
         _ = series
     }
@@ -818,7 +830,7 @@ public struct TaskService: Sendable {
             objectID: series.id,
             before: before,
             after: series.revision,
-            summary: "scope=series"
+            summary: "编辑任务：\(series.title)"
         )
     }
 

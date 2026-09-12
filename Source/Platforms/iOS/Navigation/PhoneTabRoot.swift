@@ -205,6 +205,21 @@ private struct MobileModuleToolbar: ViewModifier {
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button {
+                        switch session.section {
+                        case .missions:
+                            session.showingAddMission = true
+                        case .habits:
+                            session.showingAddHabit = true
+                        case .countdown:
+                            session.showingAddEvent = true
+                        case .tasks:
+                            session.showingAddTask = true
+                        }
+                    } label: {
+                        Label("新建", systemImage: "plus")
+                    }
+                    .accessibilityIdentifier("mobile-add")
+                    Button {
                         session.refresh()
                     } label: {
                         Label("刷新", systemImage: "arrow.clockwise")

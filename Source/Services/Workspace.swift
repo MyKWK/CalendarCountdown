@@ -320,7 +320,9 @@ public struct Workspace: Sendable {
                 WidgetMissionItem(
                     id: $0.mission.id,
                     title: $0.mission.title,
-                    progress: $0.progress.progress
+                    progress: $0.progress.progress,
+                    icon: $0.mission.icon,
+                    color: $0.mission.color
                 )
             },
             habits: habitResults.prefix(8).map {

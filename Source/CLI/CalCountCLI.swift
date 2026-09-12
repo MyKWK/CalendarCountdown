@@ -445,6 +445,7 @@ struct CalCountCLI {
         calcount missions list
         calcount missions create --input mission.json
         calcount missions progress <mission-id>
+        calcount missions delete <mission-id> [--permanent --confirm-id ID]
         calcount habits list
         calcount habits checkin <habit-id> [--value N]
         calcount export --output snapshot.json

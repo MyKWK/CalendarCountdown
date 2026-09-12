@@ -38,7 +38,23 @@ open CalendarCountdown.xcodeproj
 ./Scripts/package-dmg.sh
 ```
 
-1.0.3 产物位于 `dist/CalendarCountdown-1.0.3-macos-universal.dmg`，内含 arm64 和 x86_64 可执行文件。当前构建采用 ad-hoc 签名，不等同于经过 Developer ID 签名和 Apple 公证的发行包。
+1.0.9 产物位于 `dist/CalendarCountdown-1.0.9-macos-universal.dmg`，内含 arm64 和 x86_64 可执行文件。当前构建采用 ad-hoc 签名，不等同于经过 Developer ID 签名和 Apple 公证的发行包。验证和安装只启动 `/Applications/知行.app`，不要打开 DerivedData 里的 `CalendarCountdown.app`。
+
+完成一轮大改动或版本更新后，用下面这条命令走完整本地发布流程：
+
+```bash
+./Scripts/release-local.sh
+```
+
+它会依次完成 macOS 测试、iOS Simulator 编译、Universal DMG、`Releases/<版本>/` 归档和 SHA-256、本机替换安装及结果验证；发布前后还会清理 DerivedData、旧 `dist` DMG 和常见临时文件。
+
+只需要日常快速安装当前芯片版本时，可以使用：
+
+```bash
+./Scripts/install-local.sh
+```
+
+Agent 完成大改动后也会自动补跑完整发布路径。若某次不想安装，设置 `CALCOUNT_SKIP_AUTO_INSTALL=1`，或创建 `.cursor/state/skip-auto-install`。
 
 要运行日历权限和小组件，需要在 Xcode 中为 App、Widget 和 CLI 配置同一个开发团队及 App Group：
 

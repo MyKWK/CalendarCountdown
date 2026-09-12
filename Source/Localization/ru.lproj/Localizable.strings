@@ -63,6 +63,47 @@
 "使用自定义颜色" = "Использовать свой цвет";
 "页面外观" = "Оформление";
 
+"appearance.title" = "Оформление";
+"appearance.design_language" = "Язык дизайна";
+"appearance.fixed_theme_name" = "Титановый серый · Ледяной циан";
+"appearance.fixed_theme_description" = "Motive использует фиксированный холодный серый интерфейс и ледяной циан для интерактивных акцентов. Цвет выбирается отдельно для каждой миссии.";
+"mission.identity" = "Значок и цвет";
+"mission.preview" = "Предпросмотр миссии";
+"mission.color.current" = "Текущий цвет";
+"mission.color.picker" = "Цвет миссии";
+"mission.color.blue" = "Небесно-синий";
+"mission.color.indigo" = "Индиго";
+"mission.color.purple" = "Фиолетовый";
+"mission.color.pink" = "Розовый";
+"mission.color.red" = "Кораллово-красный";
+"mission.color.orange" = "Закатный оранжевый";
+"mission.color.yellow" = "Янтарно-жёлтый";
+"mission.color.green" = "Лиственный зелёный";
+"mission.color.mint" = "Мятный";
+"mission.color.teal" = "Бирюзовый";
+"mission.color.cyan" = "Ледяной циан";
+"mission.color.brown" = "Песочно-коричневый";
+"mission.color.field" = "Цвет";
+"mission.name.field" = "Название";
+"mission.description.field" = "Описание";
+"mission.description.placeholder" = "Описание";
+"mission.goal.field" = "Цель";
+"mission.target_date" = "Целевая дата";
+"mission.due" = "Срок";
+"mission.icon.field" = "Значок";
+"mission.icon.search" = "Поиск значков";
+"mission.icon.picker" = "Значок миссии";
+"mission.create.title" = "Новая миссия";
+"mission.edit.title" = "Изменить миссию";
+"mission.title.placeholder" = "Заголовок";
+"calendar.access.authorize" = "Разрешить доступ к календарю";
+"calendar.access.open_settings" = "Открыть системные настройки";
+"calendar.access.recover_help" = "После включения доступа к Календарю в системных настройках вернитесь в Motive, чтобы загрузить обратный отсчёт.";
+"menubar.missions" = "Миссии";
+"status_item.mission_tooltip" = "%@ · %@";
+"status_item.event_mission_tooltip" = "%@ · %@ · %@ · %@";
+"mission.deleted_fallback" = "Эта миссия больше недоступна";
+
 /* Widget */
 "最近倒数" = "Ближайшие даты";
 "日历倒数" = "Motive";
@@ -106,6 +147,8 @@
 "empty.no_countdown_events" = "Даты для отслеживания не выбраны";
 "empty.no_future_events" = "Нет будущих событий";
 "empty.select_event_description" = "Выберите события в любом календаре Apple, чтобы добавить их в отсчёты.";
+"empty.countdown_unresolved" = "Сохранённые выборы обратного отсчёта пока не сопоставлены с событиями календаря";
+"empty.countdown_unresolved_description" = "Выборы остаются на этом Mac и не удаляются. После восстановления доступа или обновления годовые и повторяющиеся события снова сопоставляются по стабильным идентификаторам.";
 "empty.future_events_description" = "Увеличьте диапазон дат или проверьте, есть ли в этом календаре будущие события.";
 "action.track" = "Отслеживать";
 "action.untrack" = "Не отслеживать";
@@ -142,6 +185,12 @@
 "appearance.description_light" = "Всегда использует светлый фон и тёмный текст.";
 "appearance.description_dark" = "Всегда использует тёмный фон и светлый текст.";
 "appearance.theme_accessibility_label" = "Акцентный цвет: %@";
+"appearance.glass_enabled" = "Включить стеклянный эффект";
+"appearance.glass_transparency" = "Прозрачность";
+"appearance.glass_solid" = "Плотнее";
+"appearance.glass_sheer" = "Прозрачнее";
+"appearance.glass_limit" = "Главное окно использует непрозрачную титаново-серую заливку. Обои рабочего стола больше не просвечивают.";
+"appearance.glass_reduce_transparency" = "В macOS включено «Снижение прозрачности», поэтому главное окно остаётся непрозрачным.";
 
 /* Errors */
 "error.unknown" = "Неизвестная ошибка";
@@ -208,3 +257,20 @@
 "lunar.day.28" = "День 28";
 "lunar.day.29" = "День 29";
 "lunar.day.30" = "День 30";
+
+"status_bar.open_countdown" = "Открыть обратный отсчёт";
+"status_bar.open_missions" = "Открыть миссии";
+"status_bar.open_tasks" = "Открыть задачи";
+"status_bar.countdown.empty" = "Обратный отсчёт, нет отслеживаемых событий";
+"status_bar.mission.empty" = "Миссия не выбрана";
+"status_bar.mission.accessibility" = "Миссия %@, прогресс %@";
+"status_bar.tasks.tooltip" = "Сегодня осталось %lld незавершённых задач";
+"status_bar.tasks.accessibility" = "Задачи на сегодня, осталось %lld";
+"settings.status_bar.title" = "Обзор строки меню";
+"settings.status_bar.countdown" = "Обратный отсчёт";
+"settings.status_bar.mission" = "Прогресс миссии";
+"settings.status_bar.tasks" = "Задачи на сегодня";
+"settings.status_bar.mission_picker" = "Показываемая миссия";
+"settings.status_bar.mission_none" = "Не выбрано";
+"settings.status_bar.mission_empty" = "Пока нет миссий. Создайте одну, чтобы показать её в строке меню.";
+"settings.status_bar.help" = "Все три пункта можно включить сразу; у каждого свой значок в строке меню. Выключение убирает этот значок. После обновления включён только обратный отсчёт.";

@@ -116,6 +116,18 @@ enum DomainCLI {
             try invoke(method: "missions.update", params: MissionUpdateParams(id: id, patch: patch), raw: raw, arguments: arguments, spec: .command([], values: ["--input"], positionals: 3))
         case "complete", "pause", "archive":
             try invoke(method: "missions.\(raw[1])", params: IDParams(id: try uuid(raw, index: 2, usage: "calcount missions \(raw[1]) <mission-id>")), raw: raw, arguments: arguments, spec: .command([], positionals: 3))
+        case "delete":
+            try invoke(
+                method: "missions.delete",
+                params: IDParams(
+                    id: try uuid(raw, index: 2, usage: "calcount missions delete <mission-id> [--permanent --confirm-id ID]"),
+                    confirmID: arguments.value("--confirm-id").flatMap(UUID.init),
+                    permanent: arguments.has("--permanent")
+                ),
+                raw: raw,
+                arguments: arguments,
+                spec: .command(["--permanent"], values: ["--confirm-id"], positionals: 3)
+            )
         case "add-task", "remove-task":
             guard raw.count >= 4 else { throw CLIUsageError.message("用法：calcount missions \(raw[1]) <mission-id> <task-id>") }
             try invoke(

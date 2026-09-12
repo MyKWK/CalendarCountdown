@@ -1,0 +1,20 @@
+---
+description: After a major product iteration, validate all clients, archive a Universal DMG, install it locally, and clean generated residue.
+alwaysApply: true
+---
+
+# 大改动后自动完成本地发布
+
+完成影响产品体验、数据、同步、平台能力、图标或版本号的大改动后，不要只停在测试通过：
+
+1. 直接运行 `Source/Scripts/release-local.sh`。
+2. 流程会自动完成 macOS 测试、iOS Simulator 编译、Universal DMG、版本归档与 SHA-256、本机替换安装和签名/版本验证。
+3. 流程发布前后会删除 DerivedData、旧 `Source/dist` DMG、Finder 与编辑器临时文件，并保留当前 DMG 与 `Releases/` 历史归档。
+
+这会打出 ad-hoc Universal DMG，并把「知行」装到 `/Applications`。正在运行的 App 会被退出，并在需要时重新打开。
+
+跳过条件：用户明确说这次不安装；只改了文档、测试或与 macOS App 无关的文件；或存在 `.cursor/state/skip-auto-install` / `CALCOUNT_SKIP_AUTO_INSTALL=1`。
+
+不要用 Xcode Debug 运行中的产物冒充已安装的发行包。
+
+本轮额外创建的草稿、截图、临时分析和中间决策文件也要在交付前删除；正式文档、发布说明、用户数据和历史归档不属于残留文件。

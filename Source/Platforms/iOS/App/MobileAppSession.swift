@@ -9,6 +9,10 @@ final class MobileAppSession: ObservableObject {
     @Published var section: AppSection = .countdown
     @Published var showingSettings = false
     @Published var showingSyncStatus = false
+    @Published var showingAddEvent = false
+    @Published var showingAddTask = false
+    @Published var showingAddMission = false
+    @Published var showingAddHabit = false
     @Published var route: AppRoute?
 
     let model: AppModel
@@ -30,20 +34,29 @@ final class MobileAppSession: ObservableObject {
 
     func refresh() {
         workspace.reload()
+        route = MissionSelection.resolvedRoute(
+            route,
+            among: workspace.missions.map(\.mission)
+        )
+        Task { await model.recoverAuthorization() }
         Task { await model.refresh() }
         Task { await workspace.reconcileProjections() }
     }
 
     func open(_ url: URL) {
         guard let parsed = AppRoute.parse(url: url) else { return }
-        route = parsed
-        switch parsed {
+        let resolved = MissionSelection.resolvedRoute(
+            parsed,
+            among: workspace.missions.map(\.mission)
+        ) ?? parsed
+        route = resolved
+        switch resolved {
         case .syncStatus:
             showingSyncStatus = true
         case .permissionSettings:
             showingSettings = true
         default:
-            section = parsed.section
+            section = resolved.section
         }
     }
 }

@@ -527,26 +527,30 @@ public struct CountdownSelection: Codable, Identifiable, Equatable, Sendable {
     }
 
     public func matches(_ event: CountdownEvent, calendar: Calendar = .current) -> Bool {
-        let sameCalendar = calendarIdentifier == event.calendarIdentifier || (
-            calendarIdentifier == nil && calendarTitle == event.calendarTitle
-        )
-        guard sameCalendar else { return false }
+        guard belongsToSameCalendar(as: event) else { return false }
 
         switch mode {
         case .exactEvent:
-            if let eventIdentifier, eventIdentifier == event.calendarItemIdentifier { return true }
-            if let externalIdentifier, externalIdentifier == event.externalIdentifier {
-                if let occurrenceDate {
-                    return calendar.isDate(occurrenceDate, inSameDayAs: event.eventDate)
-                }
+            if let eventIdentifier, !eventIdentifier.isEmpty,
+               eventIdentifier == event.calendarItemIdentifier {
                 return true
             }
-            if eventIdentifier == nil, let occurrenceDate {
-                return eventTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-                    == event.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                    && calendar.isDate(occurrenceDate, inSameDayAs: event.eventDate)
+            if let externalIdentifier, !externalIdentifier.isEmpty,
+               externalIdentifier == event.externalIdentifier {
+                return true
             }
-            return false
+            let sameTitle = eventTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                == event.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard sameTitle else { return false }
+            if eventIdentifier == nil, externalIdentifier == nil, let occurrenceDate {
+                if calendar.isDate(occurrenceDate, inSameDayAs: event.eventDate) {
+                    return true
+                }
+                let selected = calendar.dateComponents([.month, .day], from: occurrenceDate)
+                let candidate = calendar.dateComponents([.month, .day], from: event.eventDate)
+                return selected.month == candidate.month && selected.day == candidate.day
+            }
+            return true
         case .annualTitle:
             return eventTitle.trimmingCharacters(in: .whitespacesAndNewlines)
                 == event.title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -558,6 +562,16 @@ public struct CountdownSelection: Codable, Identifiable, Equatable, Sendable {
                 && parsed.host == ProductConstants.managedURLHost
                 && parsed.pathComponents.dropFirst().first?.lowercased() == managedRecordID.uuidString.lowercased()
         }
+    }
+
+    public func belongsToSameCalendar(as event: CountdownEvent) -> Bool {
+        if let calendarIdentifier, !calendarIdentifier.isEmpty {
+            if calendarIdentifier == event.calendarIdentifier {
+                return true
+            }
+            return !calendarTitle.isEmpty && calendarTitle == event.calendarTitle
+        }
+        return !calendarTitle.isEmpty && calendarTitle == event.calendarTitle
     }
 }
 

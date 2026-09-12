@@ -506,11 +506,15 @@ enum CloudSyncApplicator {
         if merged.fields.keys.contains("description_md") {
             local.markdownDescription = merged.fields["description_md"] ?? nil
         }
+        if let color = merged.fields["color"] ?? nil {
+            local.color = MissionColor.canonicalStorageValue(color)
+        }
+        if let icon = merged.fields["icon"] ?? nil {
+            local.icon = MissionSymbolCatalog.resolved(icon)
+        }
         if let status = merged.fields["status"] ?? nil {
             local.status = MissionStatus(rawValue: status) ?? local.status
         }
-        local.color = remote.color
-        local.icon = remote.icon
         local.targetDate = remote.targetDate
         local.updatedAt = max(local.updatedAt, remote.updatedAt)
         local.revision = max(local.revision, remote.revision)
@@ -701,6 +705,8 @@ enum CloudSyncApplicator {
                     values: [
                         "title": mission.title,
                         "description_md": mission.markdownDescription,
+                        "color": mission.color,
+                        "icon": mission.icon,
                         "status": mission.status.rawValue
                     ],
                     deviceID: mission.modifiedByDevice,
@@ -818,6 +824,8 @@ enum CloudSyncApplicator {
         return [
             "title": CloudFieldSnapshot(value: mission.title, hlc: hlc),
             "description_md": CloudFieldSnapshot(value: mission.markdownDescription, hlc: hlc),
+            "color": CloudFieldSnapshot(value: mission.color, hlc: hlc),
+            "icon": CloudFieldSnapshot(value: mission.icon, hlc: hlc),
             "status": CloudFieldSnapshot(value: mission.status.rawValue, hlc: hlc)
         ]
     }
@@ -922,6 +930,8 @@ enum CloudSyncApplicator {
             values: [
                 "title": mission.title,
                 "description_md": mission.markdownDescription,
+                "color": mission.color,
+                "icon": mission.icon,
                 "status": mission.status.rawValue
             ],
             deviceID: mission.modifiedByDevice,

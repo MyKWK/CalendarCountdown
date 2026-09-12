@@ -48,32 +48,67 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func requestAccess() async {
-        isLoading = true
-        defer { isLoading = false }
-        do {
-            _ = try await repository.requestFullAccess()
-            accessState = await repository.authorizationState()
+    func recoverAuthorization() async {
+        let previous = accessState
+        let current = await repository.authorizationState()
+        accessState = current
+        switch CalendarAccessRecovery.transition(from: previous, to: current) {
+        case .gainedAccess:
             DiagnosticLogger.shared.log(
                 .notice,
                 category: .calendar,
-                event: "calendar.access.updated",
-                metadata: ["access_state": accessState.rawValue]
+                event: "calendar.access.recovered",
+                metadata: ["access_state": current.rawValue]
             )
-            if accessState == .fullAccess {
-                await reconcileManagedCountdowns()
+            await reconcileManagedCountdowns()
+            await refresh()
+        case .lostAccess:
+            DiagnosticLogger.shared.log(
+                .warning,
+                category: .calendar,
+                event: "calendar.access.revoked",
+                metadata: ["access_state": current.rawValue]
+            )
+            clearCalendarPresentation()
+        case .unchanged, .stillUnavailable:
+            if CalendarAccessRecovery.shouldLoadCalendarData(current) {
                 await refresh()
             }
-        } catch {
-            DiagnosticLogger.shared.log(
-                .error,
-                category: .calendar,
-                event: "calendar.access.failed",
-                metadata: DiagnosticLogger.errorMetadata(error)
-            )
-            errorMessage = error.localizedDescription
-            accessState = await repository.authorizationState()
         }
+    }
+
+    func requestAccess() async {
+        isLoading = true
+        defer { isLoading = false }
+        let action = CalendarAccessRecovery.action(for: accessState)
+        if action == .openSystemSettings {
+            CalendarPrivacySettings.open()
+        }
+        if action == .requestPrompt {
+            do {
+                _ = try await repository.requestFullAccess()
+            } catch {
+                DiagnosticLogger.shared.log(
+                    .error,
+                    category: .calendar,
+                    event: "calendar.access.failed",
+                    metadata: DiagnosticLogger.errorMetadata(error)
+                )
+                errorMessage = error.localizedDescription
+            }
+        }
+        await recoverAuthorization()
+        if accessState == .fullAccess {
+            await reconcileManagedCountdowns()
+            await refresh()
+        }
+    }
+
+    private func clearCalendarPresentation() {
+        calendars = []
+        events = []
+        selectedEvents = []
+        featuredEvent = nil
     }
 
     func refresh() async {
@@ -335,11 +370,16 @@ final class AppModel: ObservableObject {
             from: selectedEvents,
             selections: selections
         )
-        trackedEventsDocument = try await repository.saveTrackedEventsDocument(
-            visibleEvents: selectedEvents,
-            selections: selections,
-            pinnedSelectionID: displayPreferences.pinnedSelectionID
-        )
+        if CountdownPresentationRecovery.shouldReplaceTrackedDocument(
+            visibleEventCount: selectedEvents.count,
+            selectionCount: selections.count
+        ) {
+            trackedEventsDocument = try await repository.saveTrackedEventsDocument(
+                visibleEvents: selectedEvents,
+                selections: selections,
+                pinnedSelectionID: displayPreferences.pinnedSelectionID
+            )
+        }
         try WidgetSnapshotStore.save(events: selectedEvents)
         WidgetCenter.shared.reloadTimelines(ofKind: ProductConstants.widgetKind)
         DiagnosticLogger.shared.log(

@@ -262,8 +262,25 @@ public struct ApplicationRouter: Sendable {
             )
         case "missions.create":
             return objectSchema(required: ["title"], properties: ["title": ["type": "string"]])
+        case "missions.update":
+            return objectSchema(
+                required: ["id"],
+                properties: [
+                    "id": ["type": "string", "format": "uuid"],
+                    "patch": ["type": "object"]
+                ]
+            )
         case "missions.get", "missions.progress", "missions.complete", "missions.pause", "missions.archive":
             return objectSchema(required: ["id"], properties: ["id": ["type": "string", "format": "uuid"]])
+        case "missions.delete":
+            return objectSchema(
+                required: ["id"],
+                properties: [
+                    "id": ["type": "string", "format": "uuid"],
+                    "permanent": ["type": "boolean"],
+                    "confirmID": ["type": "string", "format": "uuid"]
+                ]
+            )
         case "habits.create":
             return objectSchema(
                 required: ["title", "metric"],

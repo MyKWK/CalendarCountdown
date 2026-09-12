@@ -3,15 +3,6 @@ import CoreGraphics
 import EventKit
 import Foundation
 
-public enum CalendarAccessState: String, Codable, Sendable {
-    case notDetermined
-    case restricted
-    case denied
-    case writeOnly
-    case fullAccess
-    case unknown
-}
-
 public enum EventKitRepositoryError: LocalizedError {
     case calendarAccessRequired(CalendarAccessState)
     case calendarNotFound(identifier: String?, title: String?)
@@ -157,17 +148,25 @@ public actor EventKitRepository {
         let requestedCalendars = calendarIdentifiers.isEmpty
             ? nil
             : store.calendars(for: .event).filter { calendarIdentifiers.contains($0.calendarIdentifier) }
-        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: requestedCalendars)
-
-        return store.events(matching: predicate)
-            .filter { $0.status != .canceled }
-            .map(countdownEvent)
-            .sorted { lhs, rhs in
-                if lhs.eventDate == rhs.eventDate {
-                    return lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
-                }
-                return lhs.eventDate < rhs.eventDate
+        var unique: [String: CountdownEvent] = [:]
+        for slice in EventKitQueryWindow.yearSlices(from: start, to: end, calendar: calendar) {
+            let predicate = store.predicateForEvents(
+                withStart: slice.start,
+                end: slice.end,
+                calendars: requestedCalendars
+            )
+            for ekEvent in store.events(matching: predicate) where ekEvent.status != .canceled {
+                let mapped = countdownEvent(ekEvent)
+                unique[mapped.id] = mapped
             }
+        }
+
+        return unique.values.sorted { lhs, rhs in
+            if lhs.eventDate == rhs.eventDate {
+                return lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
+            }
+            return lhs.eventDate < rhs.eventDate
+        }
     }
 
     public func selectedUpcomingEvents(
