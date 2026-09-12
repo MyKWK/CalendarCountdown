@@ -106,27 +106,87 @@ final class StatusBarCoordinator: NSObject {
 
     private func menu(for kind: StatusBarOverviewKind) -> NSMenu {
         let menu = NSMenu()
-        let title: String
-        let selector: Selector
         switch kind {
         case .countdown:
-            title = AppLocalization.text("status_bar.open_countdown", defaultValue: "打开倒数日")
-            selector = #selector(openCountdown)
+            addCountdownItems(to: menu)
         case .mission:
-            title = AppLocalization.text("status_bar.open_missions", defaultValue: "打开使命清单")
-            selector = #selector(openMissions)
+            addMissionItems(to: menu)
         case .todayTasks:
-            title = AppLocalization.text("status_bar.open_tasks", defaultValue: "打开任务清单")
-            selector = #selector(openTasks)
+            addTodayTaskItems(to: menu)
         }
-        let openItem = NSMenuItem(title: title, action: selector, keyEquivalent: "")
+        menu.addItem(.separator())
+        let openItem = NSMenuItem(title: "打开知行", action: #selector(openMainWindow), keyEquivalent: "")
         openItem.target = self
         menu.addItem(openItem)
         return menu
     }
 
+    private func addCountdownItems(to menu: NSMenu) {
+        let events = model.selectedEvents
+            .sorted { $0.eventDate < $1.eventDate }
+            .prefix(5)
+        guard !events.isEmpty else {
+            menu.addItem(disabledItem("尚无追踪倒数日"))
+            return
+        }
+        for event in events {
+            let item = NSMenuItem(
+                title: "\(event.title)  ·  \(CountdownCalculator.label(until: event.eventDate))",
+                action: #selector(openCountdown),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.toolTip = DateSupport.dateOnlyString(event.eventDate)
+            menu.addItem(item)
+        }
+    }
+
+    private func addMissionItems(to menu: NSMenu) {
+        guard let selectedID = overview.selectedMissionID,
+              let result = workspace.missions.first(where: { $0.mission.id == selectedID && $0.mission.deletedAt == nil }) else {
+            menu.addItem(disabledItem("尚未选择使命"))
+            return
+        }
+        menu.addItem(disabledItem(result.mission.title))
+        let progress = result.progress.displayPercent.map { String(format: "成果进度 %.0f%%", $0) } ?? "尚未规划"
+        menu.addItem(disabledItem(progress))
+        if let summary = result.mission.markdownDescription?
+            .split(whereSeparator: \.isNewline)
+            .joined(separator: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines), !summary.isEmpty {
+            menu.addItem(disabledItem(summary))
+        }
+    }
+
+    private func addTodayTaskItems(to menu: NSMenu) {
+        let tasks = workspace.todayTasks.filter { $0.occurrence.status == .open }
+        guard !tasks.isEmpty else {
+            menu.addItem(disabledItem("今天没有待办任务"))
+            return
+        }
+        for task in tasks {
+            let item = NSMenuItem(title: task.title, action: #selector(completeTodayTask(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = task.occurrence.id
+            item.image = NSImage(systemSymbolName: "circle", accessibilityDescription: "完成任务")
+            menu.addItem(item)
+        }
+    }
+
+    private func disabledItem(_ title: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        item.attributedTitle = NSAttributedString(
+            string: title,
+            attributes: [.foregroundColor: NSColor.secondaryLabelColor]
+        )
+        item.toolTip = title
+        return item
+    }
+
     private func update(_ kind: StatusBarOverviewKind) {
         guard let button = items[kind]?.button else { return }
+        items[kind]?.menu = menu(for: kind)
         switch kind {
         case .countdown:
             button.image = StatusItemArtwork.countdownIcon
@@ -224,6 +284,19 @@ final class StatusBarCoordinator: NSObject {
 
     @objc private func openTasks() {
         onOpen(.tasks)
+    }
+
+    @objc private func openMainWindow() {
+        onOpen(.countdown)
+    }
+
+    @objc private func completeTodayTask(_ sender: NSMenuItem) {
+        guard let occurrenceID = sender.representedObject as? UUID,
+              let task = workspace.todayTasks.first(where: { $0.occurrence.id == occurrenceID && $0.occurrence.status == .open }) else {
+            return
+        }
+        workspace.complete(task)
+        refresh()
     }
 }
 #endif

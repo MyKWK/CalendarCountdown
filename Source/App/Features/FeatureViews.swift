@@ -351,7 +351,7 @@ struct MissionCardView: View {
     @State private var editingTask: TaskOccurrenceView?
     @State private var confirmCompletedAdd = false
     @State private var showingActivity = false
-    @State private var isCollapsed = false
+    @State private var isCollapsed = true
 
     private var linkedTasks: [TaskOccurrenceView] {
         workspace.taskViews(forMissionID: item.mission.id)
@@ -379,18 +379,6 @@ struct MissionCardView: View {
                     .background(Circle().fill(missionTint))
                     .accessibilityHidden(true)
                 Text(item.mission.title).font(.title3.weight(.semibold))
-                if !compact {
-                    Button {
-                        isCollapsed.toggle()
-                        UserDefaults.standard.set(isCollapsed, forKey: collapseStorageKey)
-                    } label: {
-                        Image(systemName: isCollapsed ? "chevron.down.circle" : "chevron.up.circle")
-                    }
-                    .buttonStyle(.plain)
-                    .help(isCollapsed ? "展开使命详情" : "折叠使命详情")
-                    .accessibilityLabel(isCollapsed ? "展开使命详情" : "折叠使命详情")
-                    .appActionFocusEffectDisabled()
-                }
                 Spacer()
                 if item.mission.status != .active {
                     Label(missionStatusLabel, systemImage: missionStatusSymbol)
@@ -520,8 +508,15 @@ struct MissionCardView: View {
         .contextMenu {
             missionManagementButtons
         }
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) {
+            isCollapsed.toggle()
+            UserDefaults.standard.set(isCollapsed, forKey: collapseStorageKey)
+        }
         .onAppear {
-            isCollapsed = UserDefaults.standard.bool(forKey: collapseStorageKey)
+            if UserDefaults.standard.object(forKey: collapseStorageKey) != nil {
+                isCollapsed = UserDefaults.standard.bool(forKey: collapseStorageKey)
+            }
         }
         .sheet(isPresented: $showingEditor) {
             MissionEditorSheet(mission: item.mission) { command in
@@ -583,12 +578,6 @@ struct MissionCardView: View {
     private var missionManagementButtons: some View {
         Button("编辑使命") { showingEditor = true }
         Button("使命历程") { showingActivity = true }
-        if !compact {
-            Button(isCollapsed ? "展开详情" : "折叠详情") {
-                isCollapsed.toggle()
-                UserDefaults.standard.set(isCollapsed, forKey: collapseStorageKey)
-            }
-        }
         if item.mission.status != .archived {
             Button("添加任务") { requestAddTask() }
             if !workspace.unassignedTaskSeries.isEmpty {
