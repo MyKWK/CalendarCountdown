@@ -15,6 +15,9 @@ final class WorkspaceModel: ObservableObject {
     @Published var isLoading = false
 
     @Published private(set) var cloudMode: CloudSyncMode = .localOnly
+    @Published private(set) var cloudStatus: CloudSyncStatus?
+    @Published var isCloudSyncing = false
+    @Published var cloudErrorMessage: String?
     @Published private(set) var workspace: Workspace?
     var projectionRuntime: AppleProjectionRuntime?
     var onEnableCloudKit: (() -> Void)?
@@ -43,6 +46,7 @@ final class WorkspaceModel: ObservableObject {
             missions = try workspace.missions.list().filter { $0.mission.status != .archived }
             habits = try workspace.habits.list()
             cloudMode = (try? workspace.cloud.mode()) ?? .localOnly
+            cloudStatus = try? workspace.cloud.status()
             if let snapshot = try? workspace.widgetSnapshotV2() {
                 try? WidgetSnapshotV2.save(snapshot)
             }
@@ -325,13 +329,45 @@ final class WorkspaceModel: ObservableObject {
         }
     }
 
+    var cloudPresentation: CloudSyncPresentation {
+        CloudSyncPresentation.resolve(
+            mode: cloudMode,
+            isSyncing: isCloudSyncing,
+            hasError: cloudErrorMessage != nil,
+            status: cloudStatus
+        )
+    }
+
     func setCloudMode(_ enabled: Bool) {
+        cloudErrorMessage = nil
+        isCloudSyncing = enabled
         perform(enabled ? "已开启 iCloud 同步" : "已关闭 iCloud 同步") {
             try $0.cloud.setMode(enabled ? .iCloud : .localOnly)
         }
         if enabled, cloudMode == .iCloud {
             onEnableCloudKit?()
+        } else {
+            isCloudSyncing = false
         }
+        if enabled, cloudMode != .iCloud {
+            isCloudSyncing = false
+            cloudErrorMessage = errorMessage
+        }
+    }
+
+    func markCloudSyncFinished(error: String?) {
+        isCloudSyncing = false
+        if let error {
+            cloudErrorMessage = error
+            errorMessage = error
+            statusMessage = nil
+        } else if cloudErrorMessage != nil, errorMessage == cloudErrorMessage {
+            errorMessage = nil
+            cloudErrorMessage = nil
+        } else {
+            cloudErrorMessage = nil
+        }
+        reload()
     }
 
     func reconcileProjections() async {

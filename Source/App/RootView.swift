@@ -16,89 +16,84 @@ struct RootView: View {
     @State private var showingAddTask = false
     @State private var showingAddMission = false
     @State private var showingAddHabit = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var currentSection: AppSection { selection ?? .countdown }
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $selection) {
-                Section {
-                    ForEach(AppSection.allCases) { section in
-                        Label(section.title, systemImage: section.systemImage)
-                            .badge(badge(for: section))
-                            .tag(section)
-                    }
-                }
-            }
-            .navigationTitle("日历倒数")
-            .navigationSplitViewColumnWidth(min: 220, ideal: 270)
-            .appGlassScrollBackground()
+            sidebar
+                .navigationSplitViewColumnWidth(
+                    min: ZhixingMetrics.sidebarMinWidth,
+                    ideal: ZhixingMetrics.sidebarIdealWidth,
+                    max: ZhixingMetrics.sidebarMaxWidth
+                )
         } detail: {
             detail
-                .appGlassScrollBackground()
+                .background(ZhixingColor.contentBackground)
         }
         .toolbar {
-            ToolbarItemGroup {
-                Button {
-                    showingImporter = true
-                } label: {
-                    Label("导入", systemImage: "square.and.arrow.down")
+            ToolbarItem(placement: .primaryAction) {
+                PrimaryToolbarAction(
+                    title: "新建",
+                    systemImage: "plus",
+                    help: currentSection.createHelp,
+                    identifier: currentSection == .missions ? "mission-create-toolbar" : "mac-create-button"
+                ) {
+                    presentCreate(for: currentSection)
                 }
-                .disabled(model.accessState != .fullAccess)
-                .appActionFocusEffectDisabled()
+            }
 
-                Button {
-                    showingExporter = true
-                } label: {
-                    Label("导出追踪清单", systemImage: "square.and.arrow.up")
-                }
-                .disabled(model.trackedEventsDocument.events.isEmpty)
-                .appActionFocusEffectDisabled()
-
-                Button {
-                    switch selection {
-                    case .missions:
-                        showingAddMission = true
-                    case .habits:
-                        showingAddHabit = true
-                    case .countdown:
-                        showingAddEvent = true
-                    case .tasks, .none:
-                        showingAddTask = true
+            ToolbarItem {
+                Menu {
+                    Button {
+                        showingImporter = true
+                    } label: {
+                        Label("导入", systemImage: "square.and.arrow.down")
                     }
-                } label: {
-                    Label("新建", systemImage: "plus")
-                }
-                .appActionFocusEffectDisabled()
+                    .disabled(model.accessState != .fullAccess)
 
-                Button {
-                    Task { await model.refresh() }
-                    workspace.reload()
-                    Task { await workspace.reconcileProjections() }
-                } label: {
-                    Label("刷新", systemImage: "arrow.clockwise")
-                }
-                .appActionFocusEffectDisabled()
+                    Button {
+                        showingExporter = true
+                    } label: {
+                        Label("导出追踪清单", systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(model.trackedEventsDocument.events.isEmpty)
 
-                Menu("系统投影") {
+                    Button {
+                        Task { await model.refresh() }
+                        workspace.reload()
+                        Task { await workspace.reconcileProjections() }
+                    } label: {
+                        Label("刷新", systemImage: "arrow.clockwise")
+                    }
+
+                    Divider()
+
                     Toggle(isOn: Binding(
                         get: { (try? workspace.workspace?.projectionSettings().projectTasks) ?? false },
                         set: { workspace.setProjectTasks($0) }
                     )) {
-                        Text("任务")
+                        Text("投影任务")
                     }
                     Toggle(isOn: Binding(
                         get: { (try? workspace.workspace?.projectionSettings().projectHabits) ?? false },
                         set: { workspace.setProjectHabits($0) }
                     )) {
-                        Text("习惯")
+                        Text("投影习惯")
                     }
                     Toggle(isOn: Binding(
                         get: { (try? workspace.workspace?.projectionSettings().projectMissions) ?? false },
                         set: { workspace.setProjectMissions($0) }
                     )) {
-                        Text("使命")
+                        Text("投影使命")
                     }
+                } label: {
+                    Label("整理", systemImage: "ellipsis.circle")
                 }
-
+                .help("导入、导出、刷新与系统投影")
+                .accessibilityLabel("整理")
+                .appActionFocusEffectDisabled()
             }
 
             ToolbarItem {
@@ -113,6 +108,7 @@ struct RootView: View {
                 }
                 .appActionFocusEffectDisabled()
                 .accessibilityIdentifier("mac-settings-button")
+                .accessibilityLabel("设置")
                 .help("打开设置")
             }
         }
@@ -187,11 +183,8 @@ struct RootView: View {
         }
         .overlay(alignment: .bottom) {
             if let message = workspace.statusMessage ?? model.statusMessage {
-                Text(message)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(.regularMaterial, in: Capsule())
-                    .padding()
+                FloatingStatusBanner(message: message)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
                     .task {
                         try? await Task.sleep(for: .seconds(3))
                         if workspace.statusMessage == message { workspace.statusMessage = nil }
@@ -199,23 +192,89 @@ struct RootView: View {
                     }
             }
         }
+        .animation(ZhixingMotion.standard(reduceMotion: reduceMotion), value: workspace.statusMessage)
+        .animation(ZhixingMotion.standard(reduceMotion: reduceMotion), value: model.statusMessage)
         .onAppear { workspace.reload() }
         .onReceive(shortcuts.$request.compactMap { $0 }) { request in
             performShortcut(request.action)
         }
     }
 
+    private var sidebar: some View {
+        List(selection: $selection) {
+            Section {
+                ForEach(AppSection.allCases) { section in
+                    SidebarItemRow(
+                        section: section,
+                        count: badge(for: section),
+                        isSelected: currentSection == section
+                    )
+                    .tag(section)
+                    .listRowInsets(
+                        EdgeInsets(
+                            top: ZhixingMetrics.space4,
+                            leading: ZhixingMetrics.space8,
+                            bottom: ZhixingMetrics.space4,
+                            trailing: ZhixingMetrics.space8
+                        )
+                    )
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(SidebarSelectionBackground(isSelected: currentSection == section))
+                }
+            }
+        }
+        .listStyle(.sidebar)
+        .scrollContentBackground(.hidden)
+        .navigationTitle(AppLocalization.text("app.name", defaultValue: "知行"))
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            sidebarSyncSummary
+        }
+        .background(ZhixingColor.contentBackground)
+        .frame(minWidth: ZhixingMetrics.sidebarMinWidth)
+    }
+
+    private var sidebarSyncSummary: some View {
+        let presentation = workspace.cloudPresentation
+        return HStack(spacing: 6) {
+            Image(systemName: presentation.systemImage)
+                .font(.caption)
+            Text(presentation.title)
+                .font(.caption)
+            Spacer()
+        }
+        .foregroundStyle(.tertiary)
+        .padding(.horizontal, ZhixingMetrics.space16)
+        .padding(.vertical, ZhixingMetrics.space12)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("同步状态 \(presentation.accessibilityValue)")
+        .accessibilityAddTraits(.updatesFrequently)
+    }
+
     @ViewBuilder
     private var detail: some View {
-        switch selection ?? .countdown {
+        switch currentSection {
         case .countdown:
-            CountdownModuleView(model: model, searchText: searchText, selectedCalendarID: nil)
+            CountdownModuleView(
+                model: model,
+                searchText: searchText,
+                selectedCalendarID: nil,
+                onCreate: { showingAddEvent = true }
+            )
         case .tasks:
-            TaskListView(title: AppSection.tasks.title, views: filtered(workspace.taskViews), workspace: workspace)
+            TaskListView(
+                title: AppSection.tasks.title,
+                views: filtered(workspace.taskViews),
+                workspace: workspace,
+                onCreate: { showingAddTask = true }
+            )
         case .missions:
             MissionListView(workspace: workspace, searchText: searchText)
         case .habits:
-            HabitListView(workspace: workspace, searchText: searchText)
+            HabitListView(
+                workspace: workspace,
+                searchText: searchText,
+                onCreate: { showingAddHabit = true }
+            )
         }
     }
 
@@ -242,6 +301,19 @@ struct RootView: View {
         }
     }
 
+    private func presentCreate(for section: AppSection) {
+        switch section {
+        case .countdown:
+            showingAddEvent = true
+        case .tasks:
+            showingAddTask = true
+        case .missions:
+            showingAddMission = true
+        case .habits:
+            showingAddHabit = true
+        }
+    }
+
     private func performShortcut(_ action: AppShortcutAction) {
         switch action {
         case .addCountdown:
@@ -260,11 +332,15 @@ struct RootView: View {
             selection = section
         }
     }
-
 }
 
 private struct CloudSyncToolbarButton: View {
     @ObservedObject var workspace: WorkspaceModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var presentation: CloudSyncPresentation {
+        workspace.cloudPresentation
+    }
 
     private var isEnabled: Bool {
         workspace.cloudMode == .iCloud
@@ -272,50 +348,46 @@ private struct CloudSyncToolbarButton: View {
 
     var body: some View {
         Button {
-            withAnimation(.snappy(duration: 0.2)) {
+            withAnimation(ZhixingMotion.standard(reduceMotion: reduceMotion)) {
                 workspace.setCloudMode(!isEnabled)
             }
         } label: {
-            HStack(spacing: 7) {
-                Image(systemName: isEnabled ? "icloud.fill" : "icloud")
-                    .symbolRenderingMode(.hierarchical)
-                    .font(.system(size: 15, weight: .semibold))
-
-                VStack(alignment: .leading, spacing: 0) {
-                    Text("iCloud 同步")
-                        .font(.callout.weight(.medium))
-                    Text(isEnabled ? "已开启" : "仅本机")
-                        .font(.caption2)
-                        .foregroundStyle(isEnabled ? Color.accentColor : .secondary)
-                }
-
-                Image(systemName: isEnabled ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(isEnabled ? Color.accentColor : .secondary)
-                    .contentTransition(.symbolEffect(.replace))
-            }
-            .padding(.horizontal, 9)
-            .padding(.vertical, 4)
-            .background(backgroundColor, in: Capsule())
-            .overlay {
-                Capsule()
-                    .strokeBorder(borderColor, lineWidth: 1)
-            }
+            StatusCapsule(
+                title: presentation.title,
+                systemImage: presentation.systemImage,
+                tint: capsuleTint,
+                emphasized: isEnabled
+            )
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .appActionFocusEffectDisabled()
         .accessibilityIdentifier("mac-icloud-sync-control")
         .accessibilityLabel("iCloud 同步")
-        .accessibilityValue(isEnabled ? "已开启" : "仅本机")
-        .help(isEnabled ? "iCloud 同步已开启；点按切换为仅本机" : "当前仅保存在本机；点按开启 iCloud 同步")
+        .accessibilityValue(presentation.accessibilityValue)
+        .help(helpText)
     }
 
-    private var backgroundColor: Color {
-        isEnabled ? Color.accentColor.opacity(0.13) : Color.secondary.opacity(0.08)
+    private var capsuleTint: Color {
+        switch presentation {
+        case .failed: .orange
+        case .synced, .syncing, .enabled: .accentColor
+        case .localOnly: .secondary
+        }
     }
 
-    private var borderColor: Color {
-        isEnabled ? Color.accentColor.opacity(0.48) : Color.secondary.opacity(0.2)
+    private var helpText: String {
+        switch presentation {
+        case .localOnly:
+            "当前仅保存在本机；点按开启 iCloud 同步"
+        case .enabled:
+            "iCloud 已开启，待首次同步；点按切换为仅本机"
+        case .syncing:
+            "正在与 iCloud 同步；点按切换为仅本机"
+        case .synced:
+            "iCloud 已同步；点按切换为仅本机"
+        case .failed:
+            "iCloud 同步失败，数据已回到仅本机或等待重试；点按切换"
+        }
     }
 }

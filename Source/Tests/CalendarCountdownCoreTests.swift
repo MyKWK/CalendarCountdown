@@ -3,7 +3,224 @@ import XCTest
 
 final class CalendarCountdownCoreTests: XCTestCase {
     func testReleaseVersion() {
-        XCTAssertEqual(ProductConstants.version, "1.0.10")
+        XCTAssertEqual(ProductConstants.version, "1.0.11")
+    }
+
+    func testZhixingMetricsStayOnACoherentScale() {
+        XCTAssertEqual(ZhixingMetrics.space4, 4)
+        XCTAssertEqual(ZhixingMetrics.space8, 8)
+        XCTAssertEqual(ZhixingMetrics.space12, 12)
+        XCTAssertEqual(ZhixingMetrics.space16, 16)
+        XCTAssertEqual(ZhixingMetrics.space20, 20)
+        XCTAssertEqual(ZhixingMetrics.space24, 24)
+        XCTAssertEqual(ZhixingMetrics.space32, 32)
+        XCTAssertEqual(ZhixingMetrics.pageInset, 20)
+        XCTAssertEqual(ZhixingMetrics.sidebarMinWidth, 220)
+        XCTAssertEqual(ZhixingMetrics.sidebarIdealWidth, 236)
+        XCTAssertEqual(ZhixingMetrics.sidebarMaxWidth, 248)
+        XCTAssertEqual(ZhixingMetrics.cornerSmall, 8)
+        XCTAssertEqual(ZhixingMetrics.cornerSheet, 12)
+        XCTAssertEqual(ZhixingMetrics.cornerContainer, 16)
+        XCTAssertLessThanOrEqual(ZhixingMetrics.identityMarkWidth, 4)
+        XCTAssertGreaterThanOrEqual(ZhixingMetrics.identityMarkWidth, 3)
+        XCTAssertEqual(ZhixingMetrics.completionRingSize, 21)
+        XCTAssertLessThanOrEqual(ZhixingMetrics.accentFillMaxOpacity, 0.15)
+        XCTAssertEqual(MissionEditorLayout.cardCornerRadius, ZhixingMetrics.cornerSheet)
+        XCTAssertEqual(MissionEditorLayout.horizontalInset, ZhixingMetrics.pageInset)
+    }
+
+    func testCloudSyncPresentationCoversLocalSyncingSyncedAndFailed() {
+        XCTAssertEqual(
+            CloudSyncPresentation.resolve(
+                mode: .localOnly,
+                isSyncing: false,
+                hasError: false,
+                status: nil
+            ),
+            .localOnly
+        )
+        XCTAssertEqual(
+            CloudSyncPresentation.resolve(
+                mode: .iCloud,
+                isSyncing: false,
+                hasError: false,
+                status: nil
+            ),
+            .enabled
+        )
+        XCTAssertEqual(
+            CloudSyncPresentation.resolve(
+                mode: .iCloud,
+                isSyncing: false,
+                hasError: false,
+                status: CloudSyncStatus(mode: .iCloud, pendingOutbox: 0, openConflicts: 0)
+            ),
+            .enabled
+        )
+        XCTAssertEqual(
+            CloudSyncPresentation.resolve(
+                mode: .iCloud,
+                isSyncing: true,
+                hasError: false,
+                status: nil
+            ),
+            .syncing
+        )
+        XCTAssertEqual(
+            CloudSyncPresentation.resolve(
+                mode: .iCloud,
+                isSyncing: true,
+                hasError: false,
+                status: CloudSyncStatus(
+                    mode: .iCloud,
+                    pendingOutbox: 0,
+                    openConflicts: 0,
+                    lastFetchAt: Date()
+                )
+            ),
+            .syncing
+        )
+        XCTAssertEqual(
+            CloudSyncPresentation.resolve(
+                mode: .iCloud,
+                isSyncing: false,
+                hasError: true,
+                status: CloudSyncStatus(mode: .iCloud, pendingOutbox: 0, openConflicts: 0)
+            ),
+            .failed
+        )
+        XCTAssertEqual(
+            CloudSyncPresentation.resolve(
+                mode: .iCloud,
+                isSyncing: false,
+                hasError: false,
+                status: CloudSyncStatus(
+                    mode: .iCloud,
+                    pendingOutbox: 0,
+                    openConflicts: 0,
+                    lastFetchAt: Date()
+                )
+            ),
+            .synced
+        )
+        XCTAssertEqual(
+            CloudSyncPresentation.resolve(
+                mode: .iCloud,
+                isSyncing: false,
+                hasError: false,
+                status: CloudSyncStatus(
+                    mode: .iCloud,
+                    account: .noAccount,
+                    pendingOutbox: 0,
+                    openConflicts: 0,
+                    lastFetchAt: Date()
+                )
+            ),
+            .failed
+        )
+        XCTAssertEqual(
+            CloudSyncPresentation.resolve(
+                mode: .iCloud,
+                isSyncing: false,
+                hasError: false,
+                status: CloudSyncStatus(
+                    mode: .iCloud,
+                    pendingOutbox: 0,
+                    openConflicts: 0,
+                    lastSendAt: Date()
+                )
+            ),
+            .synced
+        )
+        XCTAssertEqual(CloudSyncPresentation.localOnly.title, "仅本机")
+        XCTAssertEqual(CloudSyncPresentation.enabled.title, "已开启")
+        XCTAssertEqual(CloudSyncPresentation.enabled.accessibilityValue, "已开启，待首次同步")
+        XCTAssertEqual(CloudSyncPresentation.syncing.title, "同步中")
+        XCTAssertEqual(CloudSyncPresentation.synced.title, "已同步")
+        XCTAssertEqual(CloudSyncPresentation.failed.title, "失败")
+    }
+
+    func testAppSectionCreateActionsStayInsideFourPrimaryModules() {
+        XCTAssertEqual(AppSection.countdown.createActionTitle, "新建倒数")
+        XCTAssertEqual(AppSection.tasks.createActionTitle, "新建任务")
+        XCTAssertEqual(AppSection.missions.createActionTitle, "新建使命")
+        XCTAssertEqual(AppSection.habits.createActionTitle, "新建打卡")
+        XCTAssertEqual(AppSection.allCases.count, 4)
+    }
+
+    func testZhixingIdentityColorIsStableForTheSameUUID() {
+        let id = UUID(uuidString: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")!
+        XCTAssertEqual(ZhixingIdentity.color(for: id), ZhixingIdentity.color(for: id))
+        XCTAssertNotEqual(
+            ZhixingIdentity.color(for: id),
+            ZhixingIdentity.color(for: UUID(uuidString: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")!)
+        )
+    }
+
+    func testCompletedTrailKeepsAllItemsAndPutsOpenTasksFirst() {
+        let items = [false, true, false, true, true]
+        let partitioned = CompletedTrailPresentation.partition(items) { $0 }
+        XCTAssertEqual(partitioned.open, [false, false])
+        XCTAssertEqual(partitioned.completed, [true, true, true])
+        XCTAssertEqual(partitioned.open.count + partitioned.completed.count, items.count)
+    }
+
+    func testCompletedTrailRestingFadeAlmostVanishesByFourthCard() {
+        let first = CompletedTrailPresentation.resting(index: 0, highContrast: false)
+        let fourth = CompletedTrailPresentation.resting(index: 3, highContrast: false)
+        let fifth = CompletedTrailPresentation.resting(index: 4, highContrast: false)
+        XCTAssertGreaterThan(first.opacity, 0.7)
+        XCTAssertGreaterThan(first.opacity, fourth.opacity)
+        XCTAssertGreaterThan(fourth.opacity, fifth.opacity)
+        XCTAssertLessThan(fifth.opacity, 0.16)
+        XCTAssertGreaterThan(fifth.opacity, 0)
+        XCTAssertGreaterThan(first.saturation, fifth.saturation)
+        XCTAssertLessThan(first.veil, fifth.veil)
+    }
+
+    func testCompletedTrailRestoresWhenScrolledIntoReadingFocus() {
+        let buried = CompletedTrailPresentation.resolve(
+            index: 6,
+            normalizedY: 0.92,
+            isHighlighted: false,
+            highContrast: false
+        )
+        let inFocus = CompletedTrailPresentation.resolve(
+            index: 6,
+            normalizedY: 0.30,
+            isHighlighted: false,
+            highContrast: false
+        )
+        XCTAssertGreaterThan(inFocus.opacity, buried.opacity)
+        XCTAssertGreaterThan(inFocus.opacity, 0.85)
+        XCTAssertEqual(inFocus.saturation, 1, accuracy: 0.001)
+        XCTAssertEqual(inFocus.veil, 0, accuracy: 0.001)
+        XCTAssertEqual(CompletedTrailPresentation.readingFocus(normalizedY: 0.30), 1, accuracy: 0.001)
+        XCTAssertEqual(CompletedTrailPresentation.readingFocus(normalizedY: 0.92), 0, accuracy: 0.001)
+    }
+
+    func testCompletedTrailHighlightAndHighContrastRaiseReadability() {
+        let buried = CompletedTrailPresentation.resolve(
+            index: 5,
+            normalizedY: 0.95,
+            isHighlighted: false,
+            highContrast: false
+        )
+        let highlighted = CompletedTrailPresentation.resolve(
+            index: 5,
+            normalizedY: 0.95,
+            isHighlighted: true,
+            highContrast: false
+        )
+        let highContrast = CompletedTrailPresentation.resolve(
+            index: 8,
+            normalizedY: 0.95,
+            isHighlighted: false,
+            highContrast: true
+        )
+        XCTAssertGreaterThan(highlighted.opacity, 0.9)
+        XCTAssertGreaterThan(highContrast.opacity, buried.opacity)
+        XCTAssertGreaterThanOrEqual(highContrast.opacity, CompletedTrailPresentation.highContrastFloor)
     }
 
     func testStatusBarOverviewMigratesLegacyUsersToCountdownOnly() {
@@ -755,6 +972,7 @@ final class CalendarCountdownCoreTests: XCTestCase {
         lockB.release(pid: pid)
     }
 
+    #if os(macOS)
     func testFileSingleInstanceLockRecoversStaleLock() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("single-instance-stale-\(UUID().uuidString)", isDirectory: true)
@@ -785,6 +1003,7 @@ final class CalendarCountdownCoreTests: XCTestCase {
         lock.release(pid: live.pid)
         XCTAssertNil(lock.inspect())
     }
+    #endif
 
     func testSingleInstanceGateOfficialPreemptsDerivedHolderButYieldsToLockOwnerOtherwise() {
         let official = AppInstanceSnapshot(

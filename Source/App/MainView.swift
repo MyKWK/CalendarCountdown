@@ -109,11 +109,7 @@ struct MainView: View {
         }
         .overlay(alignment: .bottom) {
             if let message = model.statusMessage {
-                Text(message)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(.regularMaterial, in: Capsule())
-                    .padding()
+                FloatingStatusBanner(message: message)
                     .task {
                         try? await Task.sleep(for: .seconds(3))
                         if model.statusMessage == message { model.statusMessage = nil }
@@ -331,18 +327,23 @@ struct EventRow: View {
     let event: CountdownEvent
     let isSelected: Bool
     let isPinned: Bool
+    var featured: Bool = false
     let onSelectExact: () -> Void
     let onSelectAnnual: () -> Void
     let onTogglePin: () -> Void
     let onUnselect: () -> Void
 
+    private var remaining: Int {
+        CountdownCalculator.daysRemaining(until: event.eventDate)
+    }
+
     var body: some View {
-        HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 2)
-                .fill(Color(hex: event.colorHex))
-                .frame(width: 5, height: 42)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(event.title).font(.headline)
+        HStack(alignment: featured ? .center : .top, spacing: ZhixingMetrics.space12) {
+            IdentityMark(color: Color(hex: event.colorHex), height: featured ? 56 : 36)
+            VStack(alignment: .leading, spacing: featured ? 6 : 4) {
+                Text(event.title)
+                    .font(featured ? .title3.weight(.semibold) : .headline)
+                    .foregroundStyle(.primary)
                 HStack(spacing: 6) {
                     Text(event.eventDate, format: .dateTime.year().month().day())
                     Text("·")
@@ -351,19 +352,22 @@ struct EventRow: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
-            Spacer()
-            Text(CountdownCalculator.label(until: event.eventDate))
-                .font(.headline.monospacedDigit())
+            Spacer(minLength: ZhixingMetrics.space8)
+            Text(numericLabel)
+                .font(featured ? .system(size: 28, weight: .semibold, design: .rounded).monospacedDigit() : .headline.monospacedDigit())
+                .foregroundStyle(remaining < 0 ? Color.orange : Color.primary)
+                .accessibilityLabel(CountdownCalculator.label(until: event.eventDate))
             Button(action: onTogglePin) {
                 Image(systemName: isPinned ? "star.fill" : "star")
-                    .font(.title3)
-                    .foregroundStyle(isPinned ? .yellow : .secondary)
-                    .frame(width: 26, height: 26)
+                    .font(.body)
+                    .foregroundStyle(isPinned ? Color.yellow : Color.secondary)
+                    .frame(width: 24, height: 24)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .disabled(!isSelected)
             .appActionFocusEffectDisabled()
+            .zhixingHoverOpacity(isPersistent: isPinned)
             .help(
                 isSelected
                     ? (isPinned
@@ -384,12 +388,27 @@ struct EventRow: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .foregroundStyle(.secondary)
+                    .frame(width: 22, height: 22)
+                    .contentShape(Rectangle())
             }
             .menuStyle(.borderlessButton)
             .appActionFocusEffectDisabled()
+            .zhixingHoverOpacity(isPersistent: false)
             .fixedSize()
+            .accessibilityLabel("更多")
         }
-        .padding(.vertical, 5)
+        .padding(.vertical, featured ? ZhixingMetrics.space8 : ZhixingMetrics.space4)
+    }
+
+    private var numericLabel: String {
+        switch remaining {
+        case ..<0:
+            "\(-remaining)"
+        case 0:
+            "今"
+        default:
+            "\(remaining)"
+        }
     }
 }
 
@@ -397,6 +416,7 @@ struct CountdownModuleView: View {
     @ObservedObject var model: AppModel
     var searchText: String
     var selectedCalendarID: String?
+    var onCreate: (() -> Void)? = nil
 
     var body: some View {
         Group {
@@ -409,27 +429,68 @@ struct CountdownModuleView: View {
                     CalendarAccessActions(model: model)
                 }
             } else if displayedEvents.isEmpty {
-                ContentUnavailableView(
-                    countdownEmptyTitle,
-                    systemImage: "calendar",
-                    description: Text(countdownEmptyDescription)
+                ZhixingEmptyState(
+                    systemImage: AppSection.countdown.emptySymbol,
+                    title: countdownEmptyTitle,
+                    description: countdownEmptyDescription,
+                    actionTitle: onCreate == nil ? nil : AppSection.countdown.createActionTitle,
+                    actionIdentifier: "countdown-create",
+                    action: onCreate
                 )
             } else {
-                List(displayedEvents) { event in
-                    EventRow(
-                        event: event,
-                        isSelected: model.isSelected(event),
-                        isPinned: model.isPinned(event),
-                        onSelectExact: { Task { await model.select(event, mode: .exactEvent) } },
-                        onSelectAnnual: { Task { await model.select(event, mode: .annualTitle) } },
-                        onTogglePin: { Task { await model.togglePin(event) } },
-                        onUnselect: { Task { await model.unselect(event) } }
-                    )
+                List {
+                    Section {
+                        ModuleHeader(
+                            title: selectedTitle,
+                            subtitle: AppSection.countdown.subtitle,
+                            summary: "\(displayedEvents.count) 个倒数"
+                        )
+                        .zhixingListRow()
+                    }
+                    if let featured = displayedEvents.first {
+                        Section {
+                            eventRow(featured, featured: true)
+                                .zhixingListRow(featured: true)
+                                .listRowBackground(
+                                    GlassSurface(cornerRadius: ZhixingMetrics.cornerContainer) {
+                                        Color.clear
+                                    }
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                )
+                        }
+                    }
+                    if displayedEvents.count > 1 {
+                        Section {
+                            ForEach(Array(displayedEvents.dropFirst())) { event in
+                                eventRow(event, featured: false)
+                                    .zhixingListRow()
+                                    .overlay(alignment: .bottom) {
+                                        Divider().padding(.leading, ZhixingMetrics.space24)
+                                    }
+                            }
+                        }
+                    }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
                 .appGlassScrollBackground()
             }
         }
+        .background(ZhixingColor.contentBackground)
         .navigationTitle(selectedTitle)
+    }
+
+    private func eventRow(_ event: CountdownEvent, featured: Bool) -> some View {
+        EventRow(
+            event: event,
+            isSelected: model.isSelected(event),
+            isPinned: model.isPinned(event),
+            featured: featured,
+            onSelectExact: { Task { await model.select(event, mode: .exactEvent) } },
+            onSelectAnnual: { Task { await model.select(event, mode: .annualTitle) } },
+            onTogglePin: { Task { await model.togglePin(event) } },
+            onUnselect: { Task { await model.unselect(event) } }
+        )
     }
 
     private var countdownEmptyTitle: String {

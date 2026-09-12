@@ -98,6 +98,7 @@
 		77A5049536DB3620CA43306F /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 48021BD8FA42385AE4D4C3FF /* GRDB */; };
 		78583CD46349A08EB415AFD3 /* libCalendarCountdownCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E8AC3FCC01295977EDB1CC2 /* libCalendarCountdownCore.a */; };
 		78A34B836A5F202979BCA451 /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F962E882C560CE12182B37E3 /* EventKit.framework */; };
+		7900EF93CF9A743F58661C93 /* ZhixingMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC7520B1AB8442BF3729F6E /* ZhixingMetrics.swift */; };
 		7E406EF9D16E53136B19DC99 /* CommandContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3384D73622B6B4B984AACE0F /* CommandContracts.swift */; };
 		7E50049A81FB23DA6DF8D4BA /* RecurrenceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B1CCF3969F271F463A6A3EB /* RecurrenceModels.swift */; };
 		7EAF4CD827BDDBB62551F6AE /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 72E2718D0B79EFBCB1E614BF /* SwiftUI.framework */; };
@@ -122,6 +123,7 @@
 		8EE06AEAC7C11EFB7DD54F25 /* FocusAppearance.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1DD3DCF6D0B33B7C1BA434D /* FocusAppearance.swift */; };
 		8F3047F9F8BDFF082AD33699 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 241317BB23CE634E81423861 /* WidgetSnapshot.swift */; };
 		8F988C8AA211AC50C73376E1 /* FeatureViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6A7FD971E03D6BD84F9C6BF /* FeatureViews.swift */; };
+		91AB381BB812933F15148C93 /* ZhixingDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7193A3537CDFC01C68046D32 /* ZhixingDesignSystem.swift */; };
 		92F28C4C73D78A9A4F59DD68 /* TimeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65EEE7448999059B4B786DF6 /* TimeModels.swift */; };
 		9373B3B8D34FAED6CA0F4CC6 /* MissionIconPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA22EE8C73646074E3F3CDB8 /* MissionIconPicker.swift */; };
 		93AD99C1DEC5BD3E49DF8149 /* AppLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3261404CA33E927A22BACE6D /* AppLocalization.swift */; };
@@ -146,6 +148,7 @@
 		A1E003588CC7BE355EDD5C40 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = AD2B277F119CDCAE06896A48 /* Localizable.strings */; };
 		A2276EB911AE54F79623A910 /* ComposerKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9DB34F34545B0E6B275FF44 /* ComposerKeyboard.swift */; };
 		A37EB7C803EE27ECB2D21216 /* libCalendarCountdownCalendariOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F1AFDD338204D2F02D8F8408 /* libCalendarCountdownCalendariOS.a */; };
+		A3BB542238254160A5E1CE43 /* ZhixingDesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7193A3537CDFC01C68046D32 /* ZhixingDesignSystem.swift */; };
 		A46926631CB09D4F98770ADE /* CalendarCountdownCoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B9ED4A5ED8CF6612F8B5B40 /* CalendarCountdownCoreTests.swift */; };
 		A7EB3AA316B74204B0459DD8 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F1764BB744B922EE2B47939 /* CloudKit.framework */; };
 		A8639A61A257ACF83D5A22FE /* StatusBarCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E7FD2BED5CCEA01B4DC76D6 /* StatusBarCoordinator.swift */; };
@@ -163,6 +166,7 @@
 		B58AAFBC3AE6DF5584D6B150 /* CloudMergePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF4E9D3C0E679B7D221E6BA /* CloudMergePolicy.swift */; };
 		B6B1BCB757B82A615FA3D552 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F1764BB744B922EE2B47939 /* CloudKit.framework */; };
 		B72A14BD11949F514581D0E1 /* MissionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F67C29AD931E14C2B32CA43 /* MissionModels.swift */; };
+		B8476D2C9303B87B5D3BAC57 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = D9E5CB1ED9679A0E71D3B221 /* GRDB */; };
 		BB317182A51C1EFFF391E8C4 /* CalendarCountdownWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 67CDF0687E4148F3520C3E2B /* CalendarCountdownWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BD5A49ED87605283D7D595E7 /* AddEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A00A2EC823BEC266439258 /* AddEventView.swift */; };
 		BD8B07F797BA9348620880A8 /* BrokerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CF2C84F25CF77B7A2009F33 /* BrokerClient.swift */; };
@@ -220,6 +224,7 @@
 		F3DCC9E9ABF09E0132B7C9C2 /* RepositoryProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB1E47BBDAFB0B3BF5EA52A6 /* RepositoryProtocols.swift */; };
 		F47E8338D89DA121C1AA9523 /* HabitModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72BFBB9AE32DFC203A2BEC28 /* HabitModels.swift */; };
 		F4FAC5D6F52696CE724C5E34 /* MissionEditorLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CE3882EB81F009094666999 /* MissionEditorLayout.swift */; };
+		F5D8FF3A5AEC740545E40E19 /* ZhixingMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC7520B1AB8442BF3729F6E /* ZhixingMetrics.swift */; };
 		F70F91899174FDEA70EF5249 /* MissionSymbolCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A80135EA0B72539F80B410FF /* MissionSymbolCatalog.swift */; };
 		F7D55D658B38BC7B585619D8 /* CloudRecords.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D3D035D5204F128C088DA69 /* CloudRecords.swift */; };
 		FA2B40435A024078D177EA73 /* libCalendarCountdownCoreiOS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 48B1528621FE0489EFBF5A60 /* libCalendarCountdownCoreiOS.a */; };
@@ -445,6 +450,7 @@
 		241317BB23CE634E81423861 /* WidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshot.swift; sourceTree = "<group>"; };
 		261612D1F0A1686F390D422B /* AppNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppNavigation.swift; sourceTree = "<group>"; };
 		29473E91E876101F89D1D9E6 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		2AC7520B1AB8442BF3729F6E /* ZhixingMetrics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZhixingMetrics.swift; sourceTree = "<group>"; };
 		2B53565419EC12A323EEE029 /* CountdownService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownService.swift; sourceTree = "<group>"; };
 		2D17418FDABE88D1D8A23528 /* DomainCLI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DomainCLI.swift; sourceTree = "<group>"; };
 		2E28769909C9B1B83665E13B /* CalendarProjectionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarProjectionRepository.swift; sourceTree = "<group>"; };
@@ -489,6 +495,7 @@
 		6BEDD997023ABA523C99D095 /* calcount */ = {isa = PBXFileReference; includeInIndex = 0; path = calcount; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F53BA650E3E4B812B855599 /* CloudKitSyncEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitSyncEngine.swift; sourceTree = "<group>"; };
 		6F67C29AD931E14C2B32CA43 /* MissionModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MissionModels.swift; sourceTree = "<group>"; };
+		7193A3537CDFC01C68046D32 /* ZhixingDesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZhixingDesignSystem.swift; sourceTree = "<group>"; };
 		725608A4DA181F6FAF9811D0 /* WindowGlassChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowGlassChrome.swift; sourceTree = "<group>"; };
 		72BFBB9AE32DFC203A2BEC28 /* HabitModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitModels.swift; sourceTree = "<group>"; };
 		72E2718D0B79EFBCB1E614BF /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
@@ -583,6 +590,7 @@
 				FA2B40435A024078D177EA73 /* libCalendarCountdownCoreiOS.a in Frameworks */,
 				6ACF5810AE02E8AFFD789FF2 /* libCalendarCountdownPersistenceiOS.a in Frameworks */,
 				A37EB7C803EE27ECB2D21216 /* libCalendarCountdownCalendariOS.a in Frameworks */,
+				B8476D2C9303B87B5D3BAC57 /* GRDB in Frameworks */,
 				D9D2BB063027C785DC625B50 /* EventKit.framework in Frameworks */,
 				992E606658C48307D3CFDC2C /* WidgetKit.framework in Frameworks */,
 				1FCAAB5A7A9E50E0E3EF24C3 /* CloudKit.framework in Frameworks */,
@@ -762,6 +770,7 @@
 				742C4AE139255505851E4CCF /* TrackedEvents.swift */,
 				241317BB23CE634E81423861 /* WidgetSnapshot.swift */,
 				8DCCD9367BD085F7A155C4C9 /* WindowGlassAppearance.swift */,
+				2AC7520B1AB8442BF3729F6E /* ZhixingMetrics.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -937,6 +946,7 @@
 				49F45F1E0B9902EA2E46360C /* StatusItemArtwork.swift */,
 				725608A4DA181F6FAF9811D0 /* WindowGlassChrome.swift */,
 				54E21D5602054C0D9526F004 /* WorkspaceModel.swift */,
+				7193A3537CDFC01C68046D32 /* ZhixingDesignSystem.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -1171,6 +1181,7 @@
 			);
 			name = CalendarCountdownMobile;
 			packageProductDependencies = (
+				D9E5CB1ED9679A0E71D3B221 /* GRDB */,
 			);
 			productName = CalendarCountdownMobile;
 			productReference = 68B8D2B4C83FB31DE10EB508 /* CalendarCountdownMobile.app */;
@@ -1587,6 +1598,7 @@
 				49E5084A86FAB90F41CCAEDE /* TrackedEvents.swift in Sources */,
 				85E4A35273DEE57342C3AC50 /* WidgetSnapshot.swift in Sources */,
 				524B503465E29CF153EE75EA /* WindowGlassAppearance.swift in Sources */,
+				F5D8FF3A5AEC740545E40E19 /* ZhixingMetrics.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1613,6 +1625,7 @@
 				0D26272A38783421716A6515 /* PhoneTabRoot.swift in Sources */,
 				D5DABE37E155B5D3583738F3 /* WindowGlassChrome.swift in Sources */,
 				0DF8F68F8F47301569F2CABA /* WorkspaceModel.swift in Sources */,
+				91AB381BB812933F15148C93 /* ZhixingDesignSystem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1728,6 +1741,7 @@
 				98ADFF21A0F9E15A8895D79B /* StatusItemArtwork.swift in Sources */,
 				C8A9FA5AEDF842BF6E8CE5F9 /* WindowGlassChrome.swift in Sources */,
 				D7B71FAEB23866268C975231 /* WorkspaceModel.swift in Sources */,
+				A3BB542238254160A5E1CE43 /* ZhixingDesignSystem.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1789,6 +1803,7 @@
 				5E54D68F24404A5F817AB6F7 /* TrackedEvents.swift in Sources */,
 				8F3047F9F8BDFF082AD33699 /* WidgetSnapshot.swift in Sources */,
 				CDEDBDE53D3244E2049592B5 /* WindowGlassAppearance.swift in Sources */,
+				7900EF93CF9A743F58661C93 /* ZhixingMetrics.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2854,6 +2869,11 @@
 			productName = GRDB;
 		};
 		9DC50070FF64D32EF0ABE15D /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5660B2A4173483E07CE4A9C5 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+		D9E5CB1ED9679A0E71D3B221 /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5660B2A4173483E07CE4A9C5 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
 			productName = GRDB;
