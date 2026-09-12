@@ -240,7 +240,7 @@ targets:
     dependencies:
       - target: CalendarCountdownCoreiOS
       - package: GRDB
-        product: GRDB
+        product: GRDB-dynamic
       - sdk: CryptoKit.framework
       - sdk: CloudKit.framework
     settings:
@@ -320,7 +320,7 @@ targets:
       - target: CalendarCountdownPersistenceiOS
       - target: CalendarCountdownCalendariOS
       - package: GRDB
-        product: GRDB
+        product: GRDB-dynamic
       - target: CalendarCountdownMobileWidget
         embed: true
       - sdk: EventKit.framework
@@ -385,7 +385,7 @@ targets:
       - target: CalendarCountdownCoreiOS
       - target: CalendarCountdownPersistenceiOS
       - package: GRDB
-        product: GRDB
+        product: GRDB-dynamic
       - sdk: CloudKit.framework
       - sdk: CryptoKit.framework
     settings:

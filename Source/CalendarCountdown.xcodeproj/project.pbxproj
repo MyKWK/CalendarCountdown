@@ -95,7 +95,7 @@
 		71D0164F1F19B5540EE91FDB /* DomainLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 088022E98A4AA611A93B2B69 /* DomainLinks.swift */; };
 		7512173887D39BFCEF5753AE /* MobileRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 389475F3AAEBBBD6AC19E761 /* MobileRootView.swift */; };
 		766ED7E6D3053F3D6D0A62AA /* DomainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D77514E413A67AD576173C09 /* DomainStore.swift */; };
-		77A5049536DB3620CA43306F /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 48021BD8FA42385AE4D4C3FF /* GRDB */; };
+		77A5049536DB3620CA43306F /* GRDB-dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = 29A5158D8E41C6A3029924C0 /* GRDB-dynamic */; };
 		78583CD46349A08EB415AFD3 /* libCalendarCountdownCore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 1E8AC3FCC01295977EDB1CC2 /* libCalendarCountdownCore.a */; };
 		78A34B836A5F202979BCA451 /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F962E882C560CE12182B37E3 /* EventKit.framework */; };
 		7900EF93CF9A743F58661C93 /* ZhixingMetrics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AC7520B1AB8442BF3729F6E /* ZhixingMetrics.swift */; };
@@ -166,7 +166,7 @@
 		B58AAFBC3AE6DF5584D6B150 /* CloudMergePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EF4E9D3C0E679B7D221E6BA /* CloudMergePolicy.swift */; };
 		B6B1BCB757B82A615FA3D552 /* CloudKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F1764BB744B922EE2B47939 /* CloudKit.framework */; };
 		B72A14BD11949F514581D0E1 /* MissionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F67C29AD931E14C2B32CA43 /* MissionModels.swift */; };
-		B8476D2C9303B87B5D3BAC57 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = D9E5CB1ED9679A0E71D3B221 /* GRDB */; };
+		B8476D2C9303B87B5D3BAC57 /* GRDB-dynamic in Frameworks */ = {isa = PBXBuildFile; productRef = AF85249F2161F16F4F5D6CDD /* GRDB-dynamic */; };
 		BB317182A51C1EFFF391E8C4 /* CalendarCountdownWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 67CDF0687E4148F3520C3E2B /* CalendarCountdownWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		BD5A49ED87605283D7D595E7 /* AddEventView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65A00A2EC823BEC266439258 /* AddEventView.swift */; };
 		BD8B07F797BA9348620880A8 /* BrokerClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CF2C84F25CF77B7A2009F33 /* BrokerClient.swift */; };
@@ -590,7 +590,7 @@
 				FA2B40435A024078D177EA73 /* libCalendarCountdownCoreiOS.a in Frameworks */,
 				6ACF5810AE02E8AFFD789FF2 /* libCalendarCountdownPersistenceiOS.a in Frameworks */,
 				A37EB7C803EE27ECB2D21216 /* libCalendarCountdownCalendariOS.a in Frameworks */,
-				B8476D2C9303B87B5D3BAC57 /* GRDB in Frameworks */,
+				B8476D2C9303B87B5D3BAC57 /* GRDB-dynamic in Frameworks */,
 				D9D2BB063027C785DC625B50 /* EventKit.framework in Frameworks */,
 				992E606658C48307D3CFDC2C /* WidgetKit.framework in Frameworks */,
 				1FCAAB5A7A9E50E0E3EF24C3 /* CloudKit.framework in Frameworks */,
@@ -621,7 +621,7 @@
 			files = (
 				A12005D6459ABF4EB052CCA3 /* libCalendarCountdownCoreiOS.a in Frameworks */,
 				823189BA9A9579027CF7CD85 /* libCalendarCountdownPersistenceiOS.a in Frameworks */,
-				77A5049536DB3620CA43306F /* GRDB in Frameworks */,
+				77A5049536DB3620CA43306F /* GRDB-dynamic in Frameworks */,
 				D7E9E25F843BFD558EE06C8A /* CloudKit.framework in Frameworks */,
 				81B1ED4A783064123DD8C756 /* CryptoKit.framework in Frameworks */,
 			);
@@ -1080,7 +1080,7 @@
 			);
 			name = CalendarCountdownPersistenceiOS;
 			packageProductDependencies = (
-				EDD73FBAF00EC67409B6C4F1 /* GRDB */,
+				47429CB451A30500E88D9B57 /* GRDB-dynamic */,
 			);
 			productName = CalendarCountdownPersistenceiOS;
 			productReference = 4AC93BB4CD9AC572DBBF5657 /* libCalendarCountdownPersistenceiOS.a */;
@@ -1181,7 +1181,7 @@
 			);
 			name = CalendarCountdownMobile;
 			packageProductDependencies = (
-				D9E5CB1ED9679A0E71D3B221 /* GRDB */,
+				AF85249F2161F16F4F5D6CDD /* GRDB-dynamic */,
 			);
 			productName = CalendarCountdownMobile;
 			productReference = 68B8D2B4C83FB31DE10EB508 /* CalendarCountdownMobile.app */;
@@ -1203,7 +1203,7 @@
 			);
 			name = CalendarCountdownMobileTests;
 			packageProductDependencies = (
-				48021BD8FA42385AE4D4C3FF /* GRDB */,
+				29A5158D8E41C6A3029924C0 /* GRDB-dynamic */,
 			);
 			productName = CalendarCountdownMobileTests;
 			productReference = 53B8D0C82086DD68FEA2B7D8 /* CalendarCountdownMobileTests.xctest */;
@@ -1880,7 +1880,7 @@
 		};
 		A6515E04E7030EA35733CDDD /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			productRef = EDD73FBAF00EC67409B6C4F1 /* GRDB */;
+			productRef = 47429CB451A30500E88D9B57 /* GRDB-dynamic */;
 		};
 		ABA2DB8C6908F589785671B1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2863,25 +2863,25 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		48021BD8FA42385AE4D4C3FF /* GRDB */ = {
+		29A5158D8E41C6A3029924C0 /* GRDB-dynamic */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5660B2A4173483E07CE4A9C5 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
-			productName = GRDB;
+			productName = "GRDB-dynamic";
+		};
+		47429CB451A30500E88D9B57 /* GRDB-dynamic */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5660B2A4173483E07CE4A9C5 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = "GRDB-dynamic";
 		};
 		9DC50070FF64D32EF0ABE15D /* GRDB */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5660B2A4173483E07CE4A9C5 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
 			productName = GRDB;
 		};
-		D9E5CB1ED9679A0E71D3B221 /* GRDB */ = {
+		AF85249F2161F16F4F5D6CDD /* GRDB-dynamic */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 5660B2A4173483E07CE4A9C5 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
-			productName = GRDB;
-		};
-		EDD73FBAF00EC67409B6C4F1 /* GRDB */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5660B2A4173483E07CE4A9C5 /* XCRemoteSwiftPackageReference "GRDB.swift" */;
-			productName = GRDB;
+			productName = "GRDB-dynamic";
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
