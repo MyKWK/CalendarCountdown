@@ -1,2 +1,4 @@
-"CFBundleDisplayName" = "日历倒数";
-"NSCalendarsFullAccessUsageDescription" = "“日历倒数”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。";
+"CFBundleDisplayName" = "知行";
+"CFBundleName" = "知行";
+"NSCalendarsFullAccessUsageDescription" = "“知行”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。";
+"NSRemindersFullAccessUsageDescription" = "“知行”需要访问提醒事项，以便把任务投影为可完成的系统提醒；不会在你关闭投影时写入。";

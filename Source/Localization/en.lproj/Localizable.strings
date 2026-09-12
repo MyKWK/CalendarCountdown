@@ -8,7 +8,7 @@
 "操作失败" = "Operation Failed";
 "好" = "OK";
 "需要访问 Apple 日历" = "Apple Calendar Access Required";
-"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "Calendar Countdown reads existing calendar categories and events. It writes to a selected calendar only when you explicitly add or import an event.";
+"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "Motive reads existing calendar categories and events. It writes to a selected calendar only when you explicitly add or import an event.";
 "授权日历访问" = "Allow Calendar Access";
 "倒数展示" = "Countdowns";
 "Apple 日历" = "Apple Calendars";
@@ -17,7 +17,7 @@
 "每年追踪该日历中的同名事件" = "Track Same-Named Events Yearly";
 "置顶与最近倒数" = "Pinned & Upcoming";
 "尚未选择倒数事件" = "No Countdown Events Selected";
-"打开日历倒数" = "Open Calendar Countdown";
+"打开日历倒数" = "Open Motive";
 "退出" = "Quit";
 
 /* Add event */
@@ -63,14 +63,56 @@
 "使用自定义颜色" = "Use Custom Color";
 "页面外观" = "Appearance";
 
+"appearance.title" = "Appearance";
+"appearance.design_language" = "Design Language";
+"appearance.fixed_theme_name" = "Titanium Gray · Glacier Cyan";
+"appearance.fixed_theme_description" = "Motive uses a fixed cool-gray interface and glacier-cyan interaction accent. Color choices belong to individual missions.";
+"mission.identity" = "Icon & Color";
+"mission.preview" = "Mission Preview";
+"mission.color.current" = "Current Color";
+"mission.color.picker" = "Mission Color";
+"mission.color.blue" = "Sky Blue";
+"mission.color.indigo" = "Indigo";
+"mission.color.purple" = "Violet";
+"mission.color.pink" = "Pink";
+"mission.color.red" = "Coral Red";
+"mission.color.orange" = "Sunset Orange";
+"mission.color.yellow" = "Amber Yellow";
+"mission.color.green" = "Leaf Green";
+"mission.color.mint" = "Mint";
+"mission.color.teal" = "Teal";
+"mission.color.cyan" = "Ice Cyan";
+"mission.color.brown" = "Sand Brown";
+"mission.color.field" = "Color";
+"mission.name.field" = "Name";
+"mission.description.field" = "Notes";
+"mission.description.placeholder" = "Notes";
+"mission.goal.field" = "Goal";
+"mission.target_date" = "Target Date";
+"mission.due" = "Due";
+"mission.icon.field" = "Icon";
+"mission.icon.search" = "Search icons";
+"mission.icon.picker" = "Mission icon";
+"mission.create.title" = "New Mission";
+"mission.edit.title" = "Edit Mission";
+"mission.title.placeholder" = "Title";
+"calendar.access.authorize" = "Allow Calendar Access";
+"calendar.access.open_settings" = "Open System Settings";
+"calendar.access.recover_help" = "After enabling Calendar access in System Settings, return to Motive to load countdowns.";
+"menubar.missions" = "Missions";
+"status_item.mission_tooltip" = "%@ · %@";
+"status_item.event_mission_tooltip" = "%@ · %@ · %@ · %@";
+"mission.deleted_fallback" = "This mission is no longer available";
+
 /* Widget */
 "最近倒数" = "Upcoming Countdowns";
-"日历倒数" = "Calendar Countdown";
+"日历倒数" = "Motive";
 "显示你从 Apple 日历中选中的下一批倒数事件。" = "Shows the next countdown events you selected from Apple Calendar.";
 
 /* Shared dynamic text */
-"app.name" = "Calendar Countdown";
+"app.name" = "Motive";
 "window.appearance_settings" = "Appearance Settings";
+"window.settings" = "Settings";
 "common.not_provided" = "not provided";
 "calendar_system.gregorian" = "Gregorian";
 "calendar_system.lunar" = "Chinese Lunar";
@@ -79,9 +121,9 @@
 "countdown.today" = "Today";
 "countdown.tomorrow" = "Tomorrow";
 "countdown.remaining_days" = "%lld days left";
-"status_item.no_events" = "Calendar Countdown · No tracked events";
+"status_item.no_events" = "Motive · No tracked events";
 "status_item.event_tooltip" = "%@ · %@ · %@";
-"status_item.accessibility_label" = "Calendar Countdown, %@, %@";
+"status_item.accessibility_label" = "Motive, %@, %@";
 "event.untitled" = "Untitled Event";
 "widget.preview_title" = "Demo Birthday";
 "widget.preview_calendar" = "Birthdays";
@@ -105,6 +147,8 @@
 "empty.no_countdown_events" = "No Countdown Events Selected";
 "empty.no_future_events" = "No Future Events";
 "empty.select_event_description" = "Select events from any Apple calendar to add them to your countdowns.";
+"empty.countdown_unresolved" = "Saved countdown selections have not matched calendar events yet";
+"empty.countdown_unresolved_description" = "Your selections are still on this Mac and were not cleared. After access recovery or refresh, yearly and repeating events rematch by their stable identifiers.";
 "empty.future_events_description" = "Try expanding the date range or check whether this calendar contains future events.";
 "action.track" = "Track";
 "action.untrack" = "Untrack";
@@ -141,6 +185,12 @@
 "appearance.description_light" = "Always uses a light background with dark text.";
 "appearance.description_dark" = "Always uses a dark background with light text.";
 "appearance.theme_accessibility_label" = "Accent color: %@";
+"appearance.glass_enabled" = "Enable glass effect";
+"appearance.glass_transparency" = "Transparency";
+"appearance.glass_solid" = "More solid";
+"appearance.glass_sheer" = "More clear";
+"appearance.glass_limit" = "The main window uses an opaque titanium-gray fill. The desktop wallpaper no longer shows through.";
+"appearance.glass_reduce_transparency" = "Reduce Transparency is on in macOS, so the main window stays opaque.";
 
 /* Errors */
 "error.unknown" = "Unknown error";
@@ -207,3 +257,20 @@
 "lunar.day.28" = "Day 28";
 "lunar.day.29" = "Day 29";
 "lunar.day.30" = "Day 30";
+
+"status_bar.open_countdown" = "Open Countdowns";
+"status_bar.open_missions" = "Open Missions";
+"status_bar.open_tasks" = "Open Tasks";
+"status_bar.countdown.empty" = "Countdown, no tracked events";
+"status_bar.mission.empty" = "No mission selected";
+"status_bar.mission.accessibility" = "Mission %@, progress %@";
+"status_bar.tasks.tooltip" = "%lld remaining incomplete tasks today";
+"status_bar.tasks.accessibility" = "Today's tasks, %lld remaining";
+"settings.status_bar.title" = "Menu Bar Overview";
+"settings.status_bar.countdown" = "Countdown";
+"settings.status_bar.mission" = "Mission Progress";
+"settings.status_bar.tasks" = "Today's Tasks";
+"settings.status_bar.mission_picker" = "Mission to show";
+"settings.status_bar.mission_none" = "None";
+"settings.status_bar.mission_empty" = "You don’t have any missions yet. Create one to show it in the menu bar.";
+"settings.status_bar.help" = "All three can be on at once; each uses its own menu bar icon. Turning one off removes that icon. After upgrading, only Countdown stays on.";

@@ -1,5 +1,6 @@
 import CalendarCountdownCalendar
 import CalendarCountdownCore
+import CalendarCountdownPersistence
 import Darwin
 import Foundation
 
@@ -30,15 +31,21 @@ private struct TrackingExportReport: Codable {
 private struct DoctorReport: Codable {
     let version: String
     let calendarAccess: CalendarAccessState
+    let remindersAccess: CalendarAccessState
     let sharedContainer: String?
     let calendarCount: Int?
     let managedRecordCount: Int
     let selectionCount: Int
     let trackedEventCount: Int
     let trackedEventsDocument: String?
+    let sqlitePath: String?
+    let sqliteIntegrity: String
+    let sqliteError: String?
+    let cloudMode: String?
+    let cloudOutbox: Int?
 }
 
-private enum CLIUsageError: LocalizedError {
+enum CLIUsageError: LocalizedError {
     case message(String)
 
     var errorDescription: String? {
@@ -48,7 +55,7 @@ private enum CLIUsageError: LocalizedError {
     }
 }
 
-private struct Arguments {
+struct Arguments {
     let values: [String]
 
     func has(_ flag: String) -> Bool { values.contains(flag) }
@@ -70,19 +77,33 @@ private struct Arguments {
 @main
 struct CalCountCLI {
     static func main() async {
+        DiagnosticLogger.shared.configure(component: "cli")
         let raw = Array(CommandLine.arguments.dropFirst())
         guard let command = raw.first else {
             printHelp()
             return
         }
 
+        let commandID = UUID()
+        DiagnosticLogger.shared.log(
+            .info,
+            category: .command,
+            event: "cli.command.started",
+            correlationID: commandID,
+            metadata: ["command": command]
+        )
+
         let arguments = Arguments(values: raw)
-        let repository = EventKitRepository()
+        let workspace = try? Workspace.shared()
+        let repository = EventKitRepository(
+            countdownStore: workspace?.countdown ?? JSONCountdownIntentStore()
+        )
         do {
             switch command {
             case "help", "--help", "-h":
                 printHelp()
             case "version", "--version":
+                try CLIArgumentValidator.validate(raw, spec: .command([], positionals: 1))
                 try emit(["version": ProductConstants.version])
             case "auth":
                 var state = await repository.authorizationState()
@@ -122,16 +143,31 @@ struct CalCountCLI {
                     dryRun: !arguments.has("--apply")
                 ))
             case "doctor":
-                try await handleDoctor(repository: repository)
+                try await handleDoctor(repository: repository, arguments: arguments)
+            case "logs":
+                try handleLogs(raw)
             default:
+                if try DomainCLI.handle(command: command, raw: raw, arguments: arguments) {
+                    break
+                }
                 throw CLIUsageError.message("未知命令：\(command)。运行 calcount help 查看用法。")
             }
+            DiagnosticLogger.shared.log(
+                .notice,
+                category: .command,
+                event: "cli.command.completed",
+                correlationID: commandID,
+                metadata: ["command": command]
+            )
         } catch {
             let code: String
             let exitCode: Int32
             if error is CLIUsageError {
                 code = "usage_error"
                 exitCode = 64
+            } else if let domain = error as? DomainError {
+                code = domain.code.rawValue
+                exitCode = CLIExitCode.forDomain(domain)
             } else if let eventKitError = error as? EventKitRepositoryError,
                       case .calendarAccessRequired = eventKitError {
                 code = "calendar_access_required"
@@ -140,6 +176,16 @@ struct CalCountCLI {
                 code = "operation_failed"
                 exitCode = 1
             }
+            DiagnosticLogger.shared.log(
+                .error,
+                category: .command,
+                event: "cli.command.failed",
+                correlationID: commandID,
+                metadata: DiagnosticLogger.errorMetadata(error).merging([
+                    "command": command,
+                    "exit_code": String(exitCode)
+                ]) { current, _ in current }
+            )
             try? emitFailure(code: code, message: error.localizedDescription)
             Darwin.exit(exitCode)
         }
@@ -259,21 +305,47 @@ struct CalCountCLI {
         }
     }
 
-    private static func handleDoctor(repository: EventKitRepository) async throws {
+    private static func handleDoctor(repository: EventKitRepository, arguments: Arguments) async throws {
+        try CLIArgumentValidator.validate(CommandLine.arguments.dropFirst().map { $0 }, spec: .command([], values: ["--transport"], positionals: 1))
         let state = await repository.authorizationState()
-        let calendarCount = state == .fullAccess ? try await repository.calendars().count : nil
-        let trackedDocument = try? TrackedEventsFileStore.load()
-        let report = DoctorReport(
-            version: ProductConstants.version,
-            calendarAccess: state,
-            sharedContainer: (try? SharedContainer.rootURL())?.path,
-            calendarCount: calendarCount,
-            managedRecordCount: (try? ManagedEventFileStore.load().count) ?? 0,
-            selectionCount: (try? CountdownSelectionStore.load().count) ?? 0,
-            trackedEventCount: trackedDocument?.events.count ?? 0,
-            trackedEventsDocument: (try? SharedContainer.trackedEventsURL())?.path
+        let remindersAccess = ReminderRepository().authorizationState()
+        if arguments.value("--transport") == "direct" {
+            let workspace = try Workspace.shared()
+            try CalCountCLI.emit(
+                try workspace.doctor(
+                    remindersAccess: remindersAccess.rawValue,
+                    eventsAccess: state.rawValue,
+                    brokerListening: false
+                )
+            )
+            return
+        }
+        let json = try BrokerClient.call(
+            method: "system.doctor",
+            paramsJSON: "{}",
+            options: WriteOptions(actor: .cli)
         )
-        try emit(report)
+        BrokerClient.emitResult(json)
+    }
+
+    private static func handleLogs(_ raw: [String]) throws {
+        guard raw.count >= 2 else {
+            throw CLIUsageError.message("用法：calcount logs status|list|path|cleanup")
+        }
+        try CLIArgumentValidator.validate(raw, spec: .command([], positionals: 2))
+        switch raw[1] {
+        case "status":
+            try emit(try DiagnosticLogger.shared.status())
+        case "list":
+            try emit(try DiagnosticLogger.shared.status().files)
+        case "path":
+            try emit(["directory": try DiagnosticLogger.shared.status().directory])
+        case "cleanup":
+            let removed = try DiagnosticLogger.shared.cleanup()
+            try emit(["removedFiles": removed, "retentionDays": ProductConstants.diagnosticLogRetentionDays])
+        default:
+            throw CLIUsageError.message("未知 logs 子命令：\(raw[1])。")
+        }
     }
 
     private static func eventDraft(arguments: Arguments, birthdayMode: Bool) throws -> ManagedEventDraft {
@@ -344,13 +416,13 @@ struct CalCountCLI {
         value.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
     }
 
-    private static func requireSubcommand(_ raw: [String], _ expected: String) throws {
+    static func requireSubcommand(_ raw: [String], _ expected: String) throws {
         guard raw.count >= 2, raw[1] == expected else {
             throw CLIUsageError.message("需要子命令 \(expected)。")
         }
     }
 
-    private static func emit<T: Encodable>(_ value: T) throws {
+    static func emit<T: Encodable>(_ value: T) throws {
         let data = try JSONCoding.encoder().encode(SuccessEnvelope(data: value))
         print(String(decoding: data, as: UTF8.self))
     }
@@ -366,6 +438,21 @@ struct CalCountCLI {
         print("""
         calcount \(ProductConstants.version) — Apple 日历倒数 CLI
 
+        calcount capabilities
+        calcount tasks list [--open|--inbox|--completed|--overdue]
+        calcount tasks create --input task.json [--dry-run]
+        calcount tasks complete <occurrence-id>
+        calcount missions list
+        calcount missions create --input mission.json
+        calcount missions progress <mission-id>
+        calcount missions delete <mission-id> [--permanent --confirm-id ID]
+        calcount habits list
+        calcount habits checkin <habit-id> [--value N]
+        calcount export --output snapshot.json
+        calcount cloud status
+        calcount cloud export --output records.json [--ack]
+        calcount cloud apply --input records.json
+        calcount mcp serve --stdio
         calcount auth
         calcount calendars list
         calcount events list [--days N] [--calendar-id ID]
@@ -386,8 +473,13 @@ struct CalCountCLI {
         calcount sync
         calcount repair all-day-events [--apply]
         calcount doctor
+        calcount logs status
+        calcount logs list
+        calcount logs path
+        calcount logs cleanup
 
-        所有结构化命令均输出 JSON。写操作只作用于明确指定的 Apple 日历。
+        所有结构化命令均输出 JSON。诊断日志仅保存在本机 Application Support，自动保留 30 天。
+        写操作只作用于明确指定的 Apple 日历。
         """)
     }
 }

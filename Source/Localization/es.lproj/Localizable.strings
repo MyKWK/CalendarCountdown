@@ -8,7 +8,7 @@
 "操作失败" = "La operación ha fallado";
 "好" = "Aceptar";
 "需要访问 Apple 日历" = "Se necesita acceso al Calendario de Apple";
-"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "Cuenta atrás del calendario lee los calendarios y eventos existentes. Solo escribe en el calendario seleccionado cuando añades o importas un evento expresamente.";
+"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "Motive lee los calendarios y eventos existentes. Solo escribe en el calendario seleccionado cuando añades o importas un evento expresamente.";
 "授权日历访问" = "Permitir acceso al calendario";
 "倒数展示" = "Cuentas atrás";
 "Apple 日历" = "Calendarios de Apple";
@@ -17,7 +17,7 @@
 "每年追踪该日历中的同名事件" = "Seguir anualmente eventos con el mismo nombre";
 "置顶与最近倒数" = "Fijadas y próximas";
 "尚未选择倒数事件" = "No hay cuentas atrás seleccionadas";
-"打开日历倒数" = "Abrir Cuenta atrás del calendario";
+"打开日历倒数" = "Abrir Motive";
 "退出" = "Salir";
 
 /* Add event */
@@ -63,14 +63,56 @@
 "使用自定义颜色" = "Usar color personalizado";
 "页面外观" = "Apariencia";
 
+"appearance.title" = "Apariencia";
+"appearance.design_language" = "Lenguaje de diseño";
+"appearance.fixed_theme_name" = "Gris titanio · Cian glaciar";
+"appearance.fixed_theme_description" = "Motive usa una interfaz gris fría fija y un acento cian glaciar. La elección de color pertenece a cada misión.";
+"mission.identity" = "Icono y color";
+"mission.preview" = "Vista previa de la misión";
+"mission.color.current" = "Color actual";
+"mission.color.picker" = "Color de la misión";
+"mission.color.blue" = "Azul cielo";
+"mission.color.indigo" = "Índigo";
+"mission.color.purple" = "Violeta";
+"mission.color.pink" = "Rosa";
+"mission.color.red" = "Rojo coral";
+"mission.color.orange" = "Naranja atardecer";
+"mission.color.yellow" = "Amarillo ámbar";
+"mission.color.green" = "Verde hoja";
+"mission.color.mint" = "Menta";
+"mission.color.teal" = "Verde azulado";
+"mission.color.cyan" = "Cian hielo";
+"mission.color.brown" = "Marrón arena";
+"mission.color.field" = "Color";
+"mission.name.field" = "Nombre";
+"mission.description.field" = "Notas";
+"mission.description.placeholder" = "Notas";
+"mission.goal.field" = "Objetivo";
+"mission.target_date" = "Fecha objetivo";
+"mission.due" = "Vence";
+"mission.icon.field" = "Icono";
+"mission.icon.search" = "Buscar iconos";
+"mission.icon.picker" = "Icono de la misión";
+"mission.create.title" = "Nueva misión";
+"mission.edit.title" = "Editar misión";
+"mission.title.placeholder" = "Título";
+"calendar.access.authorize" = "Permitir acceso al calendario";
+"calendar.access.open_settings" = "Abrir Ajustes del Sistema";
+"calendar.access.recover_help" = "Después de activar el acceso al Calendario en Ajustes, vuelve a Motive para cargar las cuentas atrás.";
+"menubar.missions" = "Misiones";
+"status_item.mission_tooltip" = "%@ · %@";
+"status_item.event_mission_tooltip" = "%@ · %@ · %@ · %@";
+"mission.deleted_fallback" = "Esta misión ya no está disponible";
+
 /* Widget */
 "最近倒数" = "Próximas cuentas atrás";
-"日历倒数" = "Cuenta atrás del calendario";
+"日历倒数" = "Motive";
 "显示你从 Apple 日历中选中的下一批倒数事件。" = "Muestra las próximas cuentas atrás seleccionadas en el Calendario de Apple.";
 
 /* Shared dynamic text */
-"app.name" = "Cuenta atrás del calendario";
+"app.name" = "Motive";
 "window.appearance_settings" = "Ajustes de apariencia";
+"window.settings" = "Ajustes";
 "common.not_provided" = "sin especificar";
 "calendar_system.gregorian" = "Gregoriano";
 "calendar_system.lunar" = "Lunar chino";
@@ -79,9 +121,9 @@
 "countdown.today" = "Hoy";
 "countdown.tomorrow" = "Mañana";
 "countdown.remaining_days" = "Quedan %lld días";
-"status_item.no_events" = "Cuenta atrás del calendario · Sin eventos seguidos";
+"status_item.no_events" = "Motive · Sin eventos seguidos";
 "status_item.event_tooltip" = "%@ · %@ · %@";
-"status_item.accessibility_label" = "Cuenta atrás del calendario, %@, %@";
+"status_item.accessibility_label" = "Motive, %@, %@";
 "event.untitled" = "Evento sin título";
 "widget.preview_title" = "Cumpleaños de ejemplo";
 "widget.preview_calendar" = "Cumpleaños";
@@ -105,6 +147,8 @@
 "empty.no_countdown_events" = "No hay cuentas atrás seleccionadas";
 "empty.no_future_events" = "No hay eventos futuros";
 "empty.select_event_description" = "Selecciona eventos de cualquier calendario de Apple para añadirlos a tus cuentas atrás.";
+"empty.countdown_unresolved" = "Las cuentas atrás guardadas aún no coinciden con eventos del calendario";
+"empty.countdown_unresolved_description" = "Las selecciones siguen en este Mac y no se han borrado. Tras recuperar el acceso o actualizar, los eventos anuales y repetidos se vuelven a asociar por identificadores estables.";
 "empty.future_events_description" = "Amplía el intervalo de fechas o comprueba si este calendario contiene eventos futuros.";
 "action.track" = "Seguir";
 "action.untrack" = "Dejar de seguir";
@@ -141,6 +185,12 @@
 "appearance.description_light" = "Usa siempre un fondo claro con texto oscuro.";
 "appearance.description_dark" = "Usa siempre un fondo oscuro con texto claro.";
 "appearance.theme_accessibility_label" = "Color de énfasis: %@";
+"appearance.glass_enabled" = "Activar efecto de cristal";
+"appearance.glass_transparency" = "Transparencia";
+"appearance.glass_solid" = "Más sólido";
+"appearance.glass_sheer" = "Más transparente";
+"appearance.glass_limit" = "La ventana principal usa un relleno opaco gris titanio. El fondo de escritorio ya no se ve a través.";
+"appearance.glass_reduce_transparency" = "«Reducir transparencia» está activado en macOS, así que la ventana principal permanece opaca.";
 
 /* Errors */
 "error.unknown" = "Error desconocido";
@@ -207,3 +257,20 @@
 "lunar.day.28" = "Día 28";
 "lunar.day.29" = "Día 29";
 "lunar.day.30" = "Día 30";
+
+"status_bar.open_countdown" = "Abrir cuentas atrás";
+"status_bar.open_missions" = "Abrir misiones";
+"status_bar.open_tasks" = "Abrir tareas";
+"status_bar.countdown.empty" = "Cuenta atrás, sin eventos seguidos";
+"status_bar.mission.empty" = "Ninguna misión seleccionada";
+"status_bar.mission.accessibility" = "Misión %@, progreso %@";
+"status_bar.tasks.tooltip" = "%lld tareas incompletas restantes de hoy";
+"status_bar.tasks.accessibility" = "Tareas de hoy, %lld restantes";
+"settings.status_bar.title" = "Resumen de la barra de menús";
+"settings.status_bar.countdown" = "Cuenta atrás";
+"settings.status_bar.mission" = "Progreso de misión";
+"settings.status_bar.tasks" = "Tareas de hoy";
+"settings.status_bar.mission_picker" = "Misión a mostrar";
+"settings.status_bar.mission_none" = "Ninguna";
+"settings.status_bar.mission_empty" = "Aún no tienes misiones. Crea una para mostrarla en la barra de menús.";
+"settings.status_bar.help" = "Las tres pueden estar activas a la vez; cada una usa su propio icono. Al desactivar una, ese icono desaparece. Tras actualizar, solo queda la cuenta atrás.";

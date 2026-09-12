@@ -1,0 +1,5 @@
+{
+  "name": "CalendarCountdown",
+  "image": "swift:6.0.3-noble",
+  "install": "cd Source && swift build --build-tests"
+}

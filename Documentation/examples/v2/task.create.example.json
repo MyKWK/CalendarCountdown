@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 2,
+  "title": "剔牙",
+  "markdownDescription": "每三个月完成后再提醒。",
+  "kind": "deadline",
+  "priority": "none",
+  "workload": 1,
+  "schedule": {
+    "timeZoneIdentifier": "Asia/Shanghai",
+    "isAllDay": false,
+    "plannedDue": "2026-09-12T07:00:00Z"
+  },
+  "recurrence": {
+    "mode": "afterCompletion",
+    "frequency": "monthly",
+    "interval": 3,
+    "end": { "kind": "never" },
+    "timeZoneIdentifier": "Asia/Shanghai",
+    "firstWeekday": 2,
+    "invalidDatePolicy": "clampToMonthEnd"
+  },
+  "alerts": [{ "secondsBefore": 3600 }],
+  "projectionPolicy": "none"
+}

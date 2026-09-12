@@ -4,7 +4,7 @@ import UniformTypeIdentifiers
 
 struct MainView: View {
     @ObservedObject var model: AppModel
-    let openAppearanceSettings: () -> Void
+    let openSettings: () -> Void
     @State private var selectedCalendarID: String? = "__countdown__"
     @State private var searchText = ""
     @State private var showingAddEvent = false
@@ -54,9 +54,9 @@ struct MainView: View {
                 .appActionFocusEffectDisabled()
 
                 Button {
-                    openAppearanceSettings()
+                    openSettings()
                 } label: {
-                    Label("外观设置", systemImage: "paintpalette")
+                    Label("设置", systemImage: "gearshape")
                 }
                 .appActionFocusEffectDisabled()
             }
@@ -128,12 +128,7 @@ struct MainView: View {
         } description: {
             Text("日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。")
         } actions: {
-            Button("授权日历访问") {
-                Task { await model.requestAccess() }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(model.isLoading)
-            .appActionFocusEffectDisabled()
+            CalendarAccessActions(model: model)
         }
     }
 
@@ -183,31 +178,48 @@ struct MainView: View {
         }
     }
 
+    private var countdownEmptyTitle: String {
+        if selectedCalendarID == "__countdown__", !model.selections.isEmpty {
+            return AppLocalization.text(
+                "empty.countdown_unresolved",
+                defaultValue: "已保存的倒数选择尚未匹配到日历事件"
+            )
+        }
+        if selectedCalendarID == "__countdown__" {
+            return AppLocalization.text(
+                "empty.no_countdown_events",
+                defaultValue: "尚未选择倒数事件"
+            )
+        }
+        return AppLocalization.text("empty.no_future_events", defaultValue: "没有未来事件")
+    }
+
+    private var countdownEmptyDescription: String {
+        if selectedCalendarID == "__countdown__", !model.selections.isEmpty {
+            return AppLocalization.text(
+                "empty.countdown_unresolved_description",
+                defaultValue: "选择仍保留在本机，不会被清空。授权恢复或刷新后会按稳定标识重新匹配年度和重复事件。"
+            )
+        }
+        if selectedCalendarID == "__countdown__" {
+            return AppLocalization.text(
+                "empty.select_event_description",
+                defaultValue: "从任意 Apple 日历中选择具体事件加入倒数。"
+            )
+        }
+        return AppLocalization.text(
+            "empty.future_events_description",
+            defaultValue: "尝试扩大时间范围或检查该日历是否包含未来事件。"
+        )
+    }
+
     private var eventList: some View {
         Group {
             if displayedEvents.isEmpty {
                 ContentUnavailableView(
-                    selectedCalendarID == "__countdown__"
-                        ? AppLocalization.text(
-                            "empty.no_countdown_events",
-                            defaultValue: "尚未选择倒数事件"
-                        )
-                        : AppLocalization.text(
-                            "empty.no_future_events",
-                            defaultValue: "没有未来事件"
-                        ),
+                    countdownEmptyTitle,
                     systemImage: "calendar",
-                    description: Text(
-                        selectedCalendarID == "__countdown__"
-                            ? AppLocalization.text(
-                                "empty.select_event_description",
-                                defaultValue: "从任意 Apple 日历中选择具体事件加入倒数。"
-                            )
-                            : AppLocalization.text(
-                                "empty.future_events_description",
-                                defaultValue: "尝试扩大时间范围或检查该日历是否包含未来事件。"
-                            )
-                    )
+                    description: Text(countdownEmptyDescription)
                 )
             } else {
                 List(displayedEvents) { event in
@@ -221,6 +233,7 @@ struct MainView: View {
                         onUnselect: { Task { await model.unselect(event) } }
                     )
                 }
+                .appGlassScrollBackground()
             }
         }
         .navigationTitle(selectedTitle)
@@ -259,7 +272,7 @@ struct MainView: View {
     }
 }
 
-private struct TrackedEventsFileDocument: FileDocument {
+struct TrackedEventsFileDocument: FileDocument {
     static var readableContentTypes: [UTType] { [.json] }
 
     let document: TrackedEventsDocument
@@ -314,7 +327,7 @@ private struct CalendarTrackingButton: View {
     }
 }
 
-private struct EventRow: View {
+struct EventRow: View {
     let event: CountdownEvent
     let isSelected: Bool
     let isPinned: Bool
@@ -377,5 +390,104 @@ private struct EventRow: View {
             .fixedSize()
         }
         .padding(.vertical, 5)
+    }
+}
+
+struct CountdownModuleView: View {
+    @ObservedObject var model: AppModel
+    var searchText: String
+    var selectedCalendarID: String?
+
+    var body: some View {
+        Group {
+            if model.accessState != .fullAccess {
+                ContentUnavailableView {
+                    Label("需要访问 Apple 日历", systemImage: "calendar.badge.exclamationmark")
+                } description: {
+                    Text("日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。")
+                } actions: {
+                    CalendarAccessActions(model: model)
+                }
+            } else if displayedEvents.isEmpty {
+                ContentUnavailableView(
+                    countdownEmptyTitle,
+                    systemImage: "calendar",
+                    description: Text(countdownEmptyDescription)
+                )
+            } else {
+                List(displayedEvents) { event in
+                    EventRow(
+                        event: event,
+                        isSelected: model.isSelected(event),
+                        isPinned: model.isPinned(event),
+                        onSelectExact: { Task { await model.select(event, mode: .exactEvent) } },
+                        onSelectAnnual: { Task { await model.select(event, mode: .annualTitle) } },
+                        onTogglePin: { Task { await model.togglePin(event) } },
+                        onUnselect: { Task { await model.unselect(event) } }
+                    )
+                }
+                .appGlassScrollBackground()
+            }
+        }
+        .navigationTitle(selectedTitle)
+    }
+
+    private var countdownEmptyTitle: String {
+        if selectedCalendarID == nil, !model.selections.isEmpty {
+            return AppLocalization.text(
+                "empty.countdown_unresolved",
+                defaultValue: "已保存的倒数选择尚未匹配到日历事件"
+            )
+        }
+        if selectedCalendarID == nil {
+            return AppLocalization.text(
+                "empty.no_countdown_events",
+                defaultValue: "尚未选择倒数事件"
+            )
+        }
+        return AppLocalization.text("empty.no_future_events", defaultValue: "没有未来事件")
+    }
+
+    private var countdownEmptyDescription: String {
+        if selectedCalendarID == nil, !model.selections.isEmpty {
+            return AppLocalization.text(
+                "empty.countdown_unresolved_description",
+                defaultValue: "选择仍保留在本机，不会被清空。授权恢复或刷新后会按稳定标识重新匹配年度和重复事件。"
+            )
+        }
+        if selectedCalendarID == nil {
+            return AppLocalization.text(
+                "empty.select_event_description",
+                defaultValue: "从任意 Apple 日历中选择具体事件加入倒数。"
+            )
+        }
+        return AppLocalization.text(
+            "empty.future_events_description",
+            defaultValue: "尝试扩大时间范围或检查该日历是否包含未来事件。"
+        )
+    }
+
+    private var displayedEvents: [CountdownEvent] {
+        let base: [CountdownEvent]
+        if let selectedCalendarID {
+            base = CountdownSelectionStore.nextOccurrences(
+                from: model.events.filter { $0.calendarIdentifier == selectedCalendarID }
+            )
+        } else {
+            base = model.selectedEvents
+        }
+        guard !searchText.isEmpty else { return base }
+        return base.filter {
+            $0.title.localizedCaseInsensitiveContains(searchText)
+                || $0.calendarTitle.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    private var selectedTitle: String {
+        if let selectedCalendarID {
+            return model.calendars.first(where: { $0.id == selectedCalendarID })?.title
+                ?? AppLocalization.text("navigation.future_events", defaultValue: "未来事件")
+        }
+        return AppLocalization.text("navigation.countdown", defaultValue: "倒数展示")
     }
 }

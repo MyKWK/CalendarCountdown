@@ -1,16 +1,7 @@
-import AppKit
 import CalendarCountdownCore
+import CoreGraphics
 import EventKit
 import Foundation
-
-public enum CalendarAccessState: String, Codable, Sendable {
-    case notDetermined
-    case restricted
-    case denied
-    case writeOnly
-    case fullAccess
-    case unknown
-}
 
 public enum EventKitRepositoryError: LocalizedError {
     case calendarAccessRequired(CalendarAccessState)
@@ -107,9 +98,14 @@ public struct AllDayEventRepairReport: Codable, Sendable {
 
 public actor EventKitRepository {
     private let store: EKEventStore
+    private let countdownStore: any CountdownIntentStoring
 
-    public init(store: EKEventStore = EKEventStore()) {
+    public init(
+        store: EKEventStore = EKEventStore(),
+        countdownStore: any CountdownIntentStoring = JSONCountdownIntentStore()
+    ) {
         self.store = store
+        self.countdownStore = countdownStore
     }
 
     public func authorizationState() -> CalendarAccessState {
@@ -152,17 +148,25 @@ public actor EventKitRepository {
         let requestedCalendars = calendarIdentifiers.isEmpty
             ? nil
             : store.calendars(for: .event).filter { calendarIdentifiers.contains($0.calendarIdentifier) }
-        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: requestedCalendars)
-
-        return store.events(matching: predicate)
-            .filter { $0.status != .canceled }
-            .map(countdownEvent)
-            .sorted { lhs, rhs in
-                if lhs.eventDate == rhs.eventDate {
-                    return lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
-                }
-                return lhs.eventDate < rhs.eventDate
+        var unique: [String: CountdownEvent] = [:]
+        for slice in EventKitQueryWindow.yearSlices(from: start, to: end, calendar: calendar) {
+            let predicate = store.predicateForEvents(
+                withStart: slice.start,
+                end: slice.end,
+                calendars: requestedCalendars
+            )
+            for ekEvent in store.events(matching: predicate) where ekEvent.status != .canceled {
+                let mapped = countdownEvent(ekEvent)
+                unique[mapped.id] = mapped
             }
+        }
+
+        return unique.values.sorted { lhs, rhs in
+            if lhs.eventDate == rhs.eventDate {
+                return lhs.title.localizedStandardCompare(rhs.title) == .orderedAscending
+            }
+            return lhs.eventDate < rhs.eventDate
+        }
     }
 
     public func selectedUpcomingEvents(
@@ -170,7 +174,7 @@ public actor EventKitRepository {
         days: Int = ProductConstants.defaultFetchDays
     ) throws -> [CountdownEvent] {
         let all = try events(from: startDate, days: days)
-        let selections = try CountdownSelectionStore.load()
+        let selections = try countdownStore.loadSelections()
         return CountdownSelectionStore.nextSelectedEvents(from: all, selections: selections)
     }
 
@@ -185,7 +189,7 @@ public actor EventKitRepository {
             eventTitle: event.title,
             occurrenceDate: event.eventDate
         )
-        try CountdownSelectionStore.upsert(selection)
+        try countdownStore.upsertSelection(selection)
         _ = try synchronizeTrackedEventsDocument()
         return selection
     }
@@ -209,7 +213,7 @@ public actor EventKitRepository {
             calendarTitle: draft.calendarTitle,
             eventTitle: draft.eventTitle
         )
-        try CountdownSelectionStore.upsert(selection)
+        try countdownStore.upsertSelection(selection)
         if synchronizeTrackingDocument {
             _ = try synchronizeTrackedEventsDocument()
         }
@@ -217,11 +221,20 @@ public actor EventKitRepository {
     }
 
     public func selections() throws -> [CountdownSelection] {
-        try CountdownSelectionStore.load()
+        try countdownStore.loadSelections()
+    }
+
+    public func displayPreferences() throws -> CountdownDisplayPreferences {
+        try countdownStore.loadPreferences()
+    }
+
+    public func saveDisplayPreferences(_ preferences: CountdownDisplayPreferences) throws {
+        try countdownStore.savePreferences(preferences)
+        _ = try? synchronizeTrackedEventsDocument()
     }
 
     public func removeSelection(id: UUID) throws {
-        try CountdownSelectionStore.remove(id: id)
+        try countdownStore.removeSelection(id: id)
         _ = try synchronizeTrackedEventsDocument()
     }
 
@@ -230,8 +243,8 @@ public actor EventKitRepository {
         now: Date = Date()
     ) throws -> TrackedEventsDocument {
         try requireFullAccess()
-        let selections = try CountdownSelectionStore.load()
-        let preferences = CountdownDisplayPreferencesStore.load()
+        let selections = try countdownStore.loadSelections()
+        let preferences = try countdownStore.loadPreferences()
         let visibleEvents = preferences.visibleSelectedEvents(
             from: try events(from: now),
             selections: selections
@@ -253,7 +266,7 @@ public actor EventKitRepository {
     ) throws -> TrackedEventsDocument {
         try requireFullAccess()
         let managedRecords: [UUID: ManagedEventRecord] = Dictionary(
-            uniqueKeysWithValues: try ManagedEventFileStore.load().map { ($0.id, $0) }
+            uniqueKeysWithValues: try countdownStore.loadManagedEvents().map { ($0.id, $0) }
         )
         let trackedEvents: [TrackedEventRecord] = visibleEvents.compactMap { event -> TrackedEventRecord? in
             let matchingSelections = selections.filter { $0.matches(event) }
@@ -292,7 +305,7 @@ public actor EventKitRepository {
             identifier: validated.calendarIdentifier,
             title: validated.calendarTitle
         )
-        let upserted = try ManagedEventFileStore.upsert(validated)
+        let upserted = try countdownStore.upsertManagedEvent(validated, now: Date())
 
         if !upserted.wasCreated {
             try removeProjectedEvents(recordID: upserted.record.id, commit: true)
@@ -307,7 +320,7 @@ public actor EventKitRepository {
                 managedRecordID: upserted.record.id,
                 eventTitle: validated.title
             )
-            try CountdownSelectionStore.upsert(selection)
+            try countdownStore.upsertSelection(selection)
         }
 
         if synchronizeTrackingDocument {
@@ -394,7 +407,7 @@ public actor EventKitRepository {
                 managedRecordID: groupID,
                 eventTitle: validated.title
             )
-            try CountdownSelectionStore.upsert(selection)
+            try countdownStore.upsertSelection(selection)
         }
 
         _ = try synchronizeTrackedEventsDocument()
@@ -449,11 +462,8 @@ public actor EventKitRepository {
     public func syncManagedRecords() throws -> Int {
         try requireFullAccess()
         var projectedCount = 0
-        for record in try ManagedEventFileStore.load() {
-            let destination = try writableCalendar(
-                identifier: record.draft.calendarIdentifier,
-                title: record.draft.calendarTitle
-            )
+        for record in try countdownStore.loadManagedEvents() {
+            let destination = try writableCalendarForExistingProjection(record: record)
             projectedCount += try projectMissing(record: record, to: destination)
         }
         _ = try synchronizeTrackedEventsDocument()
@@ -461,7 +471,7 @@ public actor EventKitRepository {
     }
 
     public func managedRecords() throws -> [ManagedEventRecord] {
-        try ManagedEventFileStore.load()
+        try countdownStore.loadManagedEvents()
     }
 
     /// Repairs CalendarCountdown-created all-day events whose persisted end date
@@ -490,7 +500,7 @@ public actor EventKitRepository {
         let affected = scannedEvents.filter { event in
             guard event.isAllDay,
                   isCalendarCountdownEvent(event),
-                  event.calendar.source.sourceType == .exchange,
+                  event.calendar?.source.sourceType == .exchange,
                   let startDate = event.startDate,
                   let endDate = event.endDate else {
                 return false
@@ -528,12 +538,12 @@ public actor EventKitRepository {
             }
             return AllDayEventRepairItem(
                 title: event.title ?? AppLocalization.text("event.untitled", defaultValue: "未命名事件"),
-                calendarTitle: event.calendar.title,
-                calendarIdentifier: event.calendar.calendarIdentifier,
+                calendarTitle: event.calendar?.title ?? "",
+                calendarIdentifier: event.calendar?.calendarIdentifier ?? "",
                 sourceType: "exchange",
                 startDate: startDate,
                 previousEndDate: previousEndDate,
-                correctedEndDate: allDayEndDate(startingAt: startDate, in: event.calendar),
+                correctedEndDate: ekCalendar(of: event).map { allDayEndDate(startingAt: startDate, in: $0) } ?? previousEndDate,
                 url: url,
                 recurringSeries: isRecurring(event)
             )
@@ -541,7 +551,8 @@ public actor EventKitRepository {
 
         if !dryRun {
             for event in targets {
-                event.endDate = allDayEndDate(startingAt: event.startDate, in: event.calendar)
+                guard let calendar = ekCalendar(of: event) else { continue }
+                event.endDate = allDayEndDate(startingAt: event.startDate, in: calendar)
                 try store.save(
                     event,
                     span: isRecurring(event) ? .futureEvents : .thisEvent,
@@ -563,7 +574,7 @@ public actor EventKitRepository {
 
     public func updateManagedRecord(id: UUID, draft: ManagedEventDraft) throws -> ManagedEventWriteResult {
         try requireFullAccess()
-        guard try ManagedEventFileStore.record(id: id) != nil else {
+        guard try countdownStore.managedEvent(id: id) != nil else {
             throw EventKitRepositoryError.recordNotFound(id)
         }
         let validated = try draft.validated()
@@ -572,10 +583,10 @@ public actor EventKitRepository {
             title: validated.calendarTitle
         )
         try removeProjectedEvents(recordID: id, commit: true)
-        let record = try ManagedEventFileStore.replace(id: id, draft: validated)
+        let record = try countdownStore.replaceManagedEvent(id: id, draft: validated, now: Date())
         let count = try project(record: record, to: destination)
 
-        var savedSelections = try CountdownSelectionStore.load()
+        var savedSelections = try countdownStore.loadSelections()
         savedSelections.removeAll { $0.managedRecordID == id }
         if validated.selectForCountdown {
             savedSelections.append(CountdownSelection(
@@ -586,7 +597,7 @@ public actor EventKitRepository {
                 eventTitle: validated.title
             ))
         }
-        try CountdownSelectionStore.save(savedSelections)
+        try countdownStore.saveSelections(savedSelections)
         _ = try synchronizeTrackedEventsDocument()
         return ManagedEventWriteResult(
             record: record,
@@ -598,14 +609,14 @@ public actor EventKitRepository {
 
     public func deleteManagedRecord(id: UUID) throws {
         try requireFullAccess()
-        guard try ManagedEventFileStore.record(id: id) != nil else {
+        guard try countdownStore.managedEvent(id: id) != nil else {
             throw EventKitRepositoryError.recordNotFound(id)
         }
         try removeProjectedEvents(recordID: id, commit: true)
-        _ = try ManagedEventFileStore.remove(id: id)
-        var savedSelections = try CountdownSelectionStore.load()
+        _ = try countdownStore.removeManagedEvent(id: id)
+        var savedSelections = try countdownStore.loadSelections()
         savedSelections.removeAll { $0.managedRecordID == id }
-        try CountdownSelectionStore.save(savedSelections)
+        try countdownStore.saveSelections(savedSelections)
         _ = try synchronizeTrackedEventsDocument()
     }
 
@@ -638,6 +649,38 @@ public actor EventKitRepository {
             throw EventKitRepositoryError.calendarReadOnly(title)
         }
         return matches[0]
+    }
+
+    private func writableCalendarForExistingProjection(record: ManagedEventRecord) throws -> EKCalendar {
+        if let identifier = record.draft.calendarIdentifier,
+           !identifier.isEmpty,
+           let calendar = store.calendar(withIdentifier: identifier) {
+            guard calendar.allowsContentModifications else {
+                throw EventKitRepositoryError.calendarReadOnly(calendar.title)
+            }
+            return calendar
+        }
+
+        // Older records stored only the calendar title. When multiple calendars
+        // later acquire that title, preserve the actual destination already
+        // encoded by the record's stable projection URL instead of guessing.
+        let projectedCalendars = try projectedEvents(recordID: record.id).compactMap { ekCalendar(of: $0) }
+        let uniqueProjectedCalendars = Dictionary(
+            projectedCalendars.map { ($0.calendarIdentifier, $0) },
+            uniquingKeysWith: { first, _ in first }
+        ).values
+        if uniqueProjectedCalendars.count == 1,
+           let calendar = uniqueProjectedCalendars.first {
+            guard calendar.allowsContentModifications else {
+                throw EventKitRepositoryError.calendarReadOnly(calendar.title)
+            }
+            return calendar
+        }
+
+        return try writableCalendar(
+            identifier: record.draft.calendarIdentifier,
+            title: record.draft.calendarTitle
+        )
     }
 
     private func makeCalendarBackedEvent(
@@ -720,13 +763,34 @@ public actor EventKitRepository {
     }
 
     private func projectMissing(record: ManagedEventRecord, to calendar: EKCalendar) throws -> Int {
-        let existingURLs = try projectedURLs(recordID: record.id, calendar: calendar)
+        let existingEvents = try projectedEvents(recordID: record.id, calendars: [calendar])
+        let existingURLs = Set(existingEvents.compactMap { $0.url?.absoluteString })
         switch record.draft.calendarSystem {
         case .gregorian:
+            if record.draft.recurrence == .yearly {
+                guard let value = record.draft.date,
+                      let originalDate = DateSupport.parseDateOnly(value),
+                      let expectedOccurrence = DateSupport.nextYearlyOccurrence(
+                          matching: originalDate
+                      ) else {
+                    throw ManagedEventValidationError.invalidGregorianDate(record.draft.date)
+                }
+                let hasExpectedOccurrence = existingEvents.contains { event in
+                    guard let startDate = event.startDate else { return false }
+                    return Calendar.current.isDate(startDate, inSameDayAs: expectedOccurrence)
+                }
+                guard !hasExpectedOccurrence else { return 0 }
+
+                // A later occurrence does not prove that the recurring series is
+                // intact. Rebuild it from the authoritative managed record so a
+                // missing nearest occurrence cannot leave the countdown a year late.
+                try removeProjectedEvents(recordID: record.id, commit: true)
+                return try projectGregorian(record: record, to: calendar)
+            }
             guard existingURLs.isEmpty else { return 0 }
             return try projectGregorian(record: record, to: calendar)
         case .lunar:
-            return try projectLunar(record: record, to: calendar, onlyMissing: true, existingURLs: existingURLs)
+            return try projectLunar(record: record, to: calendar, onlyMissing: true, existingEvents: existingEvents)
         }
     }
 
@@ -748,14 +812,18 @@ public actor EventKitRepository {
         record: ManagedEventRecord,
         to calendar: EKCalendar,
         onlyMissing: Bool,
-        existingURLs: Set<String> = []
+        existingEvents: [EKEvent] = []
     ) throws -> Int {
         guard let month = record.draft.lunarMonth, let day = record.draft.lunarDay else {
             throw ManagedEventValidationError.invalidLunarDay(record.draft.lunarDay)
         }
         let currentYear = Calendar.current.component(.year, from: Date())
         var count = 0
+        var removedDuplicate = false
         let today = Calendar.current.startOfDay(for: Date())
+        let existingEventsByURL = Dictionary(grouping: existingEvents) { event in
+            event.url?.absoluteString ?? ""
+        }
         for year in currentYear...(currentYear + ProductConstants.defaultProjectionYears) {
             let dates = LunarDateResolver.dates(
                 month: month,
@@ -769,13 +837,23 @@ public actor EventKitRepository {
                 guard let url = managedURL(recordID: record.id, year: year, occurrenceIndex: index) else {
                     throw EventKitRepositoryError.invalidManagedURL
                 }
-                if onlyMissing, existingURLs.contains(url.absoluteString) { continue }
+                if onlyMissing, let matches = existingEventsByURL[url.absoluteString], !matches.isEmpty {
+                    // A prior wide EventKit query could be truncated by providers
+                    // such as Exchange, causing the same managed lunar occurrence to
+                    // be inserted on every launch. Keep one stable occurrence and
+                    // remove only exact duplicates owned by this managed URL.
+                    for duplicate in matches.dropFirst() {
+                        try store.remove(duplicate, span: .thisEvent, commit: false)
+                        removedDuplicate = true
+                    }
+                    continue
+                }
                 let event = makeEvent(record: record, startDate: date, calendar: calendar, year: year, url: url)
                 try store.save(event, span: .thisEvent, commit: false)
                 count += 1
             }
         }
-        if count > 0 { try store.commit() }
+        if count > 0 || removedDuplicate { try store.commit() }
         return count
     }
 
@@ -833,7 +911,7 @@ public actor EventKitRepository {
     private func allDayOccurrenceKey(for event: EKEvent) -> String {
         let occurrenceDate = event.occurrenceDate ?? event.startDate ?? .distantFuture
         return [
-            event.calendar.calendarIdentifier,
+            event.calendar?.calendarIdentifier ?? "",
             event.calendarItemIdentifier,
             String(Int(occurrenceDate.timeIntervalSince1970))
         ].joined(separator: ":")
@@ -843,7 +921,7 @@ public actor EventKitRepository {
         if isRecurring(event) {
             return [
                 "series",
-                event.calendar.calendarIdentifier,
+                event.calendar?.calendarIdentifier ?? "",
                 event.url?.absoluteString
                     ?? event.calendarItemExternalIdentifier
                     ?? event.calendarItemIdentifier
@@ -851,7 +929,7 @@ public actor EventKitRepository {
         }
         return [
             "event",
-            event.calendar.calendarIdentifier,
+            event.calendar?.calendarIdentifier ?? "",
             event.calendarItemIdentifier
         ].joined(separator: ":")
     }
@@ -863,17 +941,32 @@ public actor EventKitRepository {
 
     private func projectedEvents(recordID: UUID, calendars: [EKCalendar]? = nil) throws -> [EKEvent] {
         let currentYear = Calendar.current.component(.year, from: Date())
-        let start = Calendar.current.date(from: DateComponents(year: currentYear - 1, month: 1, day: 1)) ?? Date()
-        let end = Calendar.current.date(from: DateComponents(year: currentYear + ProductConstants.defaultProjectionYears + 1, month: 12, day: 31))
-            ?? Date().addingTimeInterval(12 * 365 * 86_400)
-        let predicate = store.predicateForEvents(withStart: start, end: end, calendars: calendars)
         let expectedPath = "/\(recordID.uuidString.lowercased())"
-        return store.events(matching: predicate).filter { event in
-            guard let url = event.url else { return false }
-            return url.scheme == ProductConstants.managedURLScheme
-                && url.host == ProductConstants.managedURLHost
-                && url.path.lowercased() == expectedPath
+
+        // Providers can truncate a single predicate spanning many years. Query
+        // one year at a time so existing projections are never mistaken for
+        // missing ones and re-created on every launch.
+        var eventsByOccurrence: [String: EKEvent] = [:]
+        for year in (currentYear - 1)...(currentYear + ProductConstants.defaultProjectionYears + 1) {
+            guard let start = Calendar.current.date(
+                from: DateComponents(year: year, month: 1, day: 1)
+            ), let end = Calendar.current.date(
+                from: DateComponents(year: year + 1, month: 1, day: 1)
+            ) else {
+                continue
+            }
+            let predicate = store.predicateForEvents(withStart: start, end: end, calendars: calendars)
+            for event in store.events(matching: predicate) where event.status != .canceled {
+                guard let url = event.url,
+                      url.scheme == ProductConstants.managedURLScheme,
+                      url.host == ProductConstants.managedURLHost,
+                      url.path.lowercased() == expectedPath else {
+                    continue
+                }
+                eventsByOccurrence[allDayOccurrenceKey(for: event)] = event
+            }
         }
+        return Array(eventsByOccurrence.values)
     }
 
     private func removeProjectedEvents(recordID: UUID, commit: Bool) throws {
@@ -1089,7 +1182,7 @@ public actor EventKitRepository {
             sourceTitle: calendar.source.title,
             sourceIdentifier: calendar.source.sourceIdentifier,
             type: calendarTypeName(calendar.type),
-            colorHex: colorHex(calendar.color),
+            colorHex: Self.colorHex(calendar.cgColor),
             allowsContentModifications: calendar.allowsContentModifications
         )
     }
@@ -1097,7 +1190,7 @@ public actor EventKitRepository {
     private func countdownEvent(_ event: EKEvent) -> CountdownEvent {
         let occurrenceDate = event.occurrenceDate ?? event.startDate ?? .distantFuture
         let stableID = [
-            event.calendar.calendarIdentifier,
+            event.calendar?.calendarIdentifier ?? "",
             event.eventIdentifier ?? event.calendarItemIdentifier,
             String(Int(occurrenceDate.timeIntervalSince1970))
         ].joined(separator: ":")
@@ -1113,10 +1206,10 @@ public actor EventKitRepository {
             eventDate: event.startDate ?? .distantFuture,
             endDate: event.endDate ?? event.startDate ?? .distantFuture,
             isAllDay: event.isAllDay,
-            calendarTitle: event.calendar.title,
-            calendarIdentifier: event.calendar.calendarIdentifier,
-            sourceTitle: event.calendar.source.title,
-            colorHex: colorHex(event.calendar.color),
+            calendarTitle: event.calendar?.title ?? "",
+            calendarIdentifier: event.calendar?.calendarIdentifier ?? "",
+            sourceTitle: event.calendar?.source.title ?? "",
+            colorHex: Self.colorHex(event.calendar?.cgColor),
             notes: event.notes,
             url: event.url?.absoluteString
         )
@@ -1128,21 +1221,31 @@ public actor EventKitRepository {
            url.host == ProductConstants.managedURLHost,
            let groupID = url.pathComponents.dropFirst().first,
            !groupID.isEmpty {
-            return "calendarcountdown:\(event.calendar.calendarIdentifier):\(groupID.lowercased())"
+            return "calendarcountdown:\(event.calendar?.calendarIdentifier ?? ""):\(groupID.lowercased())"
         }
 
         guard event.hasRecurrenceRules || event.occurrenceDate != nil else { return nil }
         let eventKitIdentifier = event.calendarItemExternalIdentifier ?? event.calendarItemIdentifier
-        return "eventkit:\(event.calendar.calendarIdentifier):\(eventKitIdentifier)"
+        return "eventkit:\(event.calendar?.calendarIdentifier ?? ""):\(eventKitIdentifier)"
     }
 
-    private func colorHex(_ color: NSColor?) -> String {
-        guard let rgb = color?.usingColorSpace(.sRGB) else { return "#8E8E93" }
+    private func ekCalendar(of event: EKEvent) -> EKCalendar? {
+        event.calendar
+    }
+
+    private static func colorHex(_ color: CGColor?) -> String {
+        guard let color,
+              let converted = color.converted(to: CGColorSpaceCreateDeviceRGB(), intent: .defaultIntent, options: nil),
+              let components = converted.components,
+              components.count >= 3
+        else {
+            return "#8E8E93"
+        }
         return String(
             format: "#%02X%02X%02X",
-            Int(round(rgb.redComponent * 255)),
-            Int(round(rgb.greenComponent * 255)),
-            Int(round(rgb.blueComponent * 255))
+            Int(round(components[0] * 255)),
+            Int(round(components[1] * 255)),
+            Int(round(components[2] * 255))
         )
     }
 

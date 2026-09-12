@@ -123,7 +123,7 @@ xcodebuild -project CalendarCountdown.xcodeproj -scheme CalendarCountdown \
 
 ## 現在の範囲
 
-- 現在はmacOSをサポート。iPhoneアプリ、iPhoneウィジェット、CloudKitルール同期は今後の対象です。
+- 現在はmacOSをサポート。Mac / iPhone / iPad は同一アプリで、macOS が主力。iOS target は未実装。
 - CalDAVサーバーではなく、Appleカレンダーのアカウント／分類構造を複製しません。
 - 詳細な製品・データ契約は [Documentation/PRODUCT.md](Documentation/PRODUCT.md) を参照してください。
 

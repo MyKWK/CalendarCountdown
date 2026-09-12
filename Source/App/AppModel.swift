@@ -23,7 +23,7 @@ final class AppModel: ObservableObject {
 
     init(repository: EventKitRepository = EventKitRepository()) {
         self.repository = repository
-        displayPreferences = CountdownDisplayPreferencesStore.load()
+        displayPreferences = .init()
         trackedEventsDocument = (try? TrackedEventsFileStore.load()) ?? .empty
     }
 
@@ -34,25 +34,87 @@ final class AppModel: ObservableObject {
     func bootstrap() async {
         guard !didBootstrap else { return }
         didBootstrap = true
+        displayPreferences = (try? await repository.displayPreferences()) ?? .init()
         accessState = await repository.authorizationState()
-        if accessState == .fullAccess { await refresh() }
+        DiagnosticLogger.shared.log(
+            .info,
+            category: .calendar,
+            event: "calendar.bootstrap.completed",
+            metadata: ["access_state": accessState.rawValue]
+        )
+        if accessState == .fullAccess {
+            await reconcileManagedCountdowns()
+            await refresh()
+        }
+    }
+
+    func recoverAuthorization() async {
+        let previous = accessState
+        let current = await repository.authorizationState()
+        accessState = current
+        switch CalendarAccessRecovery.transition(from: previous, to: current) {
+        case .gainedAccess:
+            DiagnosticLogger.shared.log(
+                .notice,
+                category: .calendar,
+                event: "calendar.access.recovered",
+                metadata: ["access_state": current.rawValue]
+            )
+            await reconcileManagedCountdowns()
+            await refresh()
+        case .lostAccess:
+            DiagnosticLogger.shared.log(
+                .warning,
+                category: .calendar,
+                event: "calendar.access.revoked",
+                metadata: ["access_state": current.rawValue]
+            )
+            clearCalendarPresentation()
+        case .unchanged, .stillUnavailable:
+            if CalendarAccessRecovery.shouldLoadCalendarData(current) {
+                await refresh()
+            }
+        }
     }
 
     func requestAccess() async {
         isLoading = true
         defer { isLoading = false }
-        do {
-            _ = try await repository.requestFullAccess()
-            accessState = await repository.authorizationState()
-            if accessState == .fullAccess { await refresh() }
-        } catch {
-            errorMessage = error.localizedDescription
-            accessState = await repository.authorizationState()
+        let action = CalendarAccessRecovery.action(for: accessState)
+        if action == .openSystemSettings {
+            CalendarPrivacySettings.open()
         }
+        if action == .requestPrompt {
+            do {
+                _ = try await repository.requestFullAccess()
+            } catch {
+                DiagnosticLogger.shared.log(
+                    .error,
+                    category: .calendar,
+                    event: "calendar.access.failed",
+                    metadata: DiagnosticLogger.errorMetadata(error)
+                )
+                errorMessage = error.localizedDescription
+            }
+        }
+        await recoverAuthorization()
+        if accessState == .fullAccess {
+            await reconcileManagedCountdowns()
+            await refresh()
+        }
+    }
+
+    private func clearCalendarPresentation() {
+        calendars = []
+        events = []
+        selectedEvents = []
+        featuredEvent = nil
     }
 
     func refresh() async {
         guard accessState == .fullAccess else { return }
+        let operationID = UUID()
+        let started = Date()
         isLoading = true
         defer { isLoading = false }
         do {
@@ -68,8 +130,52 @@ final class AppModel: ObservableObject {
             events = eventValues
             selections = selectionValues
             try await rebuildCountdownPresentation()
+            DiagnosticLogger.shared.log(
+                .notice,
+                category: .calendar,
+                event: "calendar.refresh.completed",
+                correlationID: operationID,
+                metadata: [
+                    "duration_ms": String(Int(Date().timeIntervalSince(started) * 1_000)),
+                    "calendar_count": String(calendars.count),
+                    "event_count": String(events.count),
+                    "selection_count": String(selections.count),
+                    "visible_count": String(selectedEvents.count)
+                ]
+            )
         } catch {
+            DiagnosticLogger.shared.log(
+                .error,
+                category: .calendar,
+                event: "calendar.refresh.failed",
+                correlationID: operationID,
+                metadata: DiagnosticLogger.errorMetadata(error).merging([
+                    "duration_ms": String(Int(Date().timeIntervalSince(started) * 1_000))
+                ]) { current, _ in current }
+            )
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func reconcileManagedCountdowns() async {
+        do {
+            let repairedCount = try await repository.syncManagedRecords()
+            guard repairedCount > 0 else { return }
+            DiagnosticLogger.shared.log(
+                .notice,
+                category: .calendar,
+                event: "calendar.managed_countdowns.reconciled",
+                metadata: ["projected_count": String(repairedCount)]
+            )
+        } catch {
+            // A projection repair must not prevent the user from seeing calendar
+            // data that EventKit can still read.
+            DiagnosticLogger.shared.log(
+                .error,
+                category: .calendar,
+                event: "calendar.managed_countdowns.reconcile_failed",
+                metadata: DiagnosticLogger.errorMetadata(error)
+            )
         }
     }
 
@@ -98,7 +204,7 @@ final class AppModel: ObservableObject {
         }
 
         do {
-            try CountdownDisplayPreferencesStore.save(updated)
+            try await repository.saveDisplayPreferences(updated)
             displayPreferences = updated
             try await rebuildCountdownPresentation()
             statusMessage = tracked
@@ -123,7 +229,7 @@ final class AppModel: ObservableObject {
             ? nil
             : matchingSelection.id
         do {
-            try CountdownDisplayPreferencesStore.save(updated)
+            try await repository.saveDisplayPreferences(updated)
             displayPreferences = updated
             try await rebuildCountdownPresentation()
             statusMessage = updated.pinnedSelectionID == nil
@@ -158,7 +264,7 @@ final class AppModel: ObservableObject {
             if matching.contains(where: { $0.id == displayPreferences.pinnedSelectionID }) {
                 var updated = displayPreferences
                 updated.pinnedSelectionID = nil
-                try CountdownDisplayPreferencesStore.save(updated)
+                try await repository.saveDisplayPreferences(updated)
                 displayPreferences = updated
             }
             statusMessage = AppLocalization.text(
@@ -172,8 +278,20 @@ final class AppModel: ObservableObject {
     }
 
     func add(_ draft: ManagedEventDraft) async -> Bool {
+        let operationID = UUID()
         do {
             let result = try await repository.writeCalendarBacked(draft)
+            DiagnosticLogger.shared.log(
+                .notice,
+                category: .calendar,
+                event: "calendar.write.completed",
+                correlationID: operationID,
+                metadata: [
+                    "created_events": String(result.createdEventCount),
+                    "calendar_system": draft.calendarSystem.rawValue,
+                    "recurrence": draft.recurrence.rawValue
+                ]
+            )
             statusMessage = AppLocalization.format(
                 "status.calendar_sync_complete",
                 defaultValue: "已同步到 Apple 日历，生成 %lld 个事件",
@@ -182,17 +300,39 @@ final class AppModel: ObservableObject {
             await refresh()
             return true
         } catch {
+            DiagnosticLogger.shared.log(
+                .error,
+                category: .calendar,
+                event: "calendar.write.failed",
+                correlationID: operationID,
+                metadata: DiagnosticLogger.errorMetadata(error)
+            )
             errorMessage = error.localizedDescription
             return false
         }
     }
 
     func importDocument(at url: URL, dryRun: Bool = false) async {
+        let operationID = UUID()
+        let started = Date()
         let accessed = url.startAccessingSecurityScopedResource()
         defer { if accessed { url.stopAccessingSecurityScopedResource() } }
         do {
             let document = try JSONCoding.decoder().decode(ImportDocument.self, from: Data(contentsOf: url))
             let result = try await repository.importDocument(document, dryRun: dryRun)
+            DiagnosticLogger.shared.log(
+                .notice,
+                category: .calendar,
+                event: "calendar.import.completed",
+                correlationID: operationID,
+                metadata: [
+                    "duration_ms": String(Int(Date().timeIntervalSince(started) * 1_000)),
+                    "dry_run": String(dryRun),
+                    "validated_events": String(result.validatedEventCount),
+                    "validated_selections": String(result.validatedSelectionCount),
+                    "projected_events": String(result.projectedEventCount)
+                ]
+            )
             statusMessage = dryRun
                 ? AppLocalization.format(
                     "status.import_validation_complete",
@@ -207,6 +347,16 @@ final class AppModel: ObservableObject {
                 )
             await refresh()
         } catch {
+            DiagnosticLogger.shared.log(
+                .error,
+                category: .calendar,
+                event: "calendar.import.failed",
+                correlationID: operationID,
+                metadata: DiagnosticLogger.errorMetadata(error).merging([
+                    "dry_run": String(dryRun),
+                    "duration_ms": String(Int(Date().timeIntervalSince(started) * 1_000))
+                ]) { current, _ in current }
+            )
             errorMessage = error.localizedDescription
         }
     }
@@ -220,12 +370,23 @@ final class AppModel: ObservableObject {
             from: selectedEvents,
             selections: selections
         )
-        trackedEventsDocument = try await repository.saveTrackedEventsDocument(
-            visibleEvents: selectedEvents,
-            selections: selections,
-            pinnedSelectionID: displayPreferences.pinnedSelectionID
-        )
+        if CountdownPresentationRecovery.shouldReplaceTrackedDocument(
+            visibleEventCount: selectedEvents.count,
+            selectionCount: selections.count
+        ) {
+            trackedEventsDocument = try await repository.saveTrackedEventsDocument(
+                visibleEvents: selectedEvents,
+                selections: selections,
+                pinnedSelectionID: displayPreferences.pinnedSelectionID
+            )
+        }
         try WidgetSnapshotStore.save(events: selectedEvents)
         WidgetCenter.shared.reloadTimelines(ofKind: ProductConstants.widgetKind)
+        DiagnosticLogger.shared.log(
+            .debug,
+            category: .widget,
+            event: "widget.countdown_snapshot.saved",
+            metadata: ["item_count": String(selectedEvents.count)]
+        )
     }
 }

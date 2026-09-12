@@ -46,161 +46,261 @@ enum AppAppearanceMode: String, CaseIterable, Identifiable {
     }
 }
 
-enum AppThemePreset: String, CaseIterable, Identifiable {
-    case aiBlue
-    case indigo
-    case purple
-    case pink
-    case orange
-    case yellow
-    case green
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .aiBlue:
-            AppLocalization.text("appearance.color_ai_blue", defaultValue: "AI 蓝")
-        case .indigo:
-            AppLocalization.text("appearance.color_indigo", defaultValue: "靛蓝")
-        case .purple:
-            AppLocalization.text("appearance.color_purple", defaultValue: "紫色")
-        case .pink:
-            AppLocalization.text("appearance.color_pink", defaultValue: "粉色")
-        case .orange:
-            AppLocalization.text("appearance.color_orange", defaultValue: "橙色")
-        case .yellow:
-            AppLocalization.text("appearance.color_yellow", defaultValue: "黄色")
-        case .green:
-            AppLocalization.text("appearance.color_green", defaultValue: "绿色")
-        }
-    }
-
-    var color: Color {
-        switch self {
-        // sRGB approximation of the blue-green/turquoise ADS marker-lamp gamut.
-        case .aiBlue: Color(hex: "#00E5D4")
-        case .indigo: Color(nsColor: .systemIndigo)
-        case .purple: Color(nsColor: .systemPurple)
-        case .pink: Color(nsColor: .systemPink)
-        case .orange: Color(nsColor: .systemOrange)
-        case .yellow: Color(nsColor: .systemYellow)
-        case .green: Color(nsColor: .systemGreen)
-        }
-    }
-}
-
 @MainActor
 final class AppAppearanceSettings: ObservableObject {
-    static let customThemeID = "custom"
-
     private enum Keys {
-        static let themeID = "appearance.themeID"
-        static let customColorHex = "appearance.customColorHex"
         static let mode = "appearance.mode"
+        static let glassEnabled = WindowGlassAppearance.enabledDefaultsKey
+        static let glassTransparency = WindowGlassAppearance.transparencyDefaultsKey
     }
 
     private let defaults: UserDefaults
-
-    @Published var selectedThemeID: String {
-        didSet { defaults.set(selectedThemeID, forKey: Keys.themeID) }
-    }
-
-    @Published var customColorHex: String {
-        didSet { defaults.set(customColorHex, forKey: Keys.customColorHex) }
-    }
 
     @Published var appearanceMode: AppAppearanceMode {
         didSet { defaults.set(appearanceMode.rawValue, forKey: Keys.mode) }
     }
 
+    @Published var windowGlassEnabled: Bool {
+        didSet {
+            if !WindowGlassAppearance.userFacingEnabled, windowGlassEnabled {
+                windowGlassEnabled = false
+                return
+            }
+            defaults.set(windowGlassEnabled, forKey: Keys.glassEnabled)
+        }
+    }
+
+    @Published var windowGlassTransparency: Double {
+        didSet {
+            let clamped = WindowGlassAppearance.clamped(windowGlassTransparency)
+            if clamped != windowGlassTransparency {
+                windowGlassTransparency = clamped
+                return
+            }
+            defaults.set(clamped, forKey: Keys.glassTransparency)
+        }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-
-        let storedThemeID = defaults.string(forKey: Keys.themeID)
-        if storedThemeID == Self.customThemeID
-            || AppThemePreset(rawValue: storedThemeID ?? "") != nil {
-            selectedThemeID = storedThemeID ?? AppThemePreset.aiBlue.rawValue
-        } else {
-            selectedThemeID = AppThemePreset.aiBlue.rawValue
-        }
-
-        customColorHex = defaults.string(forKey: Keys.customColorHex) ?? "#0A84FF"
         appearanceMode = AppAppearanceMode(
             rawValue: defaults.string(forKey: Keys.mode) ?? ""
         ) ?? .system
-    }
 
-    var accentColor: Color {
-        if let preset = AppThemePreset(rawValue: selectedThemeID) {
-            return preset.color
+        WindowGlassAppearance.retireUserFacingPreference(in: defaults)
+        windowGlassEnabled = false
+
+        if defaults.object(forKey: Keys.glassTransparency) == nil {
+            windowGlassTransparency = WindowGlassAppearance.defaultTransparency
+        } else {
+            windowGlassTransparency = WindowGlassAppearance.clamped(
+                defaults.double(forKey: Keys.glassTransparency)
+            )
         }
-        return Color(hex: customColorHex)
     }
 
-    var customColor: Color { Color(hex: customColorHex) }
+    /// Fixed brand signal color. Mission identity colors are configured on each mission.
+    var accentColor: Color { Color("AccentColor") }
+}
 
-    func select(_ preset: AppThemePreset) {
-        selectedThemeID = preset.rawValue
-    }
+private enum AppSettingsSection: String, Identifiable {
+    case appearance
+    case statusBar
+    case shortcuts
 
-    func useCustomColor() {
-        selectedThemeID = Self.customThemeID
-    }
+    var id: String { rawValue }
+}
 
-    func updateCustomColor(_ color: Color) {
-        guard let converted = NSColor(color).usingColorSpace(.sRGB) else { return }
-        let red = Int((converted.redComponent * 255).rounded())
-        let green = Int((converted.greenComponent * 255).rounded())
-        let blue = Int((converted.blueComponent * 255).rounded())
-        customColorHex = String(format: "#%02X%02X%02X", red, green, blue)
-        selectedThemeID = Self.customThemeID
+struct AppSettingsView: View {
+    @ObservedObject var settings: AppAppearanceSettings
+    @ObservedObject var overview: StatusBarOverviewSettings
+    @ObservedObject var shortcuts: AppShortcutCoordinator
+    @ObservedObject var workspace: WorkspaceModel
+    @State private var selection: AppSettingsSection? = .appearance
+
+    var body: some View {
+        NavigationSplitView {
+            List(selection: $selection) {
+                Label(AppLocalization.text("appearance.title", defaultValue: "外观"), systemImage: "circle.lefthalf.filled")
+                    .tag(AppSettingsSection.appearance)
+                Label(
+                    AppLocalization.text("settings.status_bar.title", defaultValue: "菜单栏概览"),
+                    systemImage: "menubar.rectangle"
+                )
+                    .tag(AppSettingsSection.statusBar)
+                Label("快捷键", systemImage: "command")
+                    .tag(AppSettingsSection.shortcuts)
+            }
+            .navigationTitle("设置")
+            .navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 210)
+        } detail: {
+            switch selection ?? .appearance {
+            case .appearance:
+                AppearanceSettingsPane(settings: settings)
+            case .statusBar:
+                StatusBarOverviewPane(overview: overview, workspace: workspace)
+            case .shortcuts:
+                ShortcutSettingsPane(shortcuts: shortcuts)
+            }
+        }
+        .frame(width: 760, height: 640)
+        .tint(settings.accentColor)
+        .preferredColorScheme(settings.appearanceMode.colorScheme)
     }
 }
 
-struct AppearanceSettingsView: View {
+private struct ShortcutSettingsPane: View {
+    @ObservedObject var shortcuts: AppShortcutCoordinator
+
+    var body: some View {
+        Form {
+            Section("全局快捷键") {
+                Toggle("启用全局唤起", isOn: $shortcuts.globalWakeEnabled)
+
+                ShortcutRow(
+                    title: "打开主界面",
+                    shortcut: AppShortcutCoordinator.globalWakeDisplay,
+                    scope: "全局"
+                )
+
+                HStack(spacing: 7) {
+                    Image(systemName: shortcuts.globalWakeStatus == .active
+                        ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .foregroundStyle(shortcuts.globalWakeStatus == .active ? .green : .orange)
+                    Text(shortcuts.globalWakeStatus.title)
+                        .font(.callout.weight(.medium))
+                }
+                Text(shortcuts.globalWakeStatus.detail)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section("当前界面内") {
+                ShortcutRow(title: "新建倒数日", shortcut: "⌘⇧D", scope: "应用内")
+                ShortcutRow(title: "新建任务", shortcut: "⌘⇧N", scope: "应用内")
+                ShortcutRow(title: "新建使命", shortcut: "⌘⇧M", scope: "应用内")
+                ShortcutRow(title: "新建打卡", shortcut: "⌘⇧H", scope: "应用内")
+                ShortcutRow(title: "切换倒数日／任务／使命／打卡", shortcut: "⌘1–4", scope: "应用内")
+            }
+
+            Section {
+                Text("全局快捷键仅在知行正在运行时生效；关闭主窗口不会退出应用，选择“退出知行”后则不会继续监听。应用内快捷键只会在知行位于前台时响应。")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("快捷键")
+    }
+}
+
+private struct ShortcutRow: View {
+    let title: String
+    let shortcut: String
+    let scope: String
+
+    var body: some View {
+        HStack {
+            Text(title)
+            Spacer()
+            Text(scope)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(shortcut)
+                .font(.body.monospaced().weight(.medium))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(.quaternary, in: RoundedRectangle(cornerRadius: 5))
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title)，\(scope)，\(shortcut)")
+    }
+}
+
+private struct StatusBarOverviewPane: View {
+    @ObservedObject var overview: StatusBarOverviewSettings
+    @ObservedObject var workspace: WorkspaceModel
+
+    private var liveMissions: [MissionDefinition] {
+        workspace.missions.map(\.mission).filter { $0.deletedAt == nil }
+    }
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle(
+                    AppLocalization.text("settings.status_bar.countdown", defaultValue: "倒数日"),
+                    isOn: $overview.showCountdown
+                )
+                Toggle(
+                    AppLocalization.text("settings.status_bar.mission", defaultValue: "使命进度"),
+                    isOn: $overview.showMissionProgress
+                )
+                Toggle(
+                    AppLocalization.text("settings.status_bar.tasks", defaultValue: "今日任务"),
+                    isOn: $overview.showTodayTasks
+                )
+            } footer: {
+                Text(AppLocalization.text(
+                    "settings.status_bar.help",
+                    defaultValue: "三项可同时打开，各自占用一个独立菜单栏图标。关闭后该图标会移除。旧版本升级后默认只保留倒数日。"
+                ))
+            }
+
+            Section {
+                if liveMissions.isEmpty {
+                    Text(AppLocalization.text(
+                        "settings.status_bar.mission_empty",
+                        defaultValue: "还没有使命。新建一项使命后，就可以把它显示在菜单栏。"
+                    ))
+                    .foregroundStyle(.secondary)
+                } else {
+                    Picker(
+                        AppLocalization.text("settings.status_bar.mission_picker", defaultValue: "显示的使命"),
+                        selection: $overview.selectedMissionID
+                    ) {
+                        Text(AppLocalization.text("settings.status_bar.mission_none", defaultValue: "未选择"))
+                            .tag(Optional<UUID>.none)
+                        ForEach(liveMissions) { mission in
+                            Text(mission.title).tag(Optional(mission.id))
+                        }
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle(AppLocalization.text("settings.status_bar.title", defaultValue: "菜单栏概览"))
+        .onAppear {
+            overview.resolveSelectedMission(among: liveMissions)
+        }
+    }
+}
+
+private struct AppearanceSettingsPane: View {
     @ObservedObject var settings: AppAppearanceSettings
 
     var body: some View {
         Form {
-            Section("主题颜色") {
-                VStack(alignment: .leading, spacing: 14) {
-                    Text("颜色用于选中状态、主要按钮和交互强调；内容分类仍沿用 Apple 日历自身的颜色。")
+            Section(AppLocalization.text("appearance.design_language", defaultValue: "设计语言")) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.primary.opacity(0.08))
+                            .frame(width: 48, height: 48)
+                        Circle()
+                            .fill(settings.accentColor)
+                            .frame(width: 18, height: 18)
+                            .shadow(color: settings.accentColor.opacity(0.35), radius: 6)
+                    }
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(AppLocalization.text("appearance.fixed_theme_name", defaultValue: "钛灰 · 冰川青"))
+                            .font(.headline)
+                        Text(AppLocalization.text(
+                            "appearance.fixed_theme_description",
+                            defaultValue: "知行使用固定的冷灰界面与冰川青交互强调；颜色选择留给每一项使命。"
+                        ))
                         .font(.callout)
                         .foregroundStyle(.secondary)
-
-                    HStack(alignment: .top, spacing: 14) {
-                        ForEach(AppThemePreset.allCases) { preset in
-                            ThemeSwatch(
-                                title: preset.title,
-                                color: preset.color,
-                                isSelected: settings.selectedThemeID == preset.rawValue
-                            ) {
-                                settings.select(preset)
-                            }
-                        }
-                    }
-
-                    Divider()
-
-                    HStack {
-                        ColorPicker(
-                            "自定义颜色",
-                            selection: Binding(
-                                get: { settings.customColor },
-                                set: { settings.updateCustomColor($0) }
-                            ),
-                            supportsOpacity: false
-                        )
-                        Spacer()
-                        Text(settings.customColorHex.uppercased())
-                            .font(.caption.monospaced())
-                            .foregroundStyle(.secondary)
-                        Button("使用自定义颜色") {
-                            settings.useCustomColor()
-                        }
-                        .disabled(settings.selectedThemeID == AppAppearanceSettings.customThemeID)
-                        .appActionFocusEffectDisabled()
                     }
                 }
                 .padding(.vertical, 6)
@@ -219,9 +319,10 @@ struct AppearanceSettingsView: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
+
         }
         .formStyle(.grouped)
-        .frame(width: 610, height: 390)
+        .navigationTitle(AppLocalization.text("appearance.title", defaultValue: "外观"))
         .tint(settings.accentColor)
         .preferredColorScheme(settings.appearanceMode.colorScheme)
     }
@@ -244,69 +345,5 @@ struct AppearanceSettingsView: View {
                 defaultValue: "始终使用深色页面与浅色文字。"
             )
         }
-    }
-}
-
-private struct ThemeSwatch: View {
-    let title: String
-    let color: Color
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 6) {
-                ZStack {
-                    Circle()
-                        .fill(color)
-                        .frame(width: 34, height: 34)
-                    if isSelected {
-                        Image(systemName: "checkmark")
-                            .font(.caption.bold())
-                            .foregroundStyle(selectionForegroundColor)
-                    }
-                }
-                .overlay {
-                    Circle()
-                        .strokeBorder(isSelected ? color : .clear, lineWidth: 2)
-                        .padding(-4)
-                }
-
-                Text(title)
-                    .font(.caption2)
-                    .foregroundStyle(isSelected ? .primary : .secondary)
-                    .lineLimit(1)
-            }
-            .frame(width: 62)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .appActionFocusEffectDisabled()
-        .accessibilityLabel(AppLocalization.format(
-            "appearance.theme_accessibility_label",
-            defaultValue: "主题颜色：%@",
-            title
-        ))
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-
-    private var selectionForegroundColor: Color {
-        guard let rgb = NSColor(color).usingColorSpace(.sRGB) else { return .white }
-        let perceivedBrightness = 0.2126 * rgb.redComponent
-            + 0.7152 * rgb.greenComponent
-            + 0.0722 * rgb.blueComponent
-        return perceivedBrightness > 0.6 ? .black.opacity(0.72) : .white
-    }
-}
-
-extension Color {
-    init(hex: String) {
-        let value = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        let number = UInt64(value, radix: 16) ?? 0x8E8E93
-        self.init(
-            red: Double((number >> 16) & 0xFF) / 255,
-            green: Double((number >> 8) & 0xFF) / 255,
-            blue: Double(number & 0xFF) / 255
-        )
     }
 }

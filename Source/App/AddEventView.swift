@@ -70,8 +70,12 @@ struct AddEventView: View {
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
-                    TextField("备注（可选）", text: $notes, axis: .vertical)
-                        .lineLimit(2...4)
+                    ComposerMultilineField(
+                        title: "备注（可选）",
+                        text: $notes,
+                        lineLimit: 2...4,
+                        onSubmit: submit
+                    )
                     Toggle("同步后加入倒数展示", isOn: $selectForCountdown)
                 }
 
@@ -83,6 +87,7 @@ struct AddEventView: View {
                 }
             }
             .formStyle(.grouped)
+            .onSubmit(submit)
 
             Divider()
             HStack {
@@ -92,7 +97,7 @@ struct AddEventView: View {
                 if isSaving {
                     ProgressView().controlSize(.small)
                 }
-                Button("同步到 Apple 日历") { Task { await save() } }
+                Button("同步到 Apple 日历") { submit() }
                     .buttonStyle(.borderedProminent)
                     .disabled(!canSave)
                     .appActionFocusEffectDisabled()
@@ -172,6 +177,11 @@ struct AddEventView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    private func submit() {
+        guard canSave else { return }
+        Task { await save() }
     }
 
     private var canSave: Bool {

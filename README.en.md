@@ -119,14 +119,14 @@ xcodebuild -project CalendarCountdown.xcodeproj \
 
 ## Data and privacy boundaries
 
-- Calendar events remain in Apple Calendar; the project does not operate its own cloud calendar service.
-- Tracking selections and `tracked-events.json` stay on the Mac for display and user-initiated export.
+- Calendar events remain in Apple Calendar; the project does not operate its own cloud calendar service. Countdown rules, tracking selections, and pin state sync through the user’s CloudKit private database and do not upload EventKit identifiers.
+- Each device keeps its own SQLite replica. The database, WAL, SHM, and backup directory are excluded from iCloud backup. `tracked-events.json` remains available for display and user-initiated export.
 - Writes affect only the Apple calendar explicitly selected by the user.
 - Real user anniversary files are excluded by `.gitignore` and must not enter the public repository or release package.
 
 ## Current scope
 
-- macOS is supported today. An iPhone app, iPhone widgets, and CloudKit rule sync are future work.
+- Mac, iPhone, and iPad are the same app; macOS is the primary and first-shipped platform. The iOS target is not landed yet.
 - This project is not a CalDAV server and does not duplicate Apple Calendar’s account or category hierarchy.
 - See [Documentation/PRODUCT.md](Documentation/PRODUCT.md) for the detailed product and data contract.
 

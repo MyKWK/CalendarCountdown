@@ -123,7 +123,7 @@ xcodebuild -project CalendarCountdown.xcodeproj -scheme CalendarCountdown \
 
 ## Périmètre actuel
 
-- macOS est pris en charge aujourd’hui. L’app iPhone, les widgets iPhone et la synchronisation des règles via CloudKit sont prévus ultérieurement.
+- macOS est pris en charge aujourd’hui. Mac, iPhone et iPad sont la même app ; macOS est la plateforme principale. La cible iOS n’est pas encore livrée.
 - Ce projet n’est pas un serveur CalDAV et ne duplique pas la hiérarchie des comptes ou catégories d’Apple Calendar.
 - Consultez [Documentation/PRODUCT.md](Documentation/PRODUCT.md) pour le contrat détaillé du produit et des données.
 

@@ -8,7 +8,7 @@
 "操作失败" = "操作失败";
 "好" = "好";
 "需要访问 Apple 日历" = "需要访问 Apple 日历";
-"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。";
+"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "知行读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。";
 "授权日历访问" = "授权日历访问";
 "倒数展示" = "倒数展示";
 "Apple 日历" = "Apple 日历";
@@ -17,7 +17,7 @@
 "每年追踪该日历中的同名事件" = "每年追踪该日历中的同名事件";
 "置顶与最近倒数" = "置顶与最近倒数";
 "尚未选择倒数事件" = "尚未选择倒数事件";
-"打开日历倒数" = "打开日历倒数";
+"打开日历倒数" = "打开知行";
 "退出" = "退出";
 
 /* Add event */
@@ -63,14 +63,56 @@
 "使用自定义颜色" = "使用自定义颜色";
 "页面外观" = "页面外观";
 
+"appearance.title" = "外观";
+"appearance.design_language" = "设计语言";
+"appearance.fixed_theme_name" = "钛灰 · 冰川青";
+"appearance.fixed_theme_description" = "知行使用固定的冷灰界面与冰川青交互强调；颜色选择留给每一项使命。";
+"mission.identity" = "图标与颜色";
+"mission.preview" = "使命预览";
+"mission.color.current" = "当前颜色";
+"mission.color.picker" = "使命颜色";
+"mission.color.blue" = "天空蓝";
+"mission.color.indigo" = "靛蓝";
+"mission.color.purple" = "紫罗兰";
+"mission.color.pink" = "粉红";
+"mission.color.red" = "珊瑚红";
+"mission.color.orange" = "日落橙";
+"mission.color.yellow" = "琥珀黄";
+"mission.color.green" = "草木绿";
+"mission.color.mint" = "薄荷";
+"mission.color.teal" = "青绿";
+"mission.color.cyan" = "冰青";
+"mission.color.brown" = "沙棕";
+"mission.color.field" = "颜色";
+"mission.name.field" = "名称";
+"mission.description.field" = "说明";
+"mission.description.placeholder" = "说明";
+"mission.goal.field" = "目标";
+"mission.target_date" = "目标日期";
+"mission.due" = "截止";
+"mission.icon.field" = "图标";
+"mission.icon.search" = "搜索图标";
+"mission.icon.picker" = "使命图标";
+"mission.create.title" = "新建使命";
+"mission.edit.title" = "编辑使命";
+"mission.title.placeholder" = "标题";
+"calendar.access.authorize" = "授权日历访问";
+"calendar.access.open_settings" = "在系统设置中打开";
+"calendar.access.recover_help" = "在系统设置中打开日历权限后，回到知行即可继续读取倒数。";
+"menubar.missions" = "使命";
+"status_item.mission_tooltip" = "%@ · %@";
+"status_item.event_mission_tooltip" = "%@ · %@ · %@ · %@";
+"mission.deleted_fallback" = "该使命已不存在";
+
 /* Widget */
 "最近倒数" = "最近倒数";
-"日历倒数" = "日历倒数";
+"日历倒数" = "知行";
 "显示你从 Apple 日历中选中的下一批倒数事件。" = "显示你从 Apple 日历中选中的下一批倒数事件。";
 
 /* Shared dynamic text */
-"app.name" = "日历倒数";
+"app.name" = "知行";
 "window.appearance_settings" = "外观设置";
+"window.settings" = "设置";
 "common.not_provided" = "未提供";
 "calendar_system.gregorian" = "公历";
 "calendar_system.lunar" = "农历";
@@ -79,9 +121,9 @@
 "countdown.today" = "今天";
 "countdown.tomorrow" = "明天";
 "countdown.remaining_days" = "还有 %lld 天";
-"status_item.no_events" = "日历倒数 · 尚无追踪事件";
+"status_item.no_events" = "知行 · 尚无追踪事件";
 "status_item.event_tooltip" = "%@ · %@ · %@";
-"status_item.accessibility_label" = "日历倒数，%@，%@";
+"status_item.accessibility_label" = "知行，%@，%@";
 "event.untitled" = "未命名事件";
 "widget.preview_title" = "示例生日";
 "widget.preview_calendar" = "生日";
@@ -105,6 +147,8 @@
 "empty.no_countdown_events" = "尚未选择倒数事件";
 "empty.no_future_events" = "没有未来事件";
 "empty.select_event_description" = "从任意 Apple 日历中选择具体事件加入倒数。";
+"empty.countdown_unresolved" = "已保存的倒数选择尚未匹配到日历事件";
+"empty.countdown_unresolved_description" = "选择仍保留在本机，不会被清空。授权恢复或刷新后会按稳定标识重新匹配年度和重复事件。";
 "empty.future_events_description" = "尝试扩大时间范围或检查该日历是否包含未来事件。";
 "action.track" = "追踪";
 "action.untrack" = "不追踪";
@@ -141,6 +185,12 @@
 "appearance.description_light" = "始终使用明亮页面与深色文字。";
 "appearance.description_dark" = "始终使用深色页面与浅色文字。";
 "appearance.theme_accessibility_label" = "主题颜色：%@";
+"appearance.glass_enabled" = "启用玻璃效果";
+"appearance.glass_transparency" = "透明度";
+"appearance.glass_solid" = "较实";
+"appearance.glass_sheer" = "较透";
+"appearance.glass_limit" = "主窗口使用不透明的钛灰底色，不再从桌面透出壁纸。";
+"appearance.glass_reduce_transparency" = "系统已开启“降低透明度”，主界面会保持不透明。";
 
 /* Errors */
 "error.unknown" = "未知错误";
@@ -207,3 +257,20 @@
 "lunar.day.28" = "廿八";
 "lunar.day.29" = "廿九";
 "lunar.day.30" = "三十";
+
+"status_bar.open_countdown" = "打开倒数日";
+"status_bar.open_missions" = "打开使命清单";
+"status_bar.open_tasks" = "打开任务清单";
+"status_bar.countdown.empty" = "倒数日，尚无追踪事件";
+"status_bar.mission.empty" = "尚未选择使命";
+"status_bar.mission.accessibility" = "使命 %@，进度 %@";
+"status_bar.tasks.tooltip" = "今日剩余 %lld 项未完成任务";
+"status_bar.tasks.accessibility" = "今日任务，剩余 %lld 项";
+"settings.status_bar.title" = "菜单栏概览";
+"settings.status_bar.countdown" = "倒数日";
+"settings.status_bar.mission" = "使命进度";
+"settings.status_bar.tasks" = "今日任务";
+"settings.status_bar.mission_picker" = "显示的使命";
+"settings.status_bar.mission_none" = "未选择";
+"settings.status_bar.mission_empty" = "还没有使命。新建一项使命后，就可以把它显示在菜单栏。";
+"settings.status_bar.help" = "三项可同时打开，各自占用一个独立菜单栏图标。关闭后该图标会移除。旧版本升级后默认只保留倒数日。";

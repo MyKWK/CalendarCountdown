@@ -13,6 +13,9 @@ Source/DerivedData/
 Source/DerivedData-*/
 Source/dist/
 
+# Local iteration stamps for automatic DMG install
+.cursor/state/
+
 # DMGs are published as GitHub Release assets, not committed to Git history.
 Releases/**/*.dmg
 

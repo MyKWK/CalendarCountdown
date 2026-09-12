@@ -8,7 +8,7 @@
 "操作失败" = "작업 실패";
 "好" = "확인";
 "需要访问 Apple 日历" = "Apple 캘린더 접근 권한 필요";
-"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "캘린더 카운트다운은 기존 캘린더와 이벤트를 읽습니다. 사용자가 직접 추가하거나 가져올 때만 선택한 캘린더에 기록합니다.";
+"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "Motive는 기존 캘린더와 이벤트를 읽습니다. 사용자가 직접 추가하거나 가져올 때만 선택한 캘린더에 기록합니다.";
 "授权日历访问" = "캘린더 접근 허용";
 "倒数展示" = "카운트다운";
 "Apple 日历" = "Apple 캘린더";
@@ -17,7 +17,7 @@
 "每年追踪该日历中的同名事件" = "같은 이름의 이벤트를 매년 추적";
 "置顶与最近倒数" = "고정 및 예정 카운트다운";
 "尚未选择倒数事件" = "선택한 카운트다운 이벤트가 없습니다";
-"打开日历倒数" = "캘린더 카운트다운 열기";
+"打开日历倒数" = "Motive 열기";
 "退出" = "종료";
 
 /* Add event */
@@ -63,14 +63,56 @@
 "使用自定义颜色" = "사용자 설정 색상 사용";
 "页面外观" = "모양";
 
+"appearance.title" = "화면 모양";
+"appearance.design_language" = "디자인 언어";
+"appearance.fixed_theme_name" = "티타늄 그레이 · 글레이셔 시안";
+"appearance.fixed_theme_description" = "Motive는 고정된 쿨 그레이 화면과 글레이셔 시안 상호작용 강조색을 사용합니다. 색상 선택은 각 미션에 적용됩니다.";
+"mission.identity" = "아이콘 및 색상";
+"mission.preview" = "미션 미리보기";
+"mission.color.current" = "현재 색상";
+"mission.color.picker" = "미션 색상";
+"mission.color.blue" = "스카이 블루";
+"mission.color.indigo" = "인디고";
+"mission.color.purple" = "바이올렛";
+"mission.color.pink" = "핑크";
+"mission.color.red" = "코랄 레드";
+"mission.color.orange" = "선셋 오렌지";
+"mission.color.yellow" = "앰버 옐로";
+"mission.color.green" = "리프 그린";
+"mission.color.mint" = "민트";
+"mission.color.teal" = "틸";
+"mission.color.cyan" = "아이스 시안";
+"mission.color.brown" = "샌드 브라운";
+"mission.color.field" = "색상";
+"mission.name.field" = "이름";
+"mission.description.field" = "설명";
+"mission.description.placeholder" = "설명";
+"mission.goal.field" = "목표";
+"mission.target_date" = "목표 날짜";
+"mission.due" = "마감";
+"mission.icon.field" = "아이콘";
+"mission.icon.search" = "아이콘 검색";
+"mission.icon.picker" = "미션 아이콘";
+"mission.create.title" = "새 미션";
+"mission.edit.title" = "미션 편집";
+"mission.title.placeholder" = "제목";
+"calendar.access.authorize" = "캘린더 접근 허용";
+"calendar.access.open_settings" = "시스템 설정 열기";
+"calendar.access.recover_help" = "시스템 설정에서 캘린더 접근을 허용한 뒤 Motive로 돌아오면 카운트다운을 불러옵니다.";
+"menubar.missions" = "미션";
+"status_item.mission_tooltip" = "%@ · %@";
+"status_item.event_mission_tooltip" = "%@ · %@ · %@ · %@";
+"mission.deleted_fallback" = "이 미션은 더 이상 없습니다";
+
 /* Widget */
 "最近倒数" = "예정 카운트다운";
-"日历倒数" = "캘린더 카운트다운";
+"日历倒数" = "Motive";
 "显示你从 Apple 日历中选中的下一批倒数事件。" = "Apple 캘린더에서 선택한 다음 카운트다운 이벤트를 표시합니다.";
 
 /* Shared dynamic text */
-"app.name" = "캘린더 카운트다운";
+"app.name" = "Motive";
 "window.appearance_settings" = "모양 설정";
+"window.settings" = "설정";
 "common.not_provided" = "제공되지 않음";
 "calendar_system.gregorian" = "양력";
 "calendar_system.lunar" = "중국 음력";
@@ -79,9 +121,9 @@
 "countdown.today" = "오늘";
 "countdown.tomorrow" = "내일";
 "countdown.remaining_days" = "%lld일 남음";
-"status_item.no_events" = "캘린더 카운트다운 · 추적 중인 이벤트 없음";
+"status_item.no_events" = "Motive · 추적 중인 이벤트 없음";
 "status_item.event_tooltip" = "%@ · %@ · %@";
-"status_item.accessibility_label" = "캘린더 카운트다운, %@, %@";
+"status_item.accessibility_label" = "Motive, %@, %@";
 "event.untitled" = "제목 없는 이벤트";
 "widget.preview_title" = "예시 생일";
 "widget.preview_calendar" = "생일";
@@ -105,6 +147,8 @@
 "empty.no_countdown_events" = "선택한 카운트다운 이벤트가 없습니다";
 "empty.no_future_events" = "예정 이벤트가 없습니다";
 "empty.select_event_description" = "Apple 캘린더에서 이벤트를 선택해 카운트다운에 추가하세요.";
+"empty.countdown_unresolved" = "저장된 카운트다운 선택이 아직 캘린더 이벤트와 맞지 않습니다";
+"empty.countdown_unresolved_description" = "선택은 이 Mac에 그대로 있으며 지워지지 않습니다. 권한 복구 또는 새로 고침 후 안정 식별자로 연간/반복 이벤트를 다시 맞춥니다.";
 "empty.future_events_description" = "날짜 범위를 늘리거나 이 캘린더에 예정 이벤트가 있는지 확인하세요.";
 "action.track" = "추적";
 "action.untrack" = "추적 중지";
@@ -141,6 +185,12 @@
 "appearance.description_light" = "항상 밝은 배경과 어두운 텍스트를 사용합니다.";
 "appearance.description_dark" = "항상 어두운 배경과 밝은 텍스트를 사용합니다.";
 "appearance.theme_accessibility_label" = "강조 색상: %@";
+"appearance.glass_enabled" = "유리 효과 사용";
+"appearance.glass_transparency" = "투명도";
+"appearance.glass_solid" = "더 불투명";
+"appearance.glass_sheer" = "더 투명";
+"appearance.glass_limit" = "메인 창은 불투명한 티타늄 그레이 배경을 사용하며, 바탕 화면 벽지가 비치지 않습니다.";
+"appearance.glass_reduce_transparency" = "macOS에서 ‘투명도 줄이기’가 켜져 있어 메인 창은 불투명하게 유지됩니다.";
 
 /* Errors */
 "error.unknown" = "알 수 없는 오류";
@@ -207,3 +257,20 @@
 "lunar.day.28" = "28일";
 "lunar.day.29" = "29일";
 "lunar.day.30" = "30일";
+
+"status_bar.open_countdown" = "카운트다운 열기";
+"status_bar.open_missions" = "미션 열기";
+"status_bar.open_tasks" = "할 일 열기";
+"status_bar.countdown.empty" = "카운트다운, 추적 중인 이벤트 없음";
+"status_bar.mission.empty" = "선택한 미션 없음";
+"status_bar.mission.accessibility" = "미션 %@, 진행률 %@";
+"status_bar.tasks.tooltip" = "오늘 남은 미완료 할 일 %lld개";
+"status_bar.tasks.accessibility" = "오늘의 할 일, %lld개 남음";
+"settings.status_bar.title" = "메뉴 막대 개요";
+"settings.status_bar.countdown" = "카운트다운";
+"settings.status_bar.mission" = "미션 진행률";
+"settings.status_bar.tasks" = "오늘의 할 일";
+"settings.status_bar.mission_picker" = "표시할 미션";
+"settings.status_bar.mission_none" = "선택 안 함";
+"settings.status_bar.mission_empty" = "아직 미션이 없습니다. 만든 뒤에 메뉴 막대에 표시할 수 있습니다.";
+"settings.status_bar.help" = "세 항목을 동시에 켤 수 있으며 각각 별도의 메뉴 막대 아이콘을 사용합니다. 끄면 해당 아이콘이 제거됩니다. 업그레이드 후에는 카운트다운만 켜져 있습니다.";
