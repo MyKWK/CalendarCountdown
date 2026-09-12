@@ -15,11 +15,16 @@ public enum SharedContainer {
             return url
         }
 
+        #if canImport(Darwin)
         return try requiredAppGroupRootURL(fileManager: fileManager)
+        #else
+        return try applicationSupportRootURL(fileManager: fileManager)
+        #endif
         #endif
     }
 
     public static func requiredAppGroupRootURL(fileManager: FileManager = .default) throws -> URL {
+        #if canImport(Darwin)
         guard let groupURL = fileManager.containerURL(
             forSecurityApplicationGroupIdentifier: ProductConstants.appGroupIdentifier
         ) else {
@@ -31,6 +36,9 @@ public enum SharedContainer {
         let url = groupURL.appendingPathComponent("CalendarCountdown", isDirectory: true)
         try fileManager.createDirectory(at: url, withIntermediateDirectories: true)
         return url
+        #endif
+
+        return try applicationSupportRootURL(fileManager: fileManager)
     }
 
     private static func migrateLegacySharedFilesIfNeeded(
