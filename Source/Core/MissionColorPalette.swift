@@ -26,29 +26,29 @@ public enum MissionColor: String, CaseIterable, Codable, Identifiable, Sendable 
     public var title: String {
         switch self {
         case .blue:
-            AppLocalization.text("mission.color.blue", defaultValue: "天空蓝")
+            AppLocalization.text("mission.color.blue", defaultValue: "深海蓝")
         case .indigo:
-            AppLocalization.text("mission.color.indigo", defaultValue: "靛蓝")
+            AppLocalization.text("mission.color.indigo", defaultValue: "夜靛")
         case .purple:
-            AppLocalization.text("mission.color.purple", defaultValue: "紫罗兰")
+            AppLocalization.text("mission.color.purple", defaultValue: "暮紫")
         case .pink:
-            AppLocalization.text("mission.color.pink", defaultValue: "粉红")
+            AppLocalization.text("mission.color.pink", defaultValue: "灰莓")
         case .red:
-            AppLocalization.text("mission.color.red", defaultValue: "珊瑚红")
+            AppLocalization.text("mission.color.red", defaultValue: "赤陶")
         case .orange:
-            AppLocalization.text("mission.color.orange", defaultValue: "日落橙")
+            AppLocalization.text("mission.color.orange", defaultValue: "焦糖")
         case .yellow:
-            AppLocalization.text("mission.color.yellow", defaultValue: "琥珀黄")
+            AppLocalization.text("mission.color.yellow", defaultValue: "古铜")
         case .green:
-            AppLocalization.text("mission.color.green", defaultValue: "草木绿")
+            AppLocalization.text("mission.color.green", defaultValue: "松柏绿")
         case .mint:
-            AppLocalization.text("mission.color.mint", defaultValue: "薄荷")
+            AppLocalization.text("mission.color.mint", defaultValue: "深薄荷")
         case .teal:
-            AppLocalization.text("mission.color.teal", defaultValue: "青绿")
+            AppLocalization.text("mission.color.teal", defaultValue: "墨青")
         case .cyan:
-            AppLocalization.text("mission.color.cyan", defaultValue: "冰青")
+            AppLocalization.text("mission.color.cyan", defaultValue: "雾青")
         case .brown:
-            AppLocalization.text("mission.color.brown", defaultValue: "沙棕")
+            AppLocalization.text("mission.color.brown", defaultValue: "胡桃棕")
         }
     }
 

@@ -32,7 +32,7 @@ struct MissionEditorSheet: View {
     @State private var color: String
     @State private var targetDateEnabled: Bool
     @State private var targetDate: Date
-    @State private var iconExpanded = false
+    @State private var showingIconPicker = false
 
     init(
         initialColor: String = MissionColor.defaultValue.rawValue,
@@ -106,25 +106,6 @@ struct MissionEditorSheet: View {
                                 )
                             }
                         }
-                        editorCard(
-                            title: AppLocalization.text("mission.icon.field", defaultValue: "图标")
-                        ) {
-                            DisclosureGroup(isExpanded: $iconExpanded) {
-                                MissionIconPicker(
-                                    selection: $icon,
-                                    tint: Color.missionIdentity(color)
-                                )
-                                .frame(maxHeight: MissionEditorLayout.iconPickerMaxHeight)
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: MissionSymbolCatalog.resolved(icon))
-                                        .foregroundStyle(Color.missionIdentity(color))
-                                    Text(MissionSymbolCatalog.title(for: icon))
-                                    Spacer()
-                                }
-                            }
-                            .accessibilityIdentifier("mission-icon-disclosure")
-                        }
                     }
                     .padding(.horizontal, MissionEditorLayout.horizontalInset)
                     .padding(.vertical, MissionEditorLayout.verticalInset)
@@ -145,19 +126,7 @@ struct MissionEditorSheet: View {
 
     private var nameChrome: some View {
         HStack(alignment: .center, spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Color.missionIdentity(color))
-                    .frame(width: 34, height: 34)
-                    .accessibilityHidden(true)
-                Image(systemName: MissionSymbolCatalog.resolved(icon))
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .accessibilityHidden(true)
-            }
-            .accessibilityLabel(
-                AppLocalization.text("mission.preview", defaultValue: "使命预览")
-            )
+            iconChooser
             VStack(alignment: .leading, spacing: 4) {
                 Text(AppLocalization.text("mission.name.field", defaultValue: "名称"))
                     .font(.caption.weight(.semibold))
@@ -171,6 +140,73 @@ struct MissionEditorSheet: View {
                 .onSubmit(submit)
             }
         }
+    }
+
+    private var iconChooser: some View {
+        Button {
+            showingIconPicker.toggle()
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(Color.missionIdentity(color))
+                    .frame(
+                        width: MissionEditorLayout.identityIconSize,
+                        height: MissionEditorLayout.identityIconSize
+                    )
+                Image(systemName: MissionSymbolCatalog.resolved(icon))
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.white)
+            }
+            .overlay {
+                Circle()
+                    .strokeBorder(
+                        Color.primary.opacity(showingIconPicker ? 0.28 : 0.10),
+                        lineWidth: 1
+                    )
+            }
+        }
+        .buttonStyle(.plain)
+        .frame(
+            width: MissionEditorLayout.identityIconHitSize,
+            height: MissionEditorLayout.identityIconHitSize
+        )
+        .contentShape(Circle())
+        .appActionFocusEffectDisabled()
+        #if os(macOS)
+        .pointerStyle(.link)
+        #endif
+        .help(MissionSymbolCatalog.title(for: icon))
+        .accessibilityLabel(AppLocalization.text("mission.icon.field", defaultValue: "图标"))
+        .accessibilityValue(MissionSymbolCatalog.title(for: icon))
+        .accessibilityHint(AppLocalization.text("mission.icon.hint", defaultValue: "点按以选择图标"))
+        .accessibilityIdentifier("mission-icon-button")
+        .popover(isPresented: $showingIconPicker, arrowEdge: .bottom) {
+            iconPickerPopover
+        }
+    }
+
+    @ViewBuilder
+    private var iconPickerPopover: some View {
+        MissionIconPicker(
+            selection: iconSelection,
+            tint: Color.missionIdentity(color)
+        )
+        .padding(12)
+        #if os(macOS)
+        .frame(width: MissionEditorLayout.iconPopoverWidth)
+        #else
+        .presentationDetents([.medium, .large])
+        #endif
+    }
+
+    private var iconSelection: Binding<String> {
+        Binding(
+            get: { icon },
+            set: { newValue in
+                icon = newValue
+                showingIconPicker = false
+            }
+        )
     }
 
     private var footerBar: some View {

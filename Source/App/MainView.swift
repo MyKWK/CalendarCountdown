@@ -476,7 +476,7 @@ struct CountdownModuleView: View {
                 .appGlassScrollBackground()
             }
         }
-        .background(ZhixingColor.contentBackground)
+        .background(Color.clear)
         .navigationTitle(selectedTitle)
     }
 

@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let appearanceSettings = AppAppearanceSettings()
     let overviewSettings = StatusBarOverviewSettings()
     let shortcuts = AppShortcutCoordinator()
+    let settingsNavigation = AppSettingsNavigation()
     private var mainWindowController: NSWindowController?
     private var settingsWindowController: NSWindowController?
     private var statusBarCoordinator: StatusBarCoordinator?
@@ -176,21 +177,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 workspace: workspace,
                 appearanceSettings: appearanceSettings,
                 shortcuts: shortcuts
-            ) { [weak self] in
-                self?.showSettings()
+            ) { [weak self] section in
+                self?.showSettings(section: section)
             }
             let hostingController = NSHostingController(rootView: rootView)
             hostingController.view.wantsLayer = true
             hostingController.view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
             let window = NSWindow(contentViewController: hostingController)
             window.title = AppLocalization.text("app.name", defaultValue: "知行")
-            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             window.setContentSize(NSSize(width: 1_040, height: 700))
             window.minSize = NSSize(width: 880, height: 580)
             window.isOpaque = true
             window.backgroundColor = .windowBackgroundColor
-            window.titlebarAppearsTransparent = false
-            window.titlebarSeparatorStyle = .automatic
+            window.titleVisibility = .hidden
+            window.titlebarAppearsTransparent = true
+            window.titlebarSeparatorStyle = .none
             window.center()
             window.isReleasedWhenClosed = false
             mainWindowController = NSWindowController(window: window)
@@ -201,14 +203,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    func showSettings() {
+    func showSettings(section: AppSettingsSection = .appearance) {
+        settingsNavigation.selection = section
         if settingsWindowController == nil {
             let hostingController = NSHostingController(
                 rootView: AppSettingsView(
                     settings: appearanceSettings,
                     overview: overviewSettings,
                     shortcuts: shortcuts,
-                    workspace: workspace
+                    workspace: workspace,
+                    navigation: settingsNavigation
                 )
             )
             let window = NSWindow(contentViewController: hostingController)
@@ -529,7 +533,8 @@ struct CalendarCountdownApp: App {
                 settings: appDelegate.appearanceSettings,
                 overview: appDelegate.overviewSettings,
                 shortcuts: appDelegate.shortcuts,
-                workspace: appDelegate.workspace
+                workspace: appDelegate.workspace,
+                navigation: appDelegate.settingsNavigation
             )
         }
         .commands {
@@ -543,7 +548,7 @@ private struct MainWindowRootView: View {
     @ObservedObject var workspace: WorkspaceModel
     @ObservedObject var appearanceSettings: AppAppearanceSettings
     @ObservedObject var shortcuts: AppShortcutCoordinator
-    let openSettings: () -> Void
+    let openSettings: (AppSettingsSection) -> Void
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
@@ -565,7 +570,6 @@ private struct MainWindowRootView: View {
             .tint(appearanceSettings.accentColor)
             .preferredColorScheme(appearanceSettings.appearanceMode.colorScheme)
             .environment(\.appWindowGlassActive, glassActive)
-            .toolbarBackgroundVisibility(.automatic, for: .windowToolbar)
             .appMainWindowGlass(
                 enabled: glassActive,
                 transparency: appearanceSettings.windowGlassTransparency

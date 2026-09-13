@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 struct RootView: View {
     @ObservedObject var model: AppModel
     @ObservedObject var workspace: WorkspaceModel
-    let openSettings: () -> Void
+    let openSettings: (AppSettingsSection) -> Void
     @ObservedObject var shortcuts: AppShortcutCoordinator
     @State private var selection: AppSection? = .countdown
     @State private var searchText = ""
@@ -30,89 +30,13 @@ struct RootView: View {
                 )
         } detail: {
             detail
-                .background(ZhixingColor.contentBackground)
+                .background(Color.clear)
         }
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                PrimaryToolbarAction(
-                    title: "新建",
-                    systemImage: "plus",
-                    help: currentSection.createHelp,
-                    identifier: currentSection == .missions ? "mission-create-toolbar" : "mac-create-button"
-                ) {
-                    presentCreate(for: currentSection)
-                }
-            }
-
-            ToolbarItem {
-                Menu {
-                    Button {
-                        showingImporter = true
-                    } label: {
-                        Label("导入", systemImage: "square.and.arrow.down")
-                    }
-                    .disabled(model.accessState != .fullAccess)
-
-                    Button {
-                        showingExporter = true
-                    } label: {
-                        Label("导出追踪清单", systemImage: "square.and.arrow.up")
-                    }
-                    .disabled(model.trackedEventsDocument.events.isEmpty)
-
-                    Button {
-                        Task { await model.refresh() }
-                        workspace.reload()
-                        Task { await workspace.reconcileProjections() }
-                    } label: {
-                        Label("刷新", systemImage: "arrow.clockwise")
-                    }
-
-                    Divider()
-
-                    Toggle(isOn: Binding(
-                        get: { (try? workspace.workspace?.projectionSettings().projectTasks) ?? false },
-                        set: { workspace.setProjectTasks($0) }
-                    )) {
-                        Text("投影任务")
-                    }
-                    Toggle(isOn: Binding(
-                        get: { (try? workspace.workspace?.projectionSettings().projectHabits) ?? false },
-                        set: { workspace.setProjectHabits($0) }
-                    )) {
-                        Text("投影习惯")
-                    }
-                    Toggle(isOn: Binding(
-                        get: { (try? workspace.workspace?.projectionSettings().projectMissions) ?? false },
-                        set: { workspace.setProjectMissions($0) }
-                    )) {
-                        Text("投影使命")
-                    }
-                } label: {
-                    Label("整理", systemImage: "ellipsis.circle")
-                }
-                .help("导入、导出、刷新与系统投影")
-                .accessibilityLabel("整理")
-                .appActionFocusEffectDisabled()
-            }
-
-            ToolbarItem {
-                CloudSyncToolbarButton(workspace: workspace)
-            }
-
-            ToolbarItem {
-                Button {
-                    openSettings()
-                } label: {
-                    Label("设置", systemImage: "gearshape")
-                }
-                .appActionFocusEffectDisabled()
-                .accessibilityIdentifier("mac-settings-button")
-                .accessibilityLabel("设置")
-                .help("打开设置")
-            }
+        .toolbar(.hidden, for: .windowToolbar)
+        .background {
+            AppGlassBackdrop()
+                .ignoresSafeArea()
         }
-        .searchable(text: $searchText, prompt: "搜索")
         .sheet(isPresented: $showingAddEvent) {
             AddEventView(calendars: model.writableCalendars) { draft in
                 await model.add(draft)
@@ -201,53 +125,196 @@ struct RootView: View {
     }
 
     private var sidebar: some View {
-        List(selection: $selection) {
-            Section {
-                ForEach(AppSection.allCases) { section in
-                    SidebarItemRow(
-                        section: section,
-                        count: badge(for: section),
-                        isSelected: currentSection == section
-                    )
-                    .tag(section)
-                    .listRowInsets(
-                        EdgeInsets(
-                            top: ZhixingMetrics.space4,
-                            leading: ZhixingMetrics.space8,
-                            bottom: ZhixingMetrics.space4,
-                            trailing: ZhixingMetrics.space8
+        VStack(spacing: 0) {
+            sidebarHeader
+
+            List(selection: $selection) {
+                Section("工作区") {
+                    ForEach(AppSection.allCases) { section in
+                        SidebarItemRow(
+                            section: section,
+                            count: badge(for: section),
+                            isSelected: currentSection == section
                         )
-                    )
-                    .listRowSeparator(.hidden)
-                    .listRowBackground(SidebarSelectionBackground(isSelected: currentSection == section))
+                        .tag(section)
+                        .sidebarListRow(
+                            background: SidebarSelectionBackground(isSelected: currentSection == section)
+                        )
+                    }
+                }
+
+                Section("快速操作") {
+                    sidebarButton(
+                        title: currentSection.createActionTitle,
+                        systemImage: "plus.circle",
+                        help: currentSection.createHelp,
+                        identifier: currentSection == .missions ? "mission-create-toolbar" : "mac-create-button"
+                    ) {
+                        presentCreate(for: currentSection)
+                    }
+
+                    sidebarButton(
+                        title: "刷新全部内容",
+                        systemImage: "arrow.clockwise",
+                        help: "重新读取日历、任务、使命与打卡"
+                    ) {
+                        refreshAllContent()
+                    }
+                }
+
+                Section("数据与系统") {
+                    Menu {
+                        Button {
+                            showingImporter = true
+                        } label: {
+                            Label("导入", systemImage: "square.and.arrow.down")
+                        }
+                        .disabled(model.accessState != .fullAccess)
+
+                        Button {
+                            showingExporter = true
+                        } label: {
+                            Label("导出追踪清单", systemImage: "square.and.arrow.up")
+                        }
+                        .disabled(model.trackedEventsDocument.events.isEmpty)
+
+                        Divider()
+
+                        Toggle("投影任务", isOn: projectTasksBinding)
+                        Toggle("投影习惯", isOn: projectHabitsBinding)
+                        Toggle("投影使命", isOn: projectMissionsBinding)
+                    } label: {
+                        SidebarUtilityRow(
+                            title: "导入、导出与投影",
+                            systemImage: "externaldrive.connected.to.line.below",
+                            accessoryImage: "chevron.up.chevron.down"
+                        )
+                    }
+                    .menuStyle(.borderlessButton)
+                    .menuIndicator(.hidden)
+                    .help("导入、导出与系统投影")
+                    .accessibilityIdentifier("sidebar-data-and-projection")
+                    .sidebarListRow()
+                }
+
+                Section("偏好设置") {
+                    ForEach(AppSettingsSection.allCases) { section in
+                        sidebarButton(
+                            title: section.title,
+                            systemImage: section.systemImage,
+                            help: section.help,
+                            identifier: section == .appearance ? "mac-settings-button" : "settings-\(section.rawValue)"
+                        ) {
+                            openSettings(section)
+                        }
+                    }
                 }
             }
+            .listStyle(.sidebar)
+            .scrollContentBackground(.hidden)
         }
-        .listStyle(.sidebar)
-        .scrollContentBackground(.hidden)
-        .navigationTitle(AppLocalization.text("app.name", defaultValue: "知行"))
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            sidebarSyncSummary
+            sidebarSyncControl
         }
-        .background(ZhixingColor.contentBackground)
+        .background(Color.clear)
         .frame(minWidth: ZhixingMetrics.sidebarMinWidth)
     }
 
-    private var sidebarSyncSummary: some View {
-        let presentation = workspace.cloudPresentation
-        return HStack(spacing: 6) {
-            Image(systemName: presentation.systemImage)
-                .font(.caption)
-            Text(presentation.title)
-                .font(.caption)
+    private var sidebarHeader: some View {
+        VStack(alignment: .leading, spacing: ZhixingMetrics.space12) {
+            Text(AppLocalization.text("app.name", defaultValue: "知行"))
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.primary)
+
+            HStack(spacing: ZhixingMetrics.space8) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundStyle(.secondary)
+                TextField("搜索", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .accessibilityIdentifier("sidebar-search-field")
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.tertiary)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("清除搜索")
+                    .appActionFocusEffectDisabled()
+                }
+            }
+            .padding(.horizontal, ZhixingMetrics.space12)
+            .frame(height: 34)
+            .background(Color.primary.opacity(0.065), in: Capsule(style: .continuous))
+            .overlay {
+                Capsule(style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.22), lineWidth: ZhixingMetrics.glassStrokeWidth)
+            }
+        }
+        .padding(.horizontal, ZhixingMetrics.space16)
+        .padding(.top, ZhixingMetrics.space12)
+        .padding(.bottom, ZhixingMetrics.space8)
+    }
+
+    private var sidebarSyncControl: some View {
+        HStack {
+            CloudSyncToolbarButton(workspace: workspace)
             Spacer()
         }
-        .foregroundStyle(.tertiary)
         .padding(.horizontal, ZhixingMetrics.space16)
         .padding(.vertical, ZhixingMetrics.space12)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("同步状态 \(presentation.accessibilityValue)")
-        .accessibilityAddTraits(.updatesFrequently)
+        .background(.ultraThinMaterial)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.white.opacity(0.20))
+                .frame(height: ZhixingMetrics.glassStrokeWidth)
+        }
+    }
+
+    private var projectTasksBinding: Binding<Bool> {
+        Binding(
+            get: { (try? workspace.workspace?.projectionSettings().projectTasks) ?? false },
+            set: { workspace.setProjectTasks($0) }
+        )
+    }
+
+    private var projectHabitsBinding: Binding<Bool> {
+        Binding(
+            get: { (try? workspace.workspace?.projectionSettings().projectHabits) ?? false },
+            set: { workspace.setProjectHabits($0) }
+        )
+    }
+
+    private var projectMissionsBinding: Binding<Bool> {
+        Binding(
+            get: { (try? workspace.workspace?.projectionSettings().projectMissions) ?? false },
+            set: { workspace.setProjectMissions($0) }
+        )
+    }
+
+    private func sidebarButton(
+        title: String,
+        systemImage: String,
+        help: String,
+        identifier: String? = nil,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            SidebarUtilityRow(title: title, systemImage: systemImage)
+        }
+        .buttonStyle(.plain)
+        .help(help)
+        .accessibilityLabel(title)
+        .accessibilityIdentifier(identifier ?? "sidebar-action-\(systemImage)")
+        .appActionFocusEffectDisabled()
+        .sidebarListRow()
+    }
+
+    private func refreshAllContent() {
+        Task { await model.refresh() }
+        workspace.reload()
+        Task { await workspace.reconcileProjections() }
     }
 
     @ViewBuilder
