@@ -88,7 +88,6 @@ struct TaskListView: View {
     @ObservedObject var workspace: WorkspaceModel
     var onCreate: (() -> Void)? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var viewport = TaskListViewportSnapshot()
 
     private var partitioned: (open: [TaskOccurrenceView], completed: [TaskOccurrenceView]) {
         CompletedTrailPresentation.partition(views) { $0.occurrence.status == .completed }
@@ -159,22 +158,6 @@ struct TaskListView: View {
                 .scrollContentBackground(.hidden)
                 .appGlassScrollBackground()
                 .contentMargins(.top, ZhixingMetrics.space8, for: .scrollContent)
-                .coordinateSpace(name: "zhixing.tasks")
-                .environment(\.taskListViewport, viewport)
-                .onScrollGeometryChange(for: CGRect.self) { geometry in
-                    geometry.visibleRect
-                } action: { _, rect in
-                    viewport.visibleRect = rect
-                }
-                .background {
-                    GeometryReader { proxy in
-                        Color.clear
-                            .onAppear { viewport.globalFrame = proxy.frame(in: .global) }
-                            .onChange(of: proxy.frame(in: .global)) { _, frame in
-                                viewport.globalFrame = frame
-                            }
-                    }
-                }
                 .animation(
                     reduceMotion ? nil : .snappy(duration: ZhixingMetrics.motionStandard),
                     value: partitioned.open.map(\.id)

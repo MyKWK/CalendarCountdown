@@ -570,10 +570,6 @@ private struct MainWindowRootView: View {
             .tint(appearanceSettings.accentColor)
             .preferredColorScheme(appearanceSettings.appearanceMode.colorScheme)
             .environment(\.appWindowGlassActive, glassActive)
-            .appMainWindowGlass(
-                enabled: glassActive,
-                transparency: appearanceSettings.windowGlassTransparency
-            )
             .task {
                 await model.bootstrap()
                 workspace.reload()

@@ -728,33 +728,15 @@ struct TaskBarCard<Content: View>: View {
     }
 }
 
-struct TaskListViewportSnapshot: Equatable {
-    var globalFrame: CGRect = .zero
-    var visibleRect: CGRect = .zero
-}
-
-private struct TaskListViewportKey: EnvironmentKey {
-    static let defaultValue = TaskListViewportSnapshot()
-}
-
-extension EnvironmentValues {
-    var taskListViewport: TaskListViewportSnapshot {
-        get { self[TaskListViewportKey.self] }
-        set { self[TaskListViewportKey.self] = newValue }
-    }
-}
-
 struct TaskCompletedTrailChrome: ViewModifier {
     var index: Int
 
-    @Environment(\.taskListViewport) private var viewport
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
     @FocusState private var isKeyboardFocused: Bool
     @AccessibilityFocusState private var isA11yFocused: Bool
     @State private var isHovering = false
-    @State private var normalizedY: Double?
 
     private var highContrast: Bool {
         reduceTransparency || contrast == .increased
@@ -763,7 +745,7 @@ struct TaskCompletedTrailChrome: ViewModifier {
     private var appearance: CompletedTrailAppearance {
         CompletedTrailPresentation.resolve(
             index: index,
-            normalizedY: normalizedY,
+            normalizedY: nil,
             isHighlighted: isHovering || isKeyboardFocused || isA11yFocused,
             highContrast: highContrast
         )
@@ -783,37 +765,8 @@ struct TaskCompletedTrailChrome: ViewModifier {
             .focusEffectDisabled()
             .accessibilityFocused($isA11yFocused)
             .onHover { isHovering = $0 }
-            .background {
-                GeometryReader { proxy in
-                    let named = proxy.frame(in: .named("zhixing.tasks"))
-                    let global = proxy.frame(in: .global)
-                    Color.clear
-                        .onAppear { updateNormalizedY(named: named, global: global) }
-                        .onChange(of: named) { _, value in
-                            updateNormalizedY(named: value, global: global)
-                        }
-                        .onChange(of: global) { _, value in
-                            updateNormalizedY(named: named, global: value)
-                        }
-                        .onChange(of: viewport) { _, _ in
-                            updateNormalizedY(named: named, global: global)
-                        }
-                }
-            }
             .animation(ZhixingMotion.standard(reduceMotion: reduceMotion), value: appearance.opacity)
             .animation(ZhixingMotion.standard(reduceMotion: reduceMotion), value: appearance.veil)
-    }
-
-    private func updateNormalizedY(named: CGRect, global: CGRect) {
-        if viewport.visibleRect.height > 1 {
-            normalizedY = (named.midY - viewport.visibleRect.minY) / viewport.visibleRect.height
-            return
-        }
-        if viewport.globalFrame.height > 1 {
-            normalizedY = (global.midY - viewport.globalFrame.minY) / viewport.globalFrame.height
-            return
-        }
-        normalizedY = nil
     }
 }
 
