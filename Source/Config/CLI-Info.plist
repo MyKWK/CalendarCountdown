@@ -13,9 +13,9 @@
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.14</string>
+	<string>1.0.15</string>
 	<key>CFBundleVersion</key>
-	<string>15</string>
+	<string>16</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>calcount 需要读取 Apple 日历并管理你明确指定的日历事件。</string>
 	<key>NSRemindersFullAccessUsageDescription</key>

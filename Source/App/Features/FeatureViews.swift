@@ -259,7 +259,6 @@ struct TaskRowView: View {
                             Text("收集箱")
                                 .zhixingForeground(.supporting)
                         }
-                        MetaTag(title: "\(view.workload.rawValue) 点")
                         if view.series.isInfinite {
                             Image(systemName: "repeat")
                                 .font(.caption2)
@@ -562,6 +561,11 @@ struct MissionCardView: View {
                     }
                 }
                 Spacer(minLength: 0)
+                Image(systemName: isCollapsed ? "chevron.right" : "chevron.down")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+                    .frame(width: 22, height: 22)
+                    .accessibilityLabel(isCollapsed ? "展开使命" : "收起使命")
                 Menu {
                     missionManagementButtons
                 } label: {
@@ -573,6 +577,10 @@ struct MissionCardView: View {
                 .menuStyle(.borderlessButton)
                 .accessibilityIdentifier("mission-overflow")
                 .appActionFocusEffectDisabled()
+            }
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2) {
+                toggleCollapsed()
             }
             if let markdown = item.mission.markdownDescription, !markdown.isEmpty {
                 MarkdownBodyView(text: markdown)
@@ -666,11 +674,10 @@ struct MissionCardView: View {
         .contextMenu {
             missionManagementButtons
         }
-        .contentShape(Rectangle())
-        .onTapGesture(count: 2) {
-            isCollapsed.toggle()
-            UserDefaults.standard.set(isCollapsed, forKey: collapseStorageKey)
-        }
+        .animation(
+            .snappy(duration: ZhixingMetrics.motionStandard, extraBounce: 0.08),
+            value: isCollapsed
+        )
         .onAppear {
             if UserDefaults.standard.object(forKey: collapseStorageKey) != nil {
                 isCollapsed = UserDefaults.standard.bool(forKey: collapseStorageKey)
@@ -797,6 +804,13 @@ struct MissionCardView: View {
         }
     }
 
+    private func toggleCollapsed() {
+        withAnimation(.snappy(duration: ZhixingMetrics.motionStandard, extraBounce: 0.08)) {
+            isCollapsed.toggle()
+        }
+        UserDefaults.standard.set(isCollapsed, forKey: collapseStorageKey)
+    }
+
     private var missionStatusLabel: String {
         switch item.mission.status {
         case .draft: "草稿"
@@ -921,32 +935,34 @@ private struct MissionLinkedTaskRow: View {
                 }
             }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(view.title)
-                    .font(ZhixingTypography.rowTitle)
-                    .strikethrough(view.occurrence.status == .completed)
-                    .zhixingForeground(.heading)
-                HStack(spacing: 6) {
-                    if let due = view.occurrence.plannedDue {
-                        Text(due, format: .dateTime.month().day().hour().minute())
-                            .foregroundStyle(view.isOverdue && view.occurrence.status == .open ? Color.orange : Color.secondary)
-                    } else {
-                        Text("收集箱")
-                            .zhixingForeground(.supporting)
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(view.title)
+                        .font(ZhixingTypography.rowTitle)
+                        .strikethrough(view.occurrence.status == .completed)
+                        .zhixingForeground(.heading)
+                    HStack(spacing: 6) {
+                        if let due = view.occurrence.plannedDue {
+                            Text(due, format: .dateTime.month().day().hour().minute())
+                                .foregroundStyle(view.isOverdue && view.occurrence.status == .open ? Color.orange : Color.secondary)
+                        } else {
+                            Text("收集箱")
+                                .zhixingForeground(.supporting)
+                        }
+                        if view.series.isInfinite {
+                            Text("∞")
+                                .zhixingForeground(.supporting)
+                        }
+                        if view.isOverdue, view.occurrence.status == .open {
+                            MetaTag(title: "逾期", tint: .orange, emphasized: true)
+                        }
                     }
-                    Text("\(view.workload.rawValue) 点")
-                        .zhixingForeground(.supporting)
-                    if view.series.isInfinite {
-                        Text("∞")
-                            .zhixingForeground(.supporting)
-                    }
-                    if view.isOverdue, view.occurrence.status == .open {
-                        MetaTag(title: "逾期", tint: .orange, emphasized: true)
-                    }
+                    .font(.caption)
                 }
-                .font(.caption)
+                Spacer(minLength: 0)
             }
-            Spacer()
+            .contentShape(Rectangle())
+            .onTapGesture(count: 2, perform: onEdit)
             Button("编辑") { onEdit() }
                 .font(.caption)
                 .zhixingForeground(.supporting)

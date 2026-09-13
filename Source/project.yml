@@ -86,8 +86,8 @@ targets:
       path: Config/App-Info.plist
       properties:
         CFBundleDisplayName: 知行
-        CFBundleShortVersionString: 1.0.14
-        CFBundleVersion: "15"
+        CFBundleShortVersionString: 1.0.15
+        CFBundleVersion: "16"
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
         LSMultipleInstancesProhibited: true
         NSCalendarsFullAccessUsageDescription: “知行”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。
@@ -138,8 +138,8 @@ targets:
       path: Config/Widget-Info.plist
       properties:
         CFBundleDisplayName: 知行
-        CFBundleShortVersionString: 1.0.14
-        CFBundleVersion: "15"
+        CFBundleShortVersionString: 1.0.15
+        CFBundleVersion: "16"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
@@ -169,8 +169,8 @@ targets:
     info:
       path: Config/CLI-Info.plist
       properties:
-        CFBundleShortVersionString: 1.0.14
-        CFBundleVersion: "15"
+        CFBundleShortVersionString: 1.0.15
+        CFBundleVersion: "16"
         NSCalendarsFullAccessUsageDescription: calcount 需要读取 Apple 日历并管理你明确指定的日历事件。
         NSRemindersFullAccessUsageDescription: calcount 需要访问提醒事项，以便诊断和预演任务投影。
     entitlements:
@@ -292,8 +292,8 @@ targets:
       path: Config/iOS/Mobile-Info.plist
       properties:
         CFBundleDisplayName: 知行
-        CFBundleShortVersionString: 1.0.14
-        CFBundleVersion: "15"
+        CFBundleShortVersionString: 1.0.15
+        CFBundleVersion: "16"
         LSRequiresIPhoneOS: true
         NSCalendarsFullAccessUsageDescription: “知行”需要读取你的日历以计算倒数，并只在你确认后向选定日历写入事件。
         NSRemindersFullAccessUsageDescription: “知行”需要访问提醒事项，以便把任务投影为可完成的系统提醒；不会在你关闭投影时写入。
@@ -349,8 +349,8 @@ targets:
       path: Config/iOS/MobileWidget-Info.plist
       properties:
         CFBundleDisplayName: 知行
-        CFBundleShortVersionString: 1.0.14
-        CFBundleVersion: "15"
+        CFBundleShortVersionString: 1.0.15
+        CFBundleVersion: "16"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
