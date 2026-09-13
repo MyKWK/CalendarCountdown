@@ -129,6 +129,17 @@ struct TaskListView: View {
                         }
                     }
                     if !partitioned.completed.isEmpty {
+                        CompletedTasksBoundary()
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(
+                                EdgeInsets(
+                                    top: ZhixingMetrics.space20,
+                                    leading: ZhixingMetrics.pageInset,
+                                    bottom: ZhixingMetrics.space8,
+                                    trailing: ZhixingMetrics.pageInset
+                                )
+                            )
+                            .listRowBackground(Color.clear)
                         Section {
                             ForEach(Array(partitioned.completed.enumerated()), id: \.element.id) { index, view in
                                 TaskRowView(
@@ -175,7 +186,7 @@ struct TaskListView: View {
                 )
             }
         }
-        .background(ZhixingColor.contentBackground)
+        .background(Color.clear)
         .navigationTitle(title)
     }
 
@@ -187,6 +198,39 @@ struct TaskListView: View {
             return "\(open) 个待办 · \(overdue) 个逾期 · \(done) 个已完成"
         }
         return "\(open) 个待办 · \(done) 个已完成"
+    }
+}
+
+private struct CompletedTasksBoundary: View {
+    var body: some View {
+        HStack(spacing: ZhixingMetrics.space12) {
+            SubtleDashedLine()
+            Image(systemName: "checkmark.circle")
+                .font(.caption2.weight(.medium))
+            SubtleDashedLine()
+        }
+        .foregroundStyle(.quaternary)
+        .accessibilityHidden(true)
+    }
+}
+
+private struct SubtleDashedLine: View {
+    var body: some View {
+        GeometryReader { proxy in
+            Path { path in
+                path.move(to: CGPoint(x: 0, y: proxy.size.height / 2))
+                path.addLine(to: CGPoint(x: proxy.size.width, y: proxy.size.height / 2))
+            }
+            .stroke(
+                Color.secondary.opacity(0.24),
+                style: StrokeStyle(
+                    lineWidth: ZhixingMetrics.glassStrokeWidth,
+                    lineCap: .round,
+                    dash: [2, 5]
+                )
+            )
+        }
+        .frame(height: 1)
     }
 }
 
@@ -232,11 +276,10 @@ struct TaskRowView: View {
                     }
                     HStack(spacing: 6) {
                         if let mission = workspace.mission(for: view.series.missionID) {
-                            MetaTag(
+                            MissionTag(
                                 title: mission.title,
                                 systemImage: MissionSymbolCatalog.resolved(mission.icon),
-                                tint: Color.missionIdentity(mission.color),
-                                emphasized: true,
+                                identity: Color.missionIdentity(mission.color),
                                 identifier: "task-mission-tag"
                             )
                         }
@@ -414,7 +457,7 @@ struct MissionListView: View {
                 .appGlassScrollBackground()
             }
         }
-        .background(ZhixingColor.contentBackground)
+        .background(Color.clear)
         .navigationTitle("使命")
         .modifier(MissionCreateToolbarModifier(showingAddMission: $showingAddMission))
         .sheet(isPresented: $showingAddMission) {
@@ -519,6 +562,10 @@ struct MissionCardView: View {
         Color.missionIdentity(item.mission.color)
     }
 
+    private var progressPercentText: String {
+        StatusBarMissionPresentation.percentText(progress: item.progress.progress)
+    }
+
     private var collapseStorageKey: String {
         "mission.card.collapsed.\(item.mission.id.uuidString.lowercased())"
     }
@@ -575,13 +622,13 @@ struct MissionCardView: View {
                 ProgressView(value: item.progress.progress ?? 0)
                     .tint(missionTint)
                     .scaleEffect(x: 1, y: 0.72, anchor: .center)
+                    .accessibilityValue(progressPercentText)
                 HStack {
-                    Text("成果进度 \(item.progress.displayPercent.map { String(format: "%.1f%%", $0) } ?? "—")")
-                        .font(.callout.monospacedDigit().weight(.medium))
                     Spacer()
-                    Text("\(item.progress.donePoints) / \(item.progress.totalPoints) 点")
-                        .font(.callout.monospacedDigit())
+                    Text(progressPercentText)
+                        .font(.callout.monospacedDigit().weight(.medium))
                         .foregroundStyle(.secondary)
+                        .accessibilityHidden(true)
                 }
             }
             if !isCollapsed, let continuity = item.progress.continuity, let rate = continuity.rate {
@@ -998,7 +1045,7 @@ struct HabitListView: View {
                 .appGlassScrollBackground()
             }
         }
-        .background(ZhixingColor.contentBackground)
+        .background(Color.clear)
         .navigationTitle("打卡")
     }
 

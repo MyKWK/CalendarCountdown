@@ -23,6 +23,51 @@ enum ZhixingColor {
     }
 }
 
+/// An opaque-to-the-desktop canvas with enough internal color variation for
+/// SwiftUI material surfaces to read as glass instead of flat white cards.
+struct AppGlassBackdrop: View {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        ZStack {
+            ZhixingColor.contentBackground
+            if !reduceTransparency, contrast != .increased {
+                LinearGradient(
+                    colors: [
+                        Color.accentColor.opacity(colorScheme == .dark ? 0.16 : 0.10),
+                        Color.cyan.opacity(colorScheme == .dark ? 0.07 : 0.045),
+                        Color.clear
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                RadialGradient(
+                    colors: [
+                        Color.white.opacity(colorScheme == .dark ? 0.07 : 0.46),
+                        Color.clear
+                    ],
+                    center: .topTrailing,
+                    startRadius: 16,
+                    endRadius: 560
+                )
+                RadialGradient(
+                    colors: [
+                        Color.accentColor.opacity(colorScheme == .dark ? 0.10 : 0.055),
+                        Color.clear
+                    ],
+                    center: .bottomLeading,
+                    startRadius: 8,
+                    endRadius: 520
+                )
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
 enum ZhixingMotion {
     static func standard(reduceMotion: Bool) -> Animation? {
         reduceMotion ? .easeInOut(duration: 0.12) : .snappy(duration: ZhixingMetrics.motionStandard)
@@ -59,14 +104,30 @@ struct GlassSurface<Content: View>: View {
             if usesSolidFill {
                 shape.fill(ZhixingColor.groupedBackground.opacity(colorScheme == .dark ? 0.92 : 0.96))
             } else {
-                shape.fill(.ultraThinMaterial)
-                shape.fill(ZhixingColor.contentBackground.opacity(colorScheme == .dark ? 0.55 : 0.72))
+                shape.fill(.thinMaterial)
+                shape.fill(ZhixingColor.contentBackground.opacity(colorScheme == .dark ? 0.24 : 0.38))
+                shape.fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(colorScheme == .dark ? 0.10 : 0.42),
+                            Color.clear
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
             }
             if tint != .clear {
                 shape.fill(tint.opacity(ZhixingMetrics.accentFillMaxOpacity))
             }
             shape.strokeBorder(strokeColor, lineWidth: strokeWidth)
         }
+        .shadow(
+            color: Color.black.opacity(colorScheme == .dark ? 0.18 : 0.07),
+            radius: 10,
+            x: 0,
+            y: 4
+        )
     }
 
     private var strokeColor: Color {
@@ -91,13 +152,22 @@ struct ContentSurface<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         content()
             .padding(ZhixingMetrics.space16)
             .background {
                 let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                shape.fill(ZhixingColor.groupedBackground.opacity(0.92))
+                Group {
+                    if reduceTransparency || contrast == .increased {
+                        shape.fill(ZhixingColor.groupedBackground.opacity(0.96))
+                    } else {
+                        shape.fill(.regularMaterial)
+                        shape.fill(ZhixingColor.groupedBackground.opacity(colorScheme == .dark ? 0.34 : 0.48))
+                    }
+                }
                     .overlay {
                         shape.strokeBorder(
                             Color.primary.opacity(contrast == .increased ? 0.35 : 0.08),
@@ -175,6 +245,40 @@ struct MetaTag: View {
         )
         .lineLimit(1)
         .accessibilityIdentifier(identifier ?? "meta-tag")
+        .accessibilityLabel(title)
+    }
+}
+
+/// A restrained mission identity label. Mission color belongs to the surface;
+/// icon and text stay titanium gray so every task uses one visual grammar.
+struct MissionTag: View {
+    let title: String
+    let systemImage: String
+    let identity: Color
+    var identifier: String? = nil
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: systemImage)
+                .imageScale(.small)
+            Text(title)
+        }
+        .font(.caption2.weight(.medium))
+        .foregroundStyle(Color.primary.opacity(colorScheme == .dark ? 0.76 : 0.70))
+        .padding(.horizontal, 7)
+        .padding(.vertical, 3)
+        .background {
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(identity.opacity(colorScheme == .dark ? 0.30 : 0.22))
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .strokeBorder(identity.opacity(colorScheme == .dark ? 0.38 : 0.24), lineWidth: 0.6)
+        }
+        .lineLimit(1)
+        .accessibilityIdentifier(identifier ?? "mission-tag")
         .accessibilityLabel(title)
     }
 }
@@ -433,8 +537,68 @@ struct SidebarItemRow: View {
     }
 }
 
+struct SidebarUtilityRow: View {
+    let title: String
+    let systemImage: String
+    var accessoryImage: String? = nil
+
+    var body: some View {
+        HStack(spacing: ZhixingMetrics.space8) {
+            Image(systemName: systemImage)
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: 18)
+                .foregroundStyle(Color.secondary.opacity(0.86))
+            Text(title)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+            Spacer(minLength: ZhixingMetrics.space8)
+            if let accessoryImage {
+                Image(systemName: accessoryImage)
+                    .font(.caption2.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.horizontal, ZhixingMetrics.space8)
+        .padding(.vertical, 7)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+}
+
+private struct SidebarListRowModifier<Background: View>: ViewModifier {
+    let background: Background
+
+    func body(content: Content) -> some View {
+        content
+            .listRowInsets(
+                EdgeInsets(
+                    top: ZhixingMetrics.space4,
+                    leading: ZhixingMetrics.space8,
+                    bottom: ZhixingMetrics.space4,
+                    trailing: ZhixingMetrics.space8
+                )
+            )
+            .listRowSeparator(.hidden)
+            .listRowBackground(background)
+    }
+}
+
+extension View {
+    func sidebarListRow() -> some View {
+        modifier(SidebarListRowModifier(background: Color.clear))
+    }
+
+    func sidebarListRow<Background: View>(background: Background) -> some View {
+        modifier(SidebarListRowModifier(background: background))
+    }
+}
+
 struct TaskBarCard<Content: View>: View {
     @ViewBuilder var content: () -> Content
+
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         content()
@@ -442,13 +606,39 @@ struct TaskBarCard<Content: View>: View {
             .padding(.vertical, ZhixingMetrics.space8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSheet, style: .continuous)
-                    .fill(ZhixingColor.groupedBackground.opacity(0.94))
+                let shape = RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSheet, style: .continuous)
+                if reduceTransparency || contrast == .increased {
+                    shape.fill(ZhixingColor.groupedBackground.opacity(0.96))
+                } else {
+                    shape.fill(.regularMaterial)
+                    shape.fill(ZhixingColor.groupedBackground.opacity(colorScheme == .dark ? 0.28 : 0.42))
+                    shape.fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(colorScheme == .dark ? 0.08 : 0.34),
+                                Color.clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                }
             }
             .overlay {
                 RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSheet, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: ZhixingMetrics.glassStrokeWidth)
+                    .strokeBorder(
+                        colorScheme == .dark
+                            ? Color.white.opacity(0.14)
+                            : Color.white.opacity(0.72),
+                        lineWidth: ZhixingMetrics.glassStrokeWidth
+                    )
             }
+            .shadow(
+                color: Color.black.opacity(colorScheme == .dark ? 0.16 : 0.055),
+                radius: 7,
+                x: 0,
+                y: 3
+            )
             .contentShape(
                 RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSheet, style: .continuous)
             )

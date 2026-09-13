@@ -103,12 +103,44 @@ final class AppAppearanceSettings: ObservableObject {
     var accentColor: Color { Color("AccentColor") }
 }
 
-private enum AppSettingsSection: String, Identifiable {
+enum AppSettingsSection: String, CaseIterable, Identifiable {
     case appearance
     case statusBar
     case shortcuts
 
     var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .appearance:
+            AppLocalization.text("appearance.title", defaultValue: "外观")
+        case .statusBar:
+            AppLocalization.text("settings.status_bar.title", defaultValue: "菜单栏概览")
+        case .shortcuts:
+            "快捷键"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .appearance: "circle.lefthalf.filled"
+        case .statusBar: "menubar.rectangle"
+        case .shortcuts: "command"
+        }
+    }
+
+    var help: String {
+        switch self {
+        case .appearance: "设置浅色、深色与系统外观"
+        case .statusBar: "选择显示在菜单栏中的概览"
+        case .shortcuts: "查看并设置全局与当前界面快捷键"
+        }
+    }
+}
+
+@MainActor
+final class AppSettingsNavigation: ObservableObject {
+    @Published var selection: AppSettingsSection? = .appearance
 }
 
 struct AppSettingsView: View {
@@ -116,25 +148,23 @@ struct AppSettingsView: View {
     @ObservedObject var overview: StatusBarOverviewSettings
     @ObservedObject var shortcuts: AppShortcutCoordinator
     @ObservedObject var workspace: WorkspaceModel
-    @State private var selection: AppSettingsSection? = .appearance
+    @ObservedObject var navigation: AppSettingsNavigation
 
     var body: some View {
         NavigationSplitView {
-            List(selection: $selection) {
-                Label(AppLocalization.text("appearance.title", defaultValue: "外观"), systemImage: "circle.lefthalf.filled")
-                    .tag(AppSettingsSection.appearance)
-                Label(
-                    AppLocalization.text("settings.status_bar.title", defaultValue: "菜单栏概览"),
-                    systemImage: "menubar.rectangle"
-                )
-                    .tag(AppSettingsSection.statusBar)
-                Label("快捷键", systemImage: "command")
-                    .tag(AppSettingsSection.shortcuts)
+            List(selection: $navigation.selection) {
+                Section("个性化") {
+                    settingsRow(.appearance)
+                }
+                Section("系统集成") {
+                    settingsRow(.statusBar)
+                    settingsRow(.shortcuts)
+                }
             }
             .navigationTitle("设置")
             .navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 210)
         } detail: {
-            switch selection ?? .appearance {
+            switch navigation.selection ?? .appearance {
             case .appearance:
                 AppearanceSettingsPane(settings: settings)
             case .statusBar:
@@ -146,6 +176,11 @@ struct AppSettingsView: View {
         .frame(width: 760, height: 640)
         .tint(settings.accentColor)
         .preferredColorScheme(settings.appearanceMode.colorScheme)
+    }
+
+    private func settingsRow(_ section: AppSettingsSection) -> some View {
+        Label(section.title, systemImage: section.systemImage)
+            .tag(section)
     }
 }
 

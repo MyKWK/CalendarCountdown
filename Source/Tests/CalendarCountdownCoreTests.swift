@@ -3,7 +3,7 @@ import XCTest
 
 final class CalendarCountdownCoreTests: XCTestCase {
     func testReleaseVersion() {
-        XCTAssertEqual(ProductConstants.version, "1.0.11")
+        XCTAssertEqual(ProductConstants.version, "1.0.12")
     }
 
     func testZhixingMetricsStayOnACoherentScale() {
@@ -431,6 +431,16 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertLessThanOrEqual(tiny.height, 360)
         XCTAssertGreaterThan(tiny.width, 0)
         XCTAssertGreaterThan(tiny.height, 0)
+    }
+
+    func testMissionEditorInlineIconStaysWithTitleChrome() {
+        XCTAssertEqual(MissionEditorLayout.identityIconSize, 34)
+        XCTAssertGreaterThan(
+            MissionEditorLayout.identityIconHitSize,
+            MissionEditorLayout.identityIconSize
+        )
+        XCTAssertLessThan(MissionEditorLayout.iconPopoverWidth, MissionEditorLayout.minWidth)
+        XCTAssertGreaterThan(MissionEditorLayout.iconPickerMaxHeight, 120)
     }
 
     func testCalendarAccessRecoveryPromptsThenOpensSettingsAfterDenial() {

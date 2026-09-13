@@ -1,8 +1,8 @@
-# 知行 1.0.11（macOS Universal）
+# 知行 1.0.12（macOS Universal）
 
 ## 安装 App
 
-1. 打开 `CalendarCountdown-1.0.11-macos-universal.dmg`。
+1. 打开 `CalendarCountdown-1.0.12-macos-universal.dmg`。
 2. 将“知行.app”拖到“Applications”快捷方式。
 3. 此 GitHub 构建为 ad-hoc 签名、尚未经过 Apple 公证。首次打开若被 macOS 阻止，请在 Finder 中按住 Control 点击 App，选择“打开”，或前往“系统设置 → 隐私与安全性”确认打开。
 4. 在 App 中点击“授权日历访问”。若权限此前被拒绝，请在系统设置中打开日历权限后回到知行。只有在你明确新建或导入时，App 才会写入选定的 Apple 日历。
@@ -14,17 +14,17 @@ DMG 只附带匿名格式示例，不包含开发者或用户的私人纪念日�
 - `导入格式示例.json`：批量写入 Apple 日历的格式。
 - `追踪清单格式示例.json`：当前追踪纪念日的导出格式。
 
-在 App 工具栏点击“导出追踪清单”，即可导出当前可见、正在追踪的重要日。Apple 日历仍是事件事实源，追踪 JSON 只是便携索引。
+在 App 左侧栏打开“导入、导出与投影”，再点击“导出追踪清单”，即可导出当前可见、正在追踪的重要日。Apple 日历仍是事件事实源，追踪 JSON 只是便携索引。
 
 ## CLI（可选）
 
 DMG 根目录中的 `calcount` 是同时支持 Apple Silicon 与 Intel Mac 的 Universal 命令行工具。示例：
 
 ```bash
-/Volumes/知行\ 1.0.11/calcount version
-/Volumes/知行\ 1.0.11/calcount auth
-/Volumes/知行\ 1.0.11/calcount import "/Volumes/知行 1.0.11/导入格式示例.json" --dry-run
-/Volumes/知行\ 1.0.11/calcount tracking export --output ~/Desktop/important-days.json
+/Volumes/知行\ 1.0.12/calcount version
+/Volumes/知行\ 1.0.12/calcount auth
+/Volumes/知行\ 1.0.12/calcount import "/Volumes/知行 1.0.12/导入格式示例.json" --dry-run
+/Volumes/知行\ 1.0.12/calcount tracking export --output ~/Desktop/important-days.json
 ```
 
 ## 签名状态

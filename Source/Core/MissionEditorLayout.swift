@@ -3,8 +3,8 @@ import Foundation
 
 /// Shared chrome metrics for the mission create/edit inspector.
 ///
-/// The sheet must stay inside the visible work area. Title, the first field,
-/// and Cancel/Save stay in reserved chrome; the remaining fields scroll.
+/// The sheet must stay inside the visible work area. Title, the inline icon
+/// control, and Cancel/Save stay in reserved chrome; the remaining fields scroll.
 public enum MissionEditorLayout: Sendable {
     public static let minWidth: CGFloat = 420
     public static let idealWidth: CGFloat = 560
@@ -18,7 +18,10 @@ public enum MissionEditorLayout: Sendable {
     public static let sectionSpacing: CGFloat = ZhixingMetrics.space16
     public static let cardPadding: CGFloat = ZhixingMetrics.space16
     public static let cardCornerRadius: CGFloat = ZhixingMetrics.cornerSheet
-    public static let iconPickerMaxHeight: CGFloat = 168
+    public static let identityIconSize: CGFloat = 34
+    public static let identityIconHitSize: CGFloat = 44
+    public static let iconPickerMaxHeight: CGFloat = 200
+    public static let iconPopoverWidth: CGFloat = 336
     public static let footerHeight: CGFloat = 56
     public static let headerHeight: CGFloat = 52
 

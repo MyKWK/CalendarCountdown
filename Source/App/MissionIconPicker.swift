@@ -102,7 +102,7 @@ struct MissionColorPicker: View {
                                 if MissionColor.resolve(selection) == color {
                                     Image(systemName: "checkmark")
                                         .font(.caption.bold())
-                                        .foregroundStyle(checkmarkColor(for: color))
+                                        .foregroundStyle(Color.white.opacity(0.92))
                                 }
                             }
                             Text(color.title)
@@ -143,12 +143,4 @@ struct MissionColorPicker: View {
         .accessibilityIdentifier("mission-color-picker")
     }
 
-    private func checkmarkColor(for color: MissionColor) -> Color {
-        switch color {
-        case .yellow, .mint, .cyan:
-            .black.opacity(0.78)
-        default:
-            .white
-        }
-    }
 }

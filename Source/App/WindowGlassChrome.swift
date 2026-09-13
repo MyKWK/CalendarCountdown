@@ -33,6 +33,7 @@ extension View {
 private struct AppGlassScrollBackgroundModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
+            .background(Color.clear)
     }
 }
 
@@ -118,7 +119,6 @@ private final class WindowGlassBackdropController {
             if let backdrop = existingBackdrop(in: contentView) {
                 backdrop.removeFromSuperview()
             }
-            restoreOpaqueChrome(in: contentView)
         }
     }
 
