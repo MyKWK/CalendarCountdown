@@ -37,6 +37,7 @@ struct RootView: View {
             AppGlassBackdrop()
                 .ignoresSafeArea()
         }
+        .zhixingForeground(.body)
         .sheet(isPresented: $showingAddEvent) {
             AddEventView(calendars: model.writableCalendars) { draft in
                 await model.add(draft)
@@ -129,7 +130,7 @@ struct RootView: View {
             sidebarHeader
 
             List(selection: $selection) {
-                Section("工作区") {
+                Section {
                     ForEach(AppSection.allCases) { section in
                         SidebarItemRow(
                             section: section,
@@ -141,9 +142,11 @@ struct RootView: View {
                             background: SidebarSelectionBackground(isSelected: currentSection == section)
                         )
                     }
+                } header: {
+                    sidebarSectionHeader("工作区")
                 }
 
-                Section("快速操作") {
+                Section {
                     sidebarButton(
                         title: currentSection.createActionTitle,
                         systemImage: "plus.circle",
@@ -160,9 +163,11 @@ struct RootView: View {
                     ) {
                         refreshAllContent()
                     }
+                } header: {
+                    sidebarSectionHeader("快速操作")
                 }
 
-                Section("数据与系统") {
+                Section {
                     Menu {
                         Button {
                             showingImporter = true
@@ -195,9 +200,11 @@ struct RootView: View {
                     .help("导入、导出与系统投影")
                     .accessibilityIdentifier("sidebar-data-and-projection")
                     .sidebarListRow()
+                } header: {
+                    sidebarSectionHeader("数据与系统")
                 }
 
-                Section("偏好设置") {
+                Section {
                     ForEach(AppSettingsSection.allCases) { section in
                         sidebarButton(
                             title: section.title,
@@ -208,6 +215,8 @@ struct RootView: View {
                             openSettings(section)
                         }
                     }
+                } header: {
+                    sidebarSectionHeader("偏好设置")
                 }
             }
             .listStyle(.sidebar)
@@ -223,12 +232,12 @@ struct RootView: View {
     private var sidebarHeader: some View {
         VStack(alignment: .leading, spacing: ZhixingMetrics.space12) {
             Text(AppLocalization.text("app.name", defaultValue: "知行"))
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(.primary)
+                .font(ZhixingTypography.sidebarBrandTitle)
+                .zhixingForeground(.heading)
 
             HStack(spacing: ZhixingMetrics.space8) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.secondary)
+                    .zhixingForeground(.supporting)
                 TextField("搜索", text: $searchText)
                     .textFieldStyle(.plain)
                     .accessibilityIdentifier("sidebar-search-field")
@@ -237,7 +246,7 @@ struct RootView: View {
                         searchText = ""
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.tertiary)
+                            .zhixingForeground(.faint)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("清除搜索")
@@ -255,6 +264,12 @@ struct RootView: View {
         .padding(.horizontal, ZhixingMetrics.space16)
         .padding(.top, ZhixingMetrics.space12)
         .padding(.bottom, ZhixingMetrics.space8)
+    }
+
+    private func sidebarSectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(ZhixingTypography.sidebarSectionTitle)
+            .zhixingForeground(.faint)
     }
 
     private var sidebarSyncControl: some View {

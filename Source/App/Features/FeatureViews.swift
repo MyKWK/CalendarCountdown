@@ -70,9 +70,11 @@ struct TodayView: View {
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title).font(.title2.weight(.semibold))
+            Text(title)
+                .font(ZhixingTypography.cardTitle)
+                .zhixingForeground(.heading)
             if isEmpty {
-                Text(empty).foregroundStyle(.secondary)
+                Text(empty).zhixingForeground(.supporting)
             } else {
                 content()
             }
@@ -265,13 +267,13 @@ struct TaskRowView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(view.title)
-                        .font(.headline)
+                        .font(ZhixingTypography.rowTitle)
                         .strikethrough(isCompleted)
-                        .foregroundStyle(.primary)
+                        .zhixingForeground(.heading)
                     if let markdown = view.markdownDescription, !markdown.isEmpty {
                         MarkdownBodyView(text: markdown)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .zhixingForeground(.supporting)
                             .lineLimit(2)
                     }
                     HStack(spacing: 6) {
@@ -288,13 +290,13 @@ struct TaskRowView: View {
                                 .foregroundStyle(view.isOverdue && !isCompleted ? Color.orange : Color.secondary)
                         } else {
                             Text("收集箱")
-                                .foregroundStyle(.secondary)
+                                .zhixingForeground(.supporting)
                         }
                         MetaTag(title: "\(view.workload.rawValue) 点")
                         if view.series.isInfinite {
                             Image(systemName: "repeat")
                                 .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .zhixingForeground(.supporting)
                         }
                         if view.isOverdue, !isCompleted {
                             MetaTag(title: "逾期", tint: .orange, emphasized: true)
@@ -306,7 +308,7 @@ struct TaskRowView: View {
                 if view.series.recurrence != nil, view.occurrence.status == .open {
                     Button("跳过") { workspace.skip(view) }
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .zhixingForeground(.supporting)
                         .buttonStyle(.plain)
                         .appActionFocusEffectDisabled()
                         .zhixingHoverOpacity(isPersistent: false, idleOpacity: 0.4)
@@ -580,7 +582,9 @@ struct MissionCardView: View {
                     .background(Circle().fill(missionTint.opacity(0.14)))
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(item.mission.title).font(.title3.weight(.semibold))
+                    Text(item.mission.title)
+                        .font(ZhixingTypography.cardTitle)
+                        .zhixingForeground(.heading)
                     HStack(spacing: 6) {
                         if item.mission.status != .active {
                             MetaTag(
@@ -593,7 +597,7 @@ struct MissionCardView: View {
                         if let date = item.mission.targetDate {
                             Text("截止 \(date.isoString)")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .zhixingForeground(.supporting)
                         }
                     }
                 }
@@ -613,11 +617,13 @@ struct MissionCardView: View {
             if let markdown = item.mission.markdownDescription, !markdown.isEmpty {
                 MarkdownBodyView(text: markdown)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .zhixingForeground(.supporting)
                     .lineLimit(compact || isCollapsed ? 2 : 6)
             }
             if item.progress.isUnplanned {
-                Text("尚未规划").font(.callout).foregroundStyle(.secondary)
+                Text("尚未规划")
+                    .font(.callout)
+                    .zhixingForeground(.supporting)
             } else {
                 ProgressView(value: item.progress.progress ?? 0)
                     .tint(missionTint)
@@ -627,14 +633,14 @@ struct MissionCardView: View {
                     Spacer()
                     Text(progressPercentText)
                         .font(.callout.monospacedDigit().weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .zhixingForeground(.supporting)
                         .accessibilityHidden(true)
                 }
             }
             if !isCollapsed, let continuity = item.progress.continuity, let rate = continuity.rate {
                 Text("持续性 \(Int((rate * 100).rounded()))% · 最近 \(continuity.windowDays) 天 \(continuity.completedCount) / \(continuity.expectedCount)")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .zhixingForeground(.supporting)
             }
             if compact, !isCollapsed, !visibleLinkedTasks.isEmpty {
                 VStack(alignment: .leading, spacing: ZhixingMetrics.space8) {
@@ -662,7 +668,7 @@ struct MissionCardView: View {
                         if linkedTasks.count > visibleLinkedTasks.count {
                             Text("还有 \(linkedTasks.count - visibleLinkedTasks.count) 个任务")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .zhixingForeground(.supporting)
                         }
                     }
                     .padding(.leading, ZhixingMetrics.space8)
@@ -957,22 +963,22 @@ private struct MissionLinkedTaskRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(view.title)
-                    .font(.subheadline)
+                    .font(ZhixingTypography.rowTitle)
                     .strikethrough(view.occurrence.status == .completed)
-                    .foregroundStyle(.primary)
+                    .zhixingForeground(.heading)
                 HStack(spacing: 6) {
                     if let due = view.occurrence.plannedDue {
                         Text(due, format: .dateTime.month().day().hour().minute())
                             .foregroundStyle(view.isOverdue && view.occurrence.status == .open ? Color.orange : Color.secondary)
                     } else {
                         Text("收集箱")
-                            .foregroundStyle(.secondary)
+                            .zhixingForeground(.supporting)
                     }
                     Text("\(view.workload.rawValue) 点")
-                        .foregroundStyle(.secondary)
+                        .zhixingForeground(.supporting)
                     if view.series.isInfinite {
                         Text("∞")
-                            .foregroundStyle(.secondary)
+                            .zhixingForeground(.supporting)
                     }
                     if view.isOverdue, view.occurrence.status == .open {
                         MetaTag(title: "逾期", tint: .orange, emphasized: true)
@@ -983,7 +989,7 @@ private struct MissionLinkedTaskRow: View {
             Spacer()
             Button("编辑") { onEdit() }
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .zhixingForeground(.supporting)
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("mission-edit-task")
                 .appActionFocusEffectDisabled()
@@ -1082,7 +1088,9 @@ struct HabitRowView: View {
         HStack(alignment: .center, spacing: ZhixingMetrics.space12) {
             IdentityMark(color: identity, height: 36)
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.habit.title).font(.headline)
+                Text(item.habit.title)
+                    .font(ZhixingTypography.rowTitle)
+                    .zhixingForeground(.heading)
                 HStack(spacing: 6) {
                     MetaTag(
                         title: isSkipped ? "今日已跳过" : (isCompletedToday ? "今日已打卡" : "今日未打卡"),
@@ -1092,10 +1100,10 @@ struct HabitRowView: View {
                     if let stats = item.stats {
                         Text("连续 \(stats.currentStreak)")
                             .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .zhixingForeground(.supporting)
                         Text("本周 \(weekLabel(stats))")
                             .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .zhixingForeground(.supporting)
                     }
                 }
             }
@@ -1586,15 +1594,16 @@ struct AttachExistingTaskSheet: View {
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(item.title)
-                                    .foregroundStyle(.primary)
+                                    .font(ZhixingTypography.rowTitle)
+                                    .zhixingForeground(.heading)
                                 if let due = item.schedule.plannedDue {
                                     Text(due, format: .dateTime.month().day().hour().minute())
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .zhixingForeground(.supporting)
                                 } else {
                                     Text("收集箱")
                                         .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                        .zhixingForeground(.supporting)
                                 }
                             }
                         }

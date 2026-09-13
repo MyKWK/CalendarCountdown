@@ -14,6 +14,7 @@ struct MobileRootView: View {
             }
         }
         .tint(Color("AccentColor"))
+        .zhixingForeground(.body)
         .sheet(isPresented: $session.showingSettings) {
             NavigationStack {
                 MobileSettingsView(session: session)

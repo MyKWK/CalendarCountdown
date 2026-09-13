@@ -129,8 +129,13 @@ struct PadSplitRoot: View {
                             session.section = section
                         } label: {
                             Label(section.title, systemImage: section.systemImage)
+                                .font(
+                                    session.section == section
+                                        ? ZhixingTypography.sidebarItemSelected
+                                        : ZhixingTypography.sidebarItem
+                                )
+                                .zhixingForeground(session.section == section ? .heading : .body)
                         }
-                        .foregroundStyle(.primary)
                         .listRowBackground(
                             SidebarSelectionBackground(isSelected: session.section == section)
                         )
@@ -154,6 +159,7 @@ struct PadSplitRoot: View {
                 }
             }
             .navigationTitle("知行")
+            .navigationBarTitleDisplayMode(.inline)
             .accessibilityIdentifier("mobile-sidebar")
         } content: {
             contentColumn

@@ -12,7 +12,8 @@ struct MenuBarContentView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text("今天 · 任务 \(workspace.openTasks.count)")
-                    .font(.headline)
+                    .font(ZhixingTypography.cardTitle)
+                    .zhixingForeground(.heading)
                 Spacer()
                 Button {
                     Task { await model.refresh() }
@@ -34,14 +35,18 @@ struct MenuBarContentView: View {
                         }
                         .buttonStyle(.plain)
                         .appActionFocusEffectDisabled()
-                        Text(view.title).lineLimit(1)
+                        Text(view.title)
+                            .zhixingForeground(.body)
+                            .lineLimit(1)
                         Spacer()
                     }
                 }
                 Divider()
             }
 
-            Text("置顶与最近倒数").font(.headline)
+            Text("置顶与最近倒数")
+                .font(ZhixingTypography.rowTitle)
+                .zhixingForeground(.heading)
 
             if model.accessState != .fullAccess {
                 CalendarAccessActions(model: model)
@@ -49,7 +54,7 @@ struct MenuBarContentView: View {
                     .padding(.vertical, 4)
             } else if model.selectedEvents.isEmpty {
                 Text("尚未选择倒数事件")
-                    .foregroundStyle(.secondary)
+                    .zhixingForeground(.supporting)
                     .padding(.vertical, 8)
             } else {
                 ForEach(menuEvents) { event in
@@ -58,21 +63,26 @@ struct MenuBarContentView: View {
                             .font(.system(size: model.isPinned(event) ? 9 : 7))
                             .foregroundStyle(model.isPinned(event) ? .orange : Color(hex: event.colorHex))
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(event.title).lineLimit(1)
+                            Text(event.title)
+                                .zhixingForeground(.body)
+                                .lineLimit(1)
                             Text(event.eventDate, format: .dateTime.year().month().day())
                                 .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .zhixingForeground(.supporting)
                         }
                         Spacer()
                         Text(CountdownCalculator.label(until: event.eventDate))
                             .font(.callout.monospacedDigit())
+                            .zhixingForeground(.body)
                     }
                 }
             }
 
             if !workspace.missions.isEmpty {
                 Divider()
-                Text(AppLocalization.text("menubar.missions", defaultValue: "使命")).font(.headline)
+                Text(AppLocalization.text("menubar.missions", defaultValue: "使命"))
+                    .font(ZhixingTypography.rowTitle)
+                    .zhixingForeground(.heading)
                 ForEach(workspace.missions.prefix(3), id: \.mission.id) { item in
                     HStack(spacing: 8) {
                         Circle()
@@ -82,12 +92,14 @@ struct MenuBarContentView: View {
                         Image(systemName: MissionSymbolCatalog.resolved(item.mission.icon))
                             .foregroundStyle(Color.missionIdentity(item.mission.color))
                             .accessibilityHidden(true)
-                        Text(item.mission.title).lineLimit(1)
+                        Text(item.mission.title)
+                            .zhixingForeground(.body)
+                            .lineLimit(1)
                         Spacer()
                         if let percent = item.progress.displayPercent {
                             Text(String(format: "%.0f%%", percent))
                                 .font(.caption.monospacedDigit())
-                                .foregroundStyle(.secondary)
+                                .zhixingForeground(.supporting)
                         }
                     }
                     .accessibilityIdentifier("menubar-mission-\(item.mission.id.uuidString)")

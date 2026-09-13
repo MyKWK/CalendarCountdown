@@ -23,8 +23,8 @@ struct MissionIconPicker: View {
                     ForEach(groups) { group in
                         VStack(alignment: .leading, spacing: 6) {
                             Text(group.title)
-                                .font(.caption.weight(.semibold))
-                                .foregroundStyle(.secondary)
+                                .font(.caption.weight(.medium))
+                                .zhixingForeground(.supporting)
                             LazyVGrid(
                                 columns: [GridItem(.adaptive(minimum: 36), spacing: 6)],
                                 spacing: 6
@@ -80,9 +80,11 @@ struct MissionColorPicker: View {
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(AppLocalization.text("mission.color.current", defaultValue: "当前颜色"))
+                        .font(.caption.weight(.medium))
+                        .zhixingForeground(.supporting)
                     Text(MissionColor.resolve(selection).title)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .zhixingForeground(.supporting)
                 }
             }
 
@@ -107,7 +109,7 @@ struct MissionColorPicker: View {
                             }
                             Text(color.title)
                                 .font(.caption2)
-                                .foregroundStyle(.primary)
+                                .zhixingForeground(.body)
                                 .lineLimit(1)
                         }
                         .frame(maxWidth: .infinity)

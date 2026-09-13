@@ -89,7 +89,7 @@ struct MissionEditorSheet: View {
                             )
                             Text("回车换行；⌘↩ 保存。")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .zhixingForeground(.supporting)
                         }
                         editorCard(
                             title: AppLocalization.text("mission.goal.field", defaultValue: "目标")
@@ -129,8 +129,8 @@ struct MissionEditorSheet: View {
             iconChooser
             VStack(alignment: .leading, spacing: 4) {
                 Text(AppLocalization.text("mission.name.field", defaultValue: "名称"))
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .font(.caption.weight(.medium))
+                    .zhixingForeground(.supporting)
                 TextField(
                     AppLocalization.text("mission.title.placeholder", defaultValue: "标题"),
                     text: $title
@@ -226,7 +226,8 @@ struct MissionEditorSheet: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(.headline)
+                .font(ZhixingTypography.rowTitle)
+                .zhixingForeground(.supporting)
             content()
         }
         .padding(MissionEditorLayout.cardPadding)

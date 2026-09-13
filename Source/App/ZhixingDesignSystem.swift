@@ -21,6 +21,95 @@ enum ZhixingColor {
     static var highlightStroke: Color {
         Color.white.opacity(0.34)
     }
+
+    /// Cool titanium-gray text scale. Regular content deliberately avoids literal
+    /// black/white so long sidebar and list surfaces read calmer, closer to the
+    /// reference Codex sidebar than the system's near-black label color. Increase
+    /// Contrast steps back toward full-strength system labels for legibility.
+    static func text(
+        _ tone: ZhixingTextTone,
+        colorScheme: ColorScheme,
+        contrast: ColorSchemeContrast
+    ) -> Color {
+        if contrast == .increased {
+            switch tone {
+            case .heading, .body: return .primary
+            case .supporting, .faint: return .secondary
+            }
+        }
+        switch tone {
+        case .heading:
+            return colorScheme == .dark
+                ? Color(red: 0.88, green: 0.90, blue: 0.94)
+                : Color(red: 0.24, green: 0.27, blue: 0.34)
+        case .body:
+            return colorScheme == .dark
+                ? Color(red: 0.78, green: 0.81, blue: 0.87)
+                : Color(red: 0.32, green: 0.36, blue: 0.44)
+        case .supporting:
+            return colorScheme == .dark
+                ? Color(red: 0.64, green: 0.68, blue: 0.75)
+                : Color(red: 0.41, green: 0.45, blue: 0.53)
+        case .faint:
+            return colorScheme == .dark
+                ? Color(red: 0.50, green: 0.54, blue: 0.61)
+                : Color(red: 0.53, green: 0.56, blue: 0.62)
+        }
+    }
+}
+
+/// Roles in the shared titanium-gray text scale. Use with `.zhixingForeground(_:)`
+/// instead of ad hoc `.foregroundStyle(.primary)` / opacity numbers so every
+/// Zhixing-styled surface stays on one centralized, accessibility-aware ramp.
+enum ZhixingTextTone {
+    /// Titles: sidebar brand title, page/module titles, row and card titles, empty-state titles.
+    case heading
+    /// Regular sidebar and list body text.
+    case body
+    /// Secondary descriptive text (subtitles, captions).
+    case supporting
+    /// Faint meta text (counts, timestamps, disabled-feeling labels).
+    case faint
+}
+
+private struct ZhixingTextToneModifier: ViewModifier {
+    let tone: ZhixingTextTone
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    func body(content: Content) -> some View {
+        content.foregroundStyle(ZhixingColor.text(tone, colorScheme: colorScheme, contrast: contrast))
+    }
+}
+
+extension View {
+    /// Applies the shared titanium-gray text tone. Prefer this over
+    /// `.foregroundStyle(.primary/.secondary)` on Zhixing-styled surfaces (sidebar,
+    /// headers, list rows) to keep color centralized and Increase-Contrast aware.
+    func zhixingForeground(_ tone: ZhixingTextTone) -> some View {
+        modifier(ZhixingTextToneModifier(tone: tone))
+    }
+}
+
+/// Shared type scale. Every case is a system Dynamic Type style (no custom fonts);
+/// weight is capped at `.medium` so titles read closer to Codex's light sidebar
+/// instead of stacking `.semibold` across every hierarchy level.
+enum ZhixingTypography {
+    static let sidebarBrandTitle: Font = .headline.weight(.medium)
+    static let sidebarSectionTitle: Font = .caption.weight(.medium)
+    static let sidebarItem: Font = .callout
+    static let sidebarItemSelected: Font = .callout.weight(.medium)
+
+    /// Page/module big titles (Countdown, Tasks, Missions, Habits headers).
+    static let pageTitle: Font = .title3.weight(.medium)
+    /// Card-level titles (mission cards, featured countdown row).
+    static let cardTitle: Font = .headline.weight(.medium)
+    /// List row titles (task rows, habit rows, countdown rows).
+    static let rowTitle: Font = .subheadline.weight(.medium)
+    /// Empty-state titles.
+    static let emptyStateTitle: Font = .title3.weight(.medium)
+    static let featuredCountdownValue: Font = .system(.title2, design: .rounded, weight: .medium).monospacedDigit()
+    static let countdownValue: Font = .headline.weight(.medium).monospacedDigit()
 }
 
 /// An opaque-to-the-desktop canvas with enough internal color variation for
@@ -204,14 +293,15 @@ struct ModuleHeader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: ZhixingMetrics.space4) {
             Text(title)
-                .font(.title2.weight(.semibold))
+                .font(ZhixingTypography.pageTitle)
+                .zhixingForeground(.heading)
             Text(subtitle)
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .zhixingForeground(.supporting)
             if let summary, !summary.isEmpty {
                 Text(summary)
                     .font(.caption.monospacedDigit())
-                    .foregroundStyle(.tertiary)
+                    .zhixingForeground(.faint)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -227,6 +317,9 @@ struct MetaTag: View {
     var emphasized: Bool = false
     var identifier: String? = nil
 
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+
     var body: some View {
         HStack(spacing: 4) {
             if let systemImage {
@@ -236,7 +329,11 @@ struct MetaTag: View {
             Text(title)
         }
         .font(.caption2.weight(emphasized ? .semibold : .medium))
-        .foregroundStyle(emphasized ? tint : Color.secondary)
+        .foregroundStyle(
+            emphasized
+                ? tint
+                : ZhixingColor.text(.supporting, colorScheme: colorScheme, contrast: contrast)
+        )
         .padding(.horizontal, ZhixingMetrics.space8)
         .padding(.vertical, 3)
         .background(
@@ -258,6 +355,7 @@ struct MissionTag: View {
     var identifier: String? = nil
 
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
 
     var body: some View {
         HStack(spacing: 4) {
@@ -266,7 +364,9 @@ struct MissionTag: View {
             Text(title)
         }
         .font(.caption2.weight(.medium))
-        .foregroundStyle(Color.primary.opacity(colorScheme == .dark ? 0.76 : 0.70))
+        .foregroundStyle(
+            ZhixingColor.text(.supporting, colorScheme: colorScheme, contrast: contrast)
+        )
         .padding(.horizontal, 7)
         .padding(.vertical, 3)
         .background {
@@ -289,6 +389,9 @@ struct StatusCapsule: View {
     var tint: Color
     var emphasized: Bool = false
 
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: systemImage)
@@ -298,7 +401,11 @@ struct StatusCapsule: View {
                 .font(.caption.weight(.semibold))
                 .lineLimit(1)
         }
-        .foregroundStyle(emphasized ? tint : Color.primary)
+        .foregroundStyle(
+            emphasized
+                ? tint
+                : ZhixingColor.text(.body, colorScheme: colorScheme, contrast: contrast)
+        )
         .padding(.horizontal, 9)
         .padding(.vertical, 5)
         .background {
@@ -378,8 +485,11 @@ struct ZhixingEmptyState: View {
     var body: some View {
         ContentUnavailableView {
             Label(title, systemImage: systemImage)
+                .font(ZhixingTypography.emptyStateTitle)
+                .zhixingForeground(.heading)
         } description: {
             Text(description)
+                .zhixingForeground(.supporting)
         } actions: {
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
@@ -398,6 +508,7 @@ struct FloatingStatusBanner: View {
         GlassSurface(cornerRadius: 20) {
             Text(message)
                 .font(.callout)
+                .zhixingForeground(.body)
                 .padding(.horizontal, ZhixingMetrics.space16)
                 .padding(.vertical, ZhixingMetrics.space8)
         }
@@ -460,7 +571,8 @@ struct ComposerSheetScaffold<Content: View>: View {
         VStack(spacing: 0) {
             HStack {
                 Text(title)
-                    .font(.headline)
+                    .font(ZhixingTypography.cardTitle)
+                    .zhixingForeground(.heading)
                 Spacer()
             }
             .padding(.horizontal, ZhixingMetrics.space20)
@@ -508,13 +620,21 @@ struct SidebarItemRow: View {
     let count: Int
     let isSelected: Bool
 
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+
     var body: some View {
         HStack(spacing: ZhixingMetrics.space8) {
             Image(systemName: section.systemImage)
                 .frame(width: 18)
-                .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.78))
+                .foregroundStyle(isSelected ? Color.accentColor : ZhixingColor.text(
+                    .supporting,
+                    colorScheme: colorScheme,
+                    contrast: contrast
+                ))
             Text(section.title)
-                .foregroundStyle(.primary)
+                .font(isSelected ? ZhixingTypography.sidebarItemSelected : ZhixingTypography.sidebarItem)
+                .zhixingForeground(isSelected ? .heading : .body)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
                 .layoutPriority(1)
@@ -522,7 +642,7 @@ struct SidebarItemRow: View {
             if count > 0 {
                 Text("\(count)")
                     .font(.caption.monospacedDigit())
-                    .foregroundStyle(isSelected ? Color.secondary : Color.secondary.opacity(0.62))
+                    .zhixingForeground(isSelected ? .supporting : .faint)
                     .fixedSize()
             }
         }
@@ -547,15 +667,16 @@ struct SidebarUtilityRow: View {
             Image(systemName: systemImage)
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: 18)
-                .foregroundStyle(Color.secondary.opacity(0.86))
+                .zhixingForeground(.supporting)
             Text(title)
-                .foregroundStyle(.primary)
+                .font(ZhixingTypography.sidebarItem)
+                .zhixingForeground(.body)
                 .lineLimit(1)
             Spacer(minLength: ZhixingMetrics.space8)
             if let accessoryImage {
                 Image(systemName: accessoryImage)
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                    .zhixingForeground(.faint)
             }
         }
         .padding(.horizontal, ZhixingMetrics.space8)
