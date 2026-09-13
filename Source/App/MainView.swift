@@ -116,6 +116,7 @@ struct MainView: View {
                     }
             }
         }
+        .zhixingForeground(.body)
     }
 
     private var permissionView: some View {
@@ -333,6 +334,9 @@ struct EventRow: View {
     let onTogglePin: () -> Void
     let onUnselect: () -> Void
 
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+
     private var remaining: Int {
         CountdownCalculator.daysRemaining(until: event.eventDate)
     }
@@ -342,20 +346,24 @@ struct EventRow: View {
             IdentityMark(color: Color(hex: event.colorHex), height: featured ? 56 : 36)
             VStack(alignment: .leading, spacing: featured ? 6 : 4) {
                 Text(event.title)
-                    .font(featured ? .title3.weight(.semibold) : .headline)
-                    .foregroundStyle(.primary)
+                    .font(featured ? ZhixingTypography.cardTitle : ZhixingTypography.rowTitle)
+                    .zhixingForeground(.heading)
                 HStack(spacing: 6) {
                     Text(event.eventDate, format: .dateTime.year().month().day())
                     Text("·")
                     Text(event.calendarTitle)
                 }
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .zhixingForeground(.supporting)
             }
             Spacer(minLength: ZhixingMetrics.space8)
             Text(numericLabel)
-                .font(featured ? .system(size: 28, weight: .semibold, design: .rounded).monospacedDigit() : .headline.monospacedDigit())
-                .foregroundStyle(remaining < 0 ? Color.orange : Color.primary)
+                .font(featured ? ZhixingTypography.featuredCountdownValue : ZhixingTypography.countdownValue)
+                .foregroundStyle(
+                    remaining < 0
+                        ? Color.orange
+                        : ZhixingColor.text(.heading, colorScheme: colorScheme, contrast: contrast)
+                )
                 .accessibilityLabel(CountdownCalculator.label(until: event.eventDate))
             Button(action: onTogglePin) {
                 Image(systemName: isPinned ? "star.fill" : "star")
