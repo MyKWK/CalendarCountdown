@@ -108,14 +108,6 @@ struct TaskListView: View {
             } else {
                 List {
                     Section {
-                        ModuleHeader(
-                            title: title,
-                            subtitle: AppSection.tasks.subtitle,
-                            summary: taskSummary
-                        )
-                        .zhixingListRow()
-                    }
-                    Section {
                         ForEach(partitioned.open) { view in
                             TaskRowView(view: view, workspace: workspace)
                                 .listRowSeparator(.hidden)
@@ -166,6 +158,7 @@ struct TaskListView: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .appGlassScrollBackground()
+                .contentMargins(.top, ZhixingMetrics.space8, for: .scrollContent)
                 .coordinateSpace(name: "zhixing.tasks")
                 .environment(\.taskListViewport, viewport)
                 .onScrollGeometryChange(for: CGRect.self) { geometry in
@@ -192,15 +185,6 @@ struct TaskListView: View {
         .navigationTitle(title)
     }
 
-    private var taskSummary: String {
-        let open = partitioned.open.count
-        let overdue = partitioned.open.filter(\.isOverdue).count
-        let done = partitioned.completed.count
-        if overdue > 0 {
-            return "\(open) 个待办 · \(overdue) 个逾期 · \(done) 个已完成"
-        }
-        return "\(open) 个待办 · \(done) 个已完成"
-    }
 }
 
 private struct CompletedTasksBoundary: View {
@@ -406,14 +390,6 @@ struct MissionListView: View {
                 )
             } else {
                 List {
-                    Section {
-                        ModuleHeader(
-                            title: AppSection.missions.title,
-                            subtitle: AppSection.missions.subtitle,
-                            summary: "\(items.count) 项使命"
-                        )
-                        .zhixingListRow()
-                    }
                     ForEach(items, id: \.mission.id) { item in
                         MissionCardView(
                             item: item,
@@ -457,6 +433,7 @@ struct MissionListView: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .appGlassScrollBackground()
+                .contentMargins(.top, ZhixingMetrics.space8, for: .scrollContent)
             }
         }
         .background(Color.clear)
@@ -1029,14 +1006,6 @@ struct HabitListView: View {
             } else {
                 List {
                     Section {
-                        ModuleHeader(
-                            title: AppSection.habits.title,
-                            subtitle: AppSection.habits.subtitle,
-                            summary: habitSummary(items)
-                        )
-                        .zhixingListRow()
-                    }
-                    Section {
                         ForEach(items, id: \.habit.id) { item in
                             HabitRowView(item: item, workspace: workspace)
                                 .zhixingListRow()
@@ -1049,20 +1018,13 @@ struct HabitListView: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .appGlassScrollBackground()
+                .contentMargins(.top, ZhixingMetrics.space8, for: .scrollContent)
             }
         }
         .background(Color.clear)
         .navigationTitle("打卡")
     }
 
-    private func habitSummary(_ items: [HabitWriteResult]) -> String {
-        let done = items.filter { isCompletedToday($0) }.count
-        return "今日 \(done) / \(items.count) 已打卡"
-    }
-
-    private func isCompletedToday(_ item: HabitWriteResult) -> Bool {
-        item.period?.disposition == .completed || item.checkIn != nil
-    }
 }
 
 struct HabitRowView: View {

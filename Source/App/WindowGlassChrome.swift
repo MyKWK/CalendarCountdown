@@ -125,14 +125,11 @@ private final class WindowGlassBackdropController {
     private func configureWindow(_ window: NSWindow, glass: Bool) {
         window.isOpaque = !glass
         window.backgroundColor = glass ? .clear : .windowBackgroundColor
-        window.titlebarAppearsTransparent = glass
+        window.titlebarAppearsTransparent = true
         window.hasShadow = true
-        window.titlebarSeparatorStyle = .automatic
-        if glass {
-            window.styleMask.insert(.fullSizeContentView)
-        } else {
-            window.styleMask.remove(.fullSizeContentView)
-        }
+        window.titlebarSeparatorStyle = .none
+        window.styleMask.insert(.fullSizeContentView)
+        window.isMovableByWindowBackground = false
         window.contentView?.wantsLayer = true
         window.contentView?.layer?.backgroundColor = glass ? NSColor.clear.cgColor : NSColor.windowBackgroundColor.cgColor
     }

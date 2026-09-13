@@ -186,7 +186,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let window = NSWindow(contentViewController: hostingController)
             window.title = AppLocalization.text("app.name", defaultValue: "知行")
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
-            window.setContentSize(NSSize(width: 1_040, height: 700))
+            window.setContentSize(NSSize(width: 1_120, height: 740))
             window.minSize = NSSize(width: 880, height: 580)
             window.isOpaque = true
             window.backgroundColor = .windowBackgroundColor

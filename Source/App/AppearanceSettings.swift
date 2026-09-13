@@ -167,16 +167,22 @@ struct AppSettingsView: View {
             }
             .navigationTitle("设置")
             .navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 210)
+            .scrollContentBackground(.hidden)
+            .background(ZhixingColor.sidebarBackground)
         } detail: {
-            switch navigation.selection ?? .appearance {
-            case .appearance:
-                AppearanceSettingsPane(settings: settings)
-            case .statusBar:
-                StatusBarOverviewPane(overview: overview, workspace: workspace)
-            case .shortcuts:
-                ShortcutSettingsPane(shortcuts: shortcuts)
+            Group {
+                switch navigation.selection ?? .appearance {
+                case .appearance:
+                    AppearanceSettingsPane(settings: settings)
+                case .statusBar:
+                    StatusBarOverviewPane(overview: overview, workspace: workspace)
+                case .shortcuts:
+                    ShortcutSettingsPane(shortcuts: shortcuts)
+                }
             }
+            .background(ZhixingColor.contentBackground)
         }
+        .background(ZhixingColor.contentBackground)
         .frame(width: 760, height: 640)
         .zhixingForeground(.body)
         .tint(settings.accentColor)

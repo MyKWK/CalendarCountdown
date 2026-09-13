@@ -1,21 +1,30 @@
 import CalendarCountdownCore
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 enum ZhixingColor {
     static var contentBackground: Color {
-        #if os(macOS)
-        Color(nsColor: .windowBackgroundColor)
-        #else
-        Color(.systemBackground)
-        #endif
+        Color(light: (0.976, 0.973, 0.965), dark: (0.075, 0.075, 0.073))
     }
 
     static var groupedBackground: Color {
-        #if os(macOS)
-        Color(nsColor: .controlBackgroundColor)
-        #else
-        Color(.secondarySystemBackground)
-        #endif
+        Color(light: (0.945, 0.941, 0.932), dark: (0.112, 0.112, 0.108))
+    }
+
+    static var sidebarBackground: Color {
+        Color(light: (0.938, 0.934, 0.925), dark: (0.092, 0.092, 0.089))
+    }
+
+    static var elevatedBackground: Color {
+        Color(light: (1, 1, 0.996), dark: (0.142, 0.142, 0.137))
+    }
+
+    static var hairline: Color {
+        Color.primary.opacity(0.085)
     }
 
     static var highlightStroke: Color {
@@ -115,43 +124,8 @@ enum ZhixingTypography {
 /// An opaque-to-the-desktop canvas with enough internal color variation for
 /// SwiftUI material surfaces to read as glass instead of flat white cards.
 struct AppGlassBackdrop: View {
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @Environment(\.colorSchemeContrast) private var contrast
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
-        ZStack {
-            ZhixingColor.contentBackground
-            if !reduceTransparency, contrast != .increased {
-                LinearGradient(
-                    colors: [
-                        Color.accentColor.opacity(colorScheme == .dark ? 0.16 : 0.10),
-                        Color.cyan.opacity(colorScheme == .dark ? 0.07 : 0.045),
-                        Color.clear
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                RadialGradient(
-                    colors: [
-                        Color.white.opacity(colorScheme == .dark ? 0.07 : 0.46),
-                        Color.clear
-                    ],
-                    center: .topTrailing,
-                    startRadius: 16,
-                    endRadius: 560
-                )
-                RadialGradient(
-                    colors: [
-                        Color.accentColor.opacity(colorScheme == .dark ? 0.10 : 0.055),
-                        Color.clear
-                    ],
-                    center: .bottomLeading,
-                    startRadius: 8,
-                    endRadius: 520
-                )
-            }
-        }
+        ZhixingColor.contentBackground
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
@@ -190,40 +164,23 @@ struct GlassSurface<Content: View>: View {
     private var chrome: some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
         return ZStack {
-            if usesSolidFill {
-                shape.fill(ZhixingColor.groupedBackground.opacity(colorScheme == .dark ? 0.92 : 0.96))
-            } else {
-                shape.fill(.thinMaterial)
-                shape.fill(ZhixingColor.contentBackground.opacity(colorScheme == .dark ? 0.24 : 0.38))
-                shape.fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(colorScheme == .dark ? 0.10 : 0.42),
-                            Color.clear
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-            }
+            shape.fill(
+                usesSolidFill
+                    ? ZhixingColor.elevatedBackground
+                    : ZhixingColor.elevatedBackground.opacity(colorScheme == .dark ? 0.82 : 0.92)
+            )
             if tint != .clear {
-                shape.fill(tint.opacity(ZhixingMetrics.accentFillMaxOpacity))
+                shape.fill(tint.opacity(colorScheme == .dark ? 0.07 : 0.055))
             }
             shape.strokeBorder(strokeColor, lineWidth: strokeWidth)
         }
-        .shadow(
-            color: Color.black.opacity(colorScheme == .dark ? 0.18 : 0.07),
-            radius: 10,
-            x: 0,
-            y: 4
-        )
     }
 
     private var strokeColor: Color {
         if contrast == .increased {
             return Color.primary.opacity(0.45)
         }
-        let highlight = colorScheme == .dark ? Color.white.opacity(0.16) : Color.white.opacity(0.42)
+        let highlight = colorScheme == .dark ? Color.white.opacity(0.075) : Color.black.opacity(0.07)
         if tint == .clear {
             return highlight
         }
@@ -250,16 +207,15 @@ struct ContentSurface<Content: View>: View {
             .background {
                 let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 Group {
-                    if reduceTransparency || contrast == .increased {
-                        shape.fill(ZhixingColor.groupedBackground.opacity(0.96))
-                    } else {
-                        shape.fill(.regularMaterial)
-                        shape.fill(ZhixingColor.groupedBackground.opacity(colorScheme == .dark ? 0.34 : 0.48))
-                    }
+                    shape.fill(
+                        reduceTransparency || contrast == .increased
+                            ? ZhixingColor.elevatedBackground
+                            : ZhixingColor.elevatedBackground.opacity(colorScheme == .dark ? 0.78 : 0.90)
+                    )
                 }
                     .overlay {
                         shape.strokeBorder(
-                            Color.primary.opacity(contrast == .increased ? 0.35 : 0.08),
+                            Color.primary.opacity(contrast == .increased ? 0.35 : 0.075),
                             lineWidth: contrast == .increased ? 1 : ZhixingMetrics.glassStrokeWidth
                         )
                     }
@@ -334,12 +290,9 @@ struct MetaTag: View {
                 ? tint
                 : ZhixingColor.text(.supporting, colorScheme: colorScheme, contrast: contrast)
         )
-        .padding(.horizontal, ZhixingMetrics.space8)
-        .padding(.vertical, 3)
-        .background(
-            (emphasized ? tint.opacity(0.14) : Color.primary.opacity(0.06)),
-            in: Capsule(style: .continuous)
-        )
+        .padding(.horizontal, emphasized ? ZhixingMetrics.space8 : 0)
+        .padding(.vertical, emphasized ? 3 : 0)
+        .background(emphasized ? tint.opacity(0.12) : Color.clear, in: Capsule(style: .continuous))
         .lineLimit(1)
         .accessibilityIdentifier(identifier ?? "meta-tag")
         .accessibilityLabel(title)
@@ -371,11 +324,7 @@ struct MissionTag: View {
         .padding(.vertical, 3)
         .background {
             RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(identity.opacity(colorScheme == .dark ? 0.30 : 0.22))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .strokeBorder(identity.opacity(colorScheme == .dark ? 0.38 : 0.24), lineWidth: 0.6)
+                .fill(identity.opacity(colorScheme == .dark ? 0.13 : 0.10))
         }
         .lineLimit(1)
         .accessibilityIdentifier(identifier ?? "mission-tag")
@@ -430,10 +379,34 @@ struct PrimaryToolbarAction: View {
         Button(action: action) {
             Label(title, systemImage: systemImage)
         }
+        .buttonStyle(CodexPrimaryButtonStyle())
         .help(help)
         .accessibilityLabel(title)
         .accessibilityIdentifier(identifier ?? "mac-create-button")
         .appActionFocusEffectDisabled()
+    }
+}
+
+struct CodexPrimaryButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var colorScheme
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.callout.weight(.medium))
+            .foregroundStyle(colorScheme == .dark ? Color.black : Color.white)
+            .padding(.horizontal, 12)
+            .frame(height: 30)
+            .background(Color.primary.opacity(configuration.isPressed ? 0.78 : 0.94), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+    }
+}
+
+struct CodexIconButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(width: 30, height: 30)
+            .background(Color.primary.opacity(configuration.isPressed ? 0.10 : 0.055), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
@@ -483,21 +456,28 @@ struct ZhixingEmptyState: View {
     var action: (() -> Void)? = nil
 
     var body: some View {
-        ContentUnavailableView {
-            Label(title, systemImage: systemImage)
-                .font(ZhixingTypography.emptyStateTitle)
+        VStack(spacing: ZhixingMetrics.space12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 28, weight: .regular))
+                .symbolRenderingMode(.hierarchical)
+                .zhixingForeground(.faint)
+            Text(title)
+                .font(.headline.weight(.medium))
                 .zhixingForeground(.heading)
-        } description: {
             Text(description)
+                .font(.callout)
                 .zhixingForeground(.supporting)
-        } actions: {
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 360)
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(CodexPrimaryButtonStyle())
                     .accessibilityIdentifier(actionIdentifier ?? "empty-primary-action")
                     .appActionFocusEffectDisabled()
             }
         }
+        .padding(ZhixingMetrics.space32)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -627,8 +607,8 @@ struct SidebarItemRow: View {
         HStack(spacing: ZhixingMetrics.space8) {
             Image(systemName: section.systemImage)
                 .frame(width: 18)
-                .foregroundStyle(isSelected ? Color.accentColor : ZhixingColor.text(
-                    .supporting,
+                .foregroundStyle(ZhixingColor.text(
+                    isSelected ? .heading : .supporting,
                     colorScheme: colorScheme,
                     contrast: contrast
                 ))
@@ -719,7 +699,7 @@ struct TaskBarCard<Content: View>: View {
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
-    @Environment(\.colorScheme) private var colorScheme
+    @State private var isHovering = false
 
     var body: some View {
         content()
@@ -728,41 +708,23 @@ struct TaskBarCard<Content: View>: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
                 let shape = RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSheet, style: .continuous)
-                if reduceTransparency || contrast == .increased {
-                    shape.fill(ZhixingColor.groupedBackground.opacity(0.96))
-                } else {
-                    shape.fill(.regularMaterial)
-                    shape.fill(ZhixingColor.groupedBackground.opacity(colorScheme == .dark ? 0.28 : 0.42))
-                    shape.fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(colorScheme == .dark ? 0.08 : 0.34),
-                                Color.clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                }
+                shape.fill(
+                    reduceTransparency || contrast == .increased
+                        ? ZhixingColor.elevatedBackground
+                        : Color.primary.opacity(isHovering ? 0.055 : 0.025)
+                )
             }
             .overlay {
                 RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSheet, style: .continuous)
                     .strokeBorder(
-                        colorScheme == .dark
-                            ? Color.white.opacity(0.14)
-                            : Color.white.opacity(0.72),
+                        Color.primary.opacity(isHovering ? 0.11 : 0.055),
                         lineWidth: ZhixingMetrics.glassStrokeWidth
                     )
             }
-            .shadow(
-                color: Color.black.opacity(colorScheme == .dark ? 0.16 : 0.055),
-                radius: 7,
-                x: 0,
-                y: 3
-            )
             .contentShape(
                 RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSheet, style: .continuous)
             )
+            .onHover { isHovering = $0 }
     }
 }
 
@@ -860,13 +822,31 @@ struct SidebarSelectionBackground: View {
 
     var body: some View {
         if isSelected {
-            GlassSurface(cornerRadius: 12, tint: .accentColor) {
-                Color.clear
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.primary.opacity(0.075))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color.primary.opacity(0.055), lineWidth: ZhixingMetrics.glassStrokeWidth)
+                }
         } else {
             Color.clear
         }
+    }
+}
+
+private extension Color {
+    init(light: (Double, Double, Double), dark: (Double, Double, Double)) {
+        #if os(macOS)
+        self.init(nsColor: NSColor(name: nil) { appearance in
+            let values = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
+            return NSColor(red: values.0, green: values.1, blue: values.2, alpha: 1)
+        })
+        #else
+        self.init(uiColor: UIColor { traits in
+            let values = traits.userInterfaceStyle == .dark ? dark : light
+            return UIColor(red: values.0, green: values.1, blue: values.2, alpha: 1)
+        })
+        #endif
     }
 }
 
