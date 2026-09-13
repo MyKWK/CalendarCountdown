@@ -77,6 +77,9 @@ private final class WindowGlassBackdropController {
     private weak var window: NSWindow?
     private var enabled = false
     private var transparency = WindowGlassAppearance.defaultTransparency
+    private var refreshScheduled = false
+    private weak var configuredWindow: NSWindow?
+    private var configuredForGlass: Bool?
 
     func update(enabled: Bool, transparency: Double) {
         self.enabled = enabled
@@ -88,9 +91,12 @@ private final class WindowGlassBackdropController {
     }
 
     func refresh() {
-        applyNow()
+        guard !refreshScheduled else { return }
+        refreshScheduled = true
         DispatchQueue.main.async { [weak self] in
-            self?.applyNow()
+            guard let self else { return }
+            self.refreshScheduled = false
+            self.applyNow()
         }
     }
 
@@ -104,7 +110,7 @@ private final class WindowGlassBackdropController {
     private func applyNow() {
         guard let window, let contentView = window.contentView else { return }
         if glassAllowed {
-            configureWindow(window, glass: true)
+            configureWindowIfNeeded(window, glass: true)
             let backdrop = existingBackdrop(in: contentView) ?? makeBackdrop()
             if backdrop.superview !== contentView {
                 contentView.addSubview(backdrop, positioned: .below, relativeTo: nil)
@@ -115,20 +121,32 @@ private final class WindowGlassBackdropController {
             makeAncestorsClear(from: contentView)
             applyTranslucency(to: contentView, skipping: backdrop)
         } else {
-            configureWindow(window, glass: false)
+            // The normal full-size title-bar configuration is installed while
+            // AppDelegate creates the window. Do not rewrite NSWindow chrome on
+            // every SwiftUI update: doing so during AppKit's constraint pass can
+            // recursively invalidate the hosting view and terminate the app.
+            if configuredWindow === window, configuredForGlass == true {
+                configureWindowIfNeeded(window, glass: false)
+            }
             if let backdrop = existingBackdrop(in: contentView) {
                 backdrop.removeFromSuperview()
             }
         }
     }
 
-    private func configureWindow(_ window: NSWindow, glass: Bool) {
+    private func configureWindowIfNeeded(_ window: NSWindow, glass: Bool) {
+        guard configuredWindow !== window || configuredForGlass != glass else { return }
+        configuredWindow = window
+        configuredForGlass = glass
+
         window.isOpaque = !glass
         window.backgroundColor = glass ? .clear : .windowBackgroundColor
         window.titlebarAppearsTransparent = true
         window.hasShadow = true
         window.titlebarSeparatorStyle = .none
-        window.styleMask.insert(.fullSizeContentView)
+        if !window.styleMask.contains(.fullSizeContentView) {
+            window.styleMask.insert(.fullSizeContentView)
+        }
         window.isMovableByWindowBackground = false
         window.contentView?.wantsLayer = true
         window.contentView?.layer?.backgroundColor = glass ? NSColor.clear.cgColor : NSColor.windowBackgroundColor.cgColor
