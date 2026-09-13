@@ -429,13 +429,23 @@ struct CountdownModuleView: View {
     var body: some View {
         Group {
             if model.accessState != .fullAccess {
-                ContentUnavailableView {
-                    Label("需要访问 Apple 日历", systemImage: "calendar.badge.exclamationmark")
-                } description: {
+                VStack(spacing: ZhixingMetrics.space12) {
+                    Image(systemName: "calendar.badge.exclamationmark")
+                        .font(.system(size: 28, weight: .regular))
+                        .symbolRenderingMode(.hierarchical)
+                        .zhixingForeground(.faint)
+                    Text("需要访问 Apple 日历")
+                        .font(.headline.weight(.medium))
+                        .zhixingForeground(.heading)
                     Text("日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。")
-                } actions: {
+                        .font(.callout)
+                        .zhixingForeground(.supporting)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: 380)
                     CalendarAccessActions(model: model)
                 }
+                .padding(ZhixingMetrics.space32)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if displayedEvents.isEmpty {
                 ZhixingEmptyState(
                     systemImage: AppSection.countdown.emptySymbol,
@@ -447,14 +457,6 @@ struct CountdownModuleView: View {
                 )
             } else {
                 List {
-                    Section {
-                        ModuleHeader(
-                            title: selectedTitle,
-                            subtitle: AppSection.countdown.subtitle,
-                            summary: "\(displayedEvents.count) 个倒数"
-                        )
-                        .zhixingListRow()
-                    }
                     if let featured = displayedEvents.first {
                         Section {
                             eventRow(featured, featured: true)
@@ -482,6 +484,7 @@ struct CountdownModuleView: View {
                 .listStyle(.plain)
                 .scrollContentBackground(.hidden)
                 .appGlassScrollBackground()
+                .contentMargins(.top, ZhixingMetrics.space8, for: .scrollContent)
             }
         }
         .background(Color.clear)
