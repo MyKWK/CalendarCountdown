@@ -1,4 +1,4 @@
-"CFBundleDisplayName" = "Motive";
-"CFBundleName" = "Motive";
+"CFBundleDisplayName" = "PlanAct";
+"CFBundleName" = "PlanAct";
 "NSCalendarsFullAccessUsageDescription" = "카운트다운을 계산하려면 캘린더 읽기 권한이 필요하며, 확인 후 선택한 캘린더에만 이벤트를 기록합니다.";
 "NSRemindersFullAccessUsageDescription" = "작업을 시스템의 미리 알림으로 투영하려면 미리 알림 접근 권한이 필요합니다. 투영을 켜기 전에는 쓰지 않습니다.";

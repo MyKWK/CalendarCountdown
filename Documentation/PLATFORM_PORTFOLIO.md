@@ -2,7 +2,7 @@
 
 > 状态：已批准的开发治理基线，非实现完成声明  
 > 建立日期：2026-09-12  
-> 适用仓库：CalendarCountdown（产品名：知行）
+> 适用仓库：CalendarCountdown（产品名：知行 / PlanAct）
 
 ## 1. 产品组合
 
@@ -86,4 +86,3 @@ Apple 的 `EventKit`、Android 的 `CalendarContract`、HarmonyOS 的系统能�
 | H5 发布候选 | 无 | 签名、隐私、性能、商店自检 | 真实设备与发布规则分别留存证据 |
 
 本项目当前只达到 **H0**。这不是鸿蒙应用已构建、仓颉已可用、模拟器已安装或云同步已验证的证据。
-

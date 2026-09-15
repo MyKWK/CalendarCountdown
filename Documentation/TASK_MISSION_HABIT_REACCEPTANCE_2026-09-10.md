@@ -14,7 +14,7 @@
 1. `syncNow()` 在 fetched 应用失败后仍无条件覆盖 `lastFetchAt`；
 2. App 已运行、Broker 尚未创建 CloudKit engine 时，CLI/MCP 首次执行 `cloud mode iCloud` 会创建一个**没有 `CloudProfileSession`** 的 engine，因而绕过账号 profile 隔离。
 
-因此，当前准确的产品口径是：**知行 / Motive 的本地任务、使命、习惯核心和多数同步基础设施已实现；CloudKit 多账号安全与失败恢复仍有 P0 代码缺口，不能称为可发布的跨端同步。**
+因此，当前准确的产品口径是：**知行 / PlanAct 的本地任务、使命、习惯核心和多数同步基础设施已实现；CloudKit 多账号安全与失败恢复仍有 P0 代码缺口，不能称为可发布的跨端同步。**
 
 ## 状态口径
 

@@ -1,4 +1,4 @@
-# CalendarCountdown（日历倒数）
+# PlanAct（日历倒数）
 
 一个以 Apple 日历为可见事件载体的 macOS 倒数日 App，包含菜单栏、桌面小组件和 AI 友好的 `calcount` CLI。
 
@@ -38,7 +38,7 @@ open CalendarCountdown.xcodeproj
 ./Scripts/package-dmg.sh
 ```
 
-1.0.20 产物位于 `dist/CalendarCountdown-1.0.20-macos-universal.dmg`，内含 arm64 和 x86_64 可执行文件。当前构建采用 ad-hoc 签名，不等同于经过 Developer ID 签名和 Apple 公证的发行包。验证和安装只启动 `/Applications/知行.app`，不要打开 DerivedData 里的 `CalendarCountdown.app`。替换安装不会清空已有任务、使命、打卡或日历数据。
+1.0.21 产物位于 `dist/CalendarCountdown-1.0.21-macos-universal.dmg`，内含 arm64 和 x86_64 可执行文件。当前构建采用 ad-hoc 签名，不等同于经过 Developer ID 签名和 Apple 公证的发行包。验证和安装只启动 `/Applications/知行.app`，不要打开 DerivedData 里的 `CalendarCountdown.app`。替换安装不会清空已有任务、使命、打卡或日历数据。
 
 完成一轮大改动或版本更新后，用下面这条命令走完整本地发布流程：
 

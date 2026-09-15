@@ -8,7 +8,7 @@
 "操作失败" = "Operation Failed";
 "好" = "OK";
 "需要访问 Apple 日历" = "Apple Calendar Access Required";
-"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "Motive reads existing calendar categories and events. It writes to a selected calendar only when you explicitly add or import an event.";
+"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "PlanAct reads existing calendar categories and events. It writes to a selected calendar only when you explicitly add or import an event.";
 "授权日历访问" = "Allow Calendar Access";
 "倒数展示" = "Countdowns";
 "Apple 日历" = "Apple Calendars";
@@ -17,7 +17,7 @@
 "每年追踪该日历中的同名事件" = "Track Same-Named Events Yearly";
 "置顶与最近倒数" = "Pinned & Upcoming";
 "尚未选择倒数事件" = "No Countdown Events Selected";
-"打开日历倒数" = "Open Motive";
+"打开日历倒数" = "Open PlanAct";
 "退出" = "Quit";
 
 /* Add event */
@@ -66,7 +66,7 @@
 "appearance.title" = "Appearance";
 "appearance.design_language" = "Design Language";
 "appearance.fixed_theme_name" = "Titanium Gray · Glacier Cyan";
-"appearance.fixed_theme_description" = "Motive uses a fixed cool-gray interface and glacier-cyan interaction accent. Color choices belong to individual missions.";
+"appearance.fixed_theme_description" = "PlanAct uses a fixed cool-gray interface and glacier-cyan interaction accent. Color choices belong to individual missions.";
 "mission.identity" = "Icon & Color";
 "mission.preview" = "Mission Preview";
 "mission.color.current" = "Current Color";
@@ -99,7 +99,7 @@
 "mission.title.placeholder" = "Title";
 "calendar.access.authorize" = "Allow Calendar Access";
 "calendar.access.open_settings" = "Open System Settings";
-"calendar.access.recover_help" = "After enabling Calendar access in System Settings, return to Motive to load countdowns.";
+"calendar.access.recover_help" = "After enabling Calendar access in System Settings, return to PlanAct to load countdowns.";
 "menubar.missions" = "Missions";
 "status_item.mission_tooltip" = "%@ · %@";
 "status_item.event_mission_tooltip" = "%@ · %@ · %@ · %@";
@@ -107,11 +107,11 @@
 
 /* Widget */
 "最近倒数" = "Upcoming Countdowns";
-"日历倒数" = "Motive";
+"日历倒数" = "PlanAct";
 "显示你从 Apple 日历中选中的下一批倒数事件。" = "Shows the next countdown events you selected from Apple Calendar.";
 
 /* Shared dynamic text */
-"app.name" = "Motive";
+"app.name" = "PlanAct";
 "window.appearance_settings" = "Appearance Settings";
 "window.settings" = "Settings";
 "common.not_provided" = "not provided";
@@ -122,9 +122,9 @@
 "countdown.today" = "Today";
 "countdown.tomorrow" = "Tomorrow";
 "countdown.remaining_days" = "%lld days left";
-"status_item.no_events" = "Motive · No tracked events";
+"status_item.no_events" = "PlanAct · No tracked events";
 "status_item.event_tooltip" = "%@ · %@ · %@";
-"status_item.accessibility_label" = "Motive, %@, %@";
+"status_item.accessibility_label" = "PlanAct, %@, %@";
 "event.untitled" = "Untitled Event";
 "widget.preview_title" = "Demo Birthday";
 "widget.preview_calendar" = "Birthdays";

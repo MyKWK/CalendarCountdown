@@ -1,4 +1,4 @@
-# CalendarCountdown · 日历倒数
+# PlanAct · 日历倒数
 
 > 一个原生 macOS 重要日期追踪工具：以 Apple 日历为事实源，同时为用户、小组件和 AI Agent 提供清晰、可移植的倒数与纪念日能力。
 

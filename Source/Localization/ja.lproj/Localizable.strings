@@ -8,7 +8,7 @@
 "操作失败" = "操作に失敗しました";
 "好" = "OK";
 "需要访问 Apple 日历" = "Appleカレンダーへのアクセスが必要です";
-"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "Motive は既存のカレンダーとイベントを読み取ります。明示的に追加または読み込んだ場合にのみ、選択したカレンダーへ書き込みます。";
+"日历倒数读取现有日历分类和事件；只有在你明确新建或导入时才会写入选定日历。" = "PlanAct は既存のカレンダーとイベントを読み取ります。明示的に追加または読み込んだ場合にのみ、選択したカレンダーへ書き込みます。";
 "授权日历访问" = "カレンダーへのアクセスを許可";
 "倒数展示" = "カウントダウン";
 "Apple 日历" = "Appleカレンダー";
@@ -17,7 +17,7 @@
 "每年追踪该日历中的同名事件" = "同名イベントを毎年追跡";
 "置顶与最近倒数" = "固定・近日のカウントダウン";
 "尚未选择倒数事件" = "カウントダウンが選択されていません";
-"打开日历倒数" = "Motive を開く";
+"打开日历倒数" = "PlanAct を開く";
 "退出" = "終了";
 
 /* Add event */
@@ -66,7 +66,7 @@
 "appearance.title" = "外観";
 "appearance.design_language" = "デザイン言語";
 "appearance.fixed_theme_name" = "チタングレー・グレイシャーシアン";
-"appearance.fixed_theme_description" = "Motiveは固定のクールグレー画面とグレイシャーシアンの操作アクセントを使用します。色はミッションごとに選択できます。";
+"appearance.fixed_theme_description" = "PlanActは固定のクールグレー画面とグレイシャーシアンの操作アクセントを使用します。色はミッションごとに選択できます。";
 "mission.identity" = "アイコンとカラー";
 "mission.preview" = "ミッションプレビュー";
 "mission.color.current" = "現在のカラー";
@@ -99,7 +99,7 @@
 "mission.title.placeholder" = "タイトル";
 "calendar.access.authorize" = "カレンダーへのアクセスを許可";
 "calendar.access.open_settings" = "システム設定を開く";
-"calendar.access.recover_help" = "システム設定でカレンダーへのアクセスをオンにしたら、Motiveに戻るとカウントダウンを読み込みます。";
+"calendar.access.recover_help" = "システム設定でカレンダーへのアクセスをオンにしたら、PlanActに戻るとカウントダウンを読み込みます。";
 "menubar.missions" = "ミッション";
 "status_item.mission_tooltip" = "%@ · %@";
 "status_item.event_mission_tooltip" = "%@ · %@ · %@ · %@";
@@ -107,11 +107,11 @@
 
 /* Widget */
 "最近倒数" = "近日のカウントダウン";
-"日历倒数" = "Motive";
+"日历倒数" = "PlanAct";
 "显示你从 Apple 日历中选中的下一批倒数事件。" = "Appleカレンダーから選択した次のカウントダウンを表示します。";
 
 /* Shared dynamic text */
-"app.name" = "Motive";
+"app.name" = "PlanAct";
 "window.appearance_settings" = "外観設定";
 "window.settings" = "設定";
 "common.not_provided" = "未指定";
@@ -122,9 +122,9 @@
 "countdown.today" = "今日";
 "countdown.tomorrow" = "明日";
 "countdown.remaining_days" = "あと%lld日";
-"status_item.no_events" = "Motive · 追跡中のイベントなし";
+"status_item.no_events" = "PlanAct · 追跡中のイベントなし";
 "status_item.event_tooltip" = "%@ · %@ · %@";
-"status_item.accessibility_label" = "Motive、%@、%@";
+"status_item.accessibility_label" = "PlanAct、%@、%@";
 "event.untitled" = "名称未設定のイベント";
 "widget.preview_title" = "サンプル誕生日";
 "widget.preview_calendar" = "誕生日";

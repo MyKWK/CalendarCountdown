@@ -1,4 +1,4 @@
-"CFBundleDisplayName" = "Motive";
-"CFBundleName" = "Motive";
-"NSCalendarsFullAccessUsageDescription" = "Motive needs to read your calendars to calculate countdowns and writes events only to a calendar you select after you confirm.";
-"NSRemindersFullAccessUsageDescription" = "Motive needs Reminders access to project tasks as completable system reminders. Nothing is written unless you enable projection.";
+"CFBundleDisplayName" = "PlanAct";
+"CFBundleName" = "PlanAct";
+"NSCalendarsFullAccessUsageDescription" = "PlanAct needs to read your calendars to calculate countdowns and writes events only to a calendar you select after you confirm.";
+"NSRemindersFullAccessUsageDescription" = "PlanAct needs Reminders access to project tasks as completable system reminders. Nothing is written unless you enable projection.";
