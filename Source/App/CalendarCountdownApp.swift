@@ -628,7 +628,7 @@ private struct MainWindowRootView: View {
             .appMainWindowGlass(
                 enabled: glassActive,
                 transparency: appearanceSettings.windowGlassTransparency,
-                blurStrength: appearanceSettings.windowGlassBlurStrength
+                blurRadius: appearanceSettings.windowGlassBlurRadius
             )
             .environment(\.appWindowGlassActive, glassActive)
             .task {

@@ -22,14 +22,14 @@ extension View {
     func appMainWindowGlass(
         enabled: Bool,
         transparency: Double,
-        blurStrength: WindowGlassAppearance.BlurStrength
+        blurRadius: Double
     ) -> some View {
         #if os(macOS)
         background {
             WindowGlassProbeRepresentable(
                 enabled: enabled,
                 transparency: transparency,
-                blurStrength: blurStrength
+                blurRadius: blurRadius
             )
                 .allowsHitTesting(false)
         }
@@ -51,7 +51,7 @@ import AppKit
 private struct WindowGlassProbeRepresentable: NSViewRepresentable {
     var enabled: Bool
     var transparency: Double
-    var blurStrength: WindowGlassAppearance.BlurStrength
+    var blurRadius: Double
 
     func makeNSView(context: Context) -> WindowGlassProbeView {
         WindowGlassProbeView()
@@ -61,7 +61,7 @@ private struct WindowGlassProbeRepresentable: NSViewRepresentable {
         view.apply(
             enabled: enabled,
             transparency: transparency,
-            blurStrength: blurStrength
+            blurRadius: blurRadius
         )
     }
 }
@@ -78,12 +78,12 @@ private final class WindowGlassProbeView: NSView {
     func apply(
         enabled: Bool,
         transparency: Double,
-        blurStrength: WindowGlassAppearance.BlurStrength
+        blurRadius: Double
     ) {
         WindowGlassBackdropController.shared.update(
             enabled: enabled,
             transparency: transparency,
-            blurStrength: blurStrength
+            blurRadius: blurRadius
         )
         WindowGlassBackdropController.shared.attach(to: window)
         WindowGlassBackdropController.shared.refresh()
@@ -98,7 +98,7 @@ private final class WindowGlassBackdropController {
     private weak var window: NSWindow?
     private var enabled = false
     private var transparency = WindowGlassAppearance.defaultTransparency
-    private var blurStrength = WindowGlassAppearance.defaultBlurStrength
+    private var blurRadius = WindowGlassAppearance.defaultBlurRadius
     private var refreshScheduled = false
     private weak var configuredWindow: NSWindow?
     private var configuredForGlass: Bool?
@@ -106,11 +106,11 @@ private final class WindowGlassBackdropController {
     func update(
         enabled: Bool,
         transparency: Double,
-        blurStrength: WindowGlassAppearance.BlurStrength
+        blurRadius: Double
     ) {
         self.enabled = enabled
         self.transparency = WindowGlassAppearance.clamped(transparency)
-        self.blurStrength = blurStrength
+        self.blurRadius = WindowGlassAppearance.clampedBlurRadius(blurRadius)
     }
 
     func attach(to window: NSWindow?) {
@@ -144,7 +144,7 @@ private final class WindowGlassBackdropController {
             }
             backdrop.frame = contentView.bounds
             backdrop.autoresizingMask = [.width, .height]
-            backdrop.apply(transparency: transparency, blurStrength: blurStrength)
+            backdrop.apply(transparency: transparency, blurRadius: blurRadius)
             makeAncestorsClear(from: contentView)
             applyTranslucency(to: contentView, skipping: backdrop)
         } else {
@@ -294,15 +294,15 @@ private final class WindowGlassBackdropView: NSView {
 
     func apply(
         transparency: Double,
-        blurStrength: WindowGlassAppearance.BlurStrength
+        blurRadius: Double
     ) {
         effectView.material = .underWindowBackground
-        blurRadius = CGFloat(blurStrength.backdropBlurRadius)
+        self.blurRadius = CGFloat(WindowGlassAppearance.clampedBlurRadius(blurRadius))
         // Filter the view that contains the live behind-window material. The
         // previous implementation filtered an empty transparent sibling, so
-        // Core Animation had no pixels to soften and all three choices looked
-        // identical.
-        effectContainerView.layer?.filters = [blurStrength.contentBlurFilter]
+        // Core Animation had no pixels to soften and changing the control had
+        // no visible effect.
+        effectContainerView.layer?.filters = [contentBlurFilter(radius: self.blurRadius)]
         effectContainerView.layer?.setNeedsDisplay()
         needsLayout = true
         overlayView.alphaValue = WindowGlassAppearance.fillOpacity(transparency: transparency)
@@ -318,11 +318,9 @@ private final class WindowGlassBackdropView: NSView {
     }
 }
 
-private extension WindowGlassAppearance.BlurStrength {
-    var contentBlurFilter: CIFilter {
-        let filter = CIFilter(name: "CIGaussianBlur")!
-        filter.setValue(backdropBlurRadius, forKey: kCIInputRadiusKey)
-        return filter
-    }
+private func contentBlurFilter(radius: CGFloat) -> CIFilter {
+    let filter = CIFilter(name: "CIGaussianBlur")!
+    filter.setValue(radius, forKey: kCIInputRadiusKey)
+    return filter
 }
 #endif
