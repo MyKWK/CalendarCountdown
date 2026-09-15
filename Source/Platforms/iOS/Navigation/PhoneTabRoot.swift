@@ -231,19 +231,11 @@ private struct MobileModuleToolbar: ViewModifier {
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     Button {
-                        switch session.section {
-                        case .missions:
-                            session.showingAddMission = true
-                        case .habits:
-                            session.showingAddHabit = true
-                        case .countdown:
-                            session.showingAddEvent = true
-                        case .tasks:
-                            session.showingAddTask = true
-                        }
+                        session.presentCreate()
                     } label: {
                         Label("新建", systemImage: "plus")
                     }
+                    .keyboardShortcut("n", modifiers: .command)
                     .accessibilityIdentifier("mobile-add")
                     Button {
                         session.refresh()

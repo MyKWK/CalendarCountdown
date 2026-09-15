@@ -232,45 +232,49 @@ struct TaskRowView: View {
                     }
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(view.title)
-                        .font(ZhixingTypography.rowTitle)
-                        .strikethrough(isCompleted)
-                        .zhixingForeground(.heading)
-                    if let markdown = view.markdownDescription, !markdown.isEmpty {
-                        MarkdownBodyView(text: markdown)
-                            .font(.caption)
-                            .zhixingForeground(.supporting)
-                            .lineLimit(2)
-                    }
-                    HStack(spacing: 6) {
-                        if let mission = workspace.mission(for: view.series.missionID) {
-                            MissionTag(
-                                title: mission.title,
-                                systemImage: MissionSymbolCatalog.resolved(mission.icon),
-                                identity: Color.missionIdentity(mission.color),
-                                identifier: "task-mission-tag"
-                            )
-                        }
-                        if let due = view.occurrence.plannedDue {
-                            Text(due, format: .dateTime.month().day().hour().minute())
-                                .foregroundStyle(view.isOverdue && !isCompleted ? Color.orange : Color.secondary)
-                        } else {
-                            Text("收集箱")
+                HStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(view.title)
+                            .font(ZhixingTypography.rowTitle)
+                            .strikethrough(isCompleted)
+                            .zhixingForeground(.heading)
+                        if let markdown = view.markdownDescription, !markdown.isEmpty {
+                            MarkdownBodyView(text: markdown)
+                                .font(.caption)
                                 .zhixingForeground(.supporting)
+                                .lineLimit(2)
                         }
-                        if view.series.isInfinite {
-                            Image(systemName: "repeat")
-                                .font(.caption2)
-                                .zhixingForeground(.supporting)
+                        HStack(spacing: 6) {
+                            if let mission = workspace.mission(for: view.series.missionID) {
+                                MissionTag(
+                                    title: mission.title,
+                                    systemImage: MissionSymbolCatalog.resolved(mission.icon),
+                                    identity: Color.missionIdentity(mission.color),
+                                    identifier: "task-mission-tag"
+                                )
+                            }
+                            if let due = view.occurrence.plannedDue {
+                                Text(due, format: .dateTime.month().day().hour().minute())
+                                    .foregroundStyle(view.isOverdue && !isCompleted ? Color.orange : Color.secondary)
+                            } else {
+                                Text("收集箱")
+                                    .zhixingForeground(.supporting)
+                            }
+                            if view.series.isInfinite {
+                                Image(systemName: "repeat")
+                                    .font(.caption2)
+                                    .zhixingForeground(.supporting)
+                            }
+                            if view.isOverdue, !isCompleted {
+                                MetaTag(title: "逾期", tint: .orange, emphasized: true)
+                            }
                         }
-                        if view.isOverdue, !isCompleted {
-                            MetaTag(title: "逾期", tint: .orange, emphasized: true)
-                        }
+                        .font(.caption)
                     }
-                    .font(.caption)
+                    Spacer(minLength: 0)
                 }
-                Spacer(minLength: 0)
+                .contentShape(Rectangle())
+                .onTapGesture(count: 2, perform: presentEditor)
                 if view.series.recurrence != nil, view.occurrence.status == .open {
                     Button("跳过") { workspace.skip(view) }
                         .font(.caption)
@@ -282,9 +286,16 @@ struct TaskRowView: View {
             }
         }
         .modifier(OptionalCompletedTrailModifier(index: trailIndex))
-        .accessibilityHint(isCompleted ? "已完成。滚动到阅读区域、悬停或聚焦后可清晰查看。" : "")
+        .accessibilityHint(
+            isCompleted
+                ? "已完成。双击可编辑。滚动到阅读区域、悬停或聚焦后可清晰查看。"
+                : "双击可编辑"
+        )
+        .accessibilityAction(named: "编辑") {
+            presentEditor()
+        }
         .contextMenu {
-            Button("编辑") { showingEditor = true }
+            Button("编辑") { presentEditor() }
             if isCompleted {
                 Button("重新打开") {
                     withAnimation(ZhixingMotion.standard(reduceMotion: reduceMotion)) {
@@ -306,6 +317,10 @@ struct TaskRowView: View {
                 workspace.updateTask(occurrenceID: view.occurrence.id, command: command)
             }
         }
+    }
+
+    private func presentEditor() {
+        showingEditor = true
     }
 }
 
@@ -657,12 +672,11 @@ struct MissionCardView: View {
         .padding(.leading, compact ? 0 : ZhixingMetrics.space8)
         .background {
             if !compact {
-                RoundedRectangle(cornerRadius: ZhixingMetrics.cornerContainer, style: .continuous)
-                    .fill(ZhixingColor.groupedBackground.opacity(0.94))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: ZhixingMetrics.cornerContainer, style: .continuous)
-                            .strokeBorder(Color.primary.opacity(0.08), lineWidth: ZhixingMetrics.glassStrokeWidth)
-                    }
+                ZhixingSurfaceChrome(
+                    role: .row,
+                    cornerRadius: ZhixingMetrics.cornerContainer,
+                    showsStroke: false
+                )
             }
         }
         .overlay(alignment: .leading) {
@@ -1006,11 +1020,19 @@ struct HabitListView: View {
                 List {
                     Section {
                         ForEach(items, id: \.habit.id) { item in
-                            HabitRowView(item: item, workspace: workspace)
-                                .zhixingListRow()
-                                .overlay(alignment: .bottom) {
-                                    Divider().padding(.leading, 48)
-                                }
+                            TaskBarCard {
+                                HabitRowView(item: item, workspace: workspace)
+                            }
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(
+                                EdgeInsets(
+                                    top: ZhixingMetrics.space4,
+                                    leading: ZhixingMetrics.pageInset,
+                                    bottom: ZhixingMetrics.space4,
+                                    trailing: ZhixingMetrics.pageInset
+                                )
+                            )
+                            .listRowBackground(Color.clear)
                         }
                     }
                 }

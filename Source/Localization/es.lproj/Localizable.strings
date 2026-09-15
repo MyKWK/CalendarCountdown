@@ -190,7 +190,7 @@
 "appearance.glass_transparency" = "Transparencia";
 "appearance.glass_solid" = "Más sólido";
 "appearance.glass_sheer" = "Más transparente";
-"appearance.glass_limit" = "La ventana principal usa un relleno opaco gris titanio. El fondo de escritorio ya no se ve a través.";
+"appearance.glass_limit" = "Arrastra para cambiar la translucidez general. La barra lateral se mantiene un poco más clara que la página principal. El fondo de escritorio no se ve a través.";
 "appearance.glass_reduce_transparency" = "«Reducir transparencia» está activado en macOS, así que la ventana principal permanece opaca.";
 
 /* Errors */

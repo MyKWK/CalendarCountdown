@@ -32,8 +32,7 @@ extension View {
 
 private struct AppGlassScrollBackgroundModifier: ViewModifier {
     func body(content: Content) -> some View {
-        content
-            .background(Color.clear)
+        content.background(Color.clear)
     }
 }
 
@@ -209,8 +208,8 @@ private final class WindowGlassBackdropController {
     }
 }
 
-/// Retained for a future opaque-safe glass implementation. Not installed while
-/// `WindowGlassAppearance.userFacingEnabled` is false.
+/// Window-level blurred backdrop. Broad SwiftUI surfaces add the cool Codex
+/// washes above this view; the desktop itself is never shown unblurred.
 private final class WindowGlassBackdropView: NSView {
     private let effectView = NSVisualEffectView()
     private let overlayView = NSView()
@@ -220,8 +219,8 @@ private final class WindowGlassBackdropView: NSView {
         wantsLayer = true
         layer?.backgroundColor = NSColor.clear.cgColor
 
-        effectView.material = .contentBackground
-        effectView.blendingMode = .withinWindow
+        effectView.material = .underWindowBackground
+        effectView.blendingMode = .behindWindow
         effectView.state = .active
         effectView.autoresizingMask = [.width, .height]
         addSubview(effectView)
@@ -229,6 +228,7 @@ private final class WindowGlassBackdropView: NSView {
         overlayView.wantsLayer = true
         overlayView.autoresizingMask = [.width, .height]
         addSubview(overlayView)
+
     }
 
     @available(*, unavailable)
@@ -257,7 +257,11 @@ private final class WindowGlassBackdropView: NSView {
     }
 
     private func refreshOverlay() {
-        overlayView.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let color = isDark
+            ? NSColor(red: 0.055, green: 0.065, blue: 0.085, alpha: 1)
+            : NSColor(red: 0.955, green: 0.968, blue: 0.992, alpha: 1)
+        overlayView.layer?.backgroundColor = color.cgColor
     }
 }
 #endif

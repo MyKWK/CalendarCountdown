@@ -121,6 +121,7 @@ struct MissionEditorSheet: View {
             )
         }
         .accessibilityIdentifier("mission-editor")
+        .zhixingSurface(.sheet)
         .modifier(MissionEditorChrome())
     }
 
@@ -233,12 +234,11 @@ struct MissionEditorSheet: View {
         .padding(MissionEditorLayout.cardPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
-            RoundedRectangle(cornerRadius: MissionEditorLayout.cardCornerRadius)
-                .fill(Color.primary.opacity(0.035))
-        }
-        .overlay {
-            RoundedRectangle(cornerRadius: MissionEditorLayout.cardCornerRadius)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
+            ZhixingSurfaceChrome(
+                role: .elevated,
+                cornerRadius: MissionEditorLayout.cardCornerRadius,
+                showsStroke: true
+            )
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(title)

@@ -119,6 +119,7 @@ struct MenuBarContentView: View {
         .frame(width: 340)
         .tint(appearanceSettings.accentColor)
         .preferredColorScheme(appearanceSettings.appearanceMode.colorScheme)
+        .appSurfaceTransparency(appearanceSettings.windowGlassTransparency)
         .onAppear { workspace.reload() }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             Task { await model.recoverAuthorization() }

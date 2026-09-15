@@ -62,10 +62,6 @@ final class AppAppearanceSettings: ObservableObject {
 
     @Published var windowGlassEnabled: Bool {
         didSet {
-            if !WindowGlassAppearance.userFacingEnabled, windowGlassEnabled {
-                windowGlassEnabled = false
-                return
-            }
             defaults.set(windowGlassEnabled, forKey: Keys.glassEnabled)
         }
     }
@@ -87,8 +83,10 @@ final class AppAppearanceSettings: ObservableObject {
             rawValue: defaults.string(forKey: Keys.mode) ?? ""
         ) ?? .system
 
-        WindowGlassAppearance.retireUserFacingPreference(in: defaults)
-        windowGlassEnabled = false
+        WindowGlassAppearance.activateCodexGlassPreference(in: defaults)
+        windowGlassEnabled = defaults.object(forKey: Keys.glassEnabled) == nil
+            ? true
+            : defaults.bool(forKey: Keys.glassEnabled)
 
         if defaults.object(forKey: Keys.glassTransparency) == nil {
             windowGlassTransparency = WindowGlassAppearance.defaultTransparency
@@ -131,7 +129,7 @@ enum AppSettingsSection: String, CaseIterable, Identifiable {
 
     var help: String {
         switch self {
-        case .appearance: "设置浅色、深色与系统外观"
+        case .appearance: "设置浅色、深色与界面通透程度"
         case .statusBar: "选择显示在菜单栏中的概览"
         case .shortcuts: "查看并设置全局与当前界面快捷键"
         }
@@ -168,7 +166,7 @@ struct AppSettingsView: View {
             .navigationTitle("设置")
             .navigationSplitViewColumnWidth(min: 150, ideal: 170, max: 210)
             .scrollContentBackground(.hidden)
-            .background(ZhixingColor.sidebarBackground)
+            .zhixingSurface(.sidebar)
         } detail: {
             Group {
                 switch navigation.selection ?? .appearance {
@@ -180,13 +178,14 @@ struct AppSettingsView: View {
                     ShortcutSettingsPane(shortcuts: shortcuts)
                 }
             }
-            .background(ZhixingColor.contentBackground)
+            .zhixingSurface(.canvas)
         }
-        .background(ZhixingColor.contentBackground)
+        .zhixingSurface(.canvas)
         .frame(width: 760, height: 640)
         .zhixingForeground(.body)
         .tint(settings.accentColor)
         .preferredColorScheme(settings.appearanceMode.colorScheme)
+        .appSurfaceTransparency(settings.windowGlassTransparency)
     }
 
     private func settingsRow(_ section: AppSettingsSection) -> some View {
@@ -342,6 +341,7 @@ private struct StatusBarOverviewPane: View {
 
 private struct AppearanceSettingsPane: View {
     @ObservedObject var settings: AppAppearanceSettings
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     var body: some View {
         Form {
@@ -391,11 +391,59 @@ private struct AppearanceSettingsPane: View {
                 settingsSectionHeader("页面外观")
             }
 
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Spacer()
+                        Text("\(WindowGlassAppearance.percent(settings.windowGlassTransparency))%")
+                            .font(.body.monospacedDigit())
+                            .zhixingForeground(.supporting)
+                    }
+                    HStack(spacing: 12) {
+                        Text(AppLocalization.text("appearance.glass_solid", defaultValue: "较实"))
+                            .font(.caption)
+                            .zhixingForeground(.supporting)
+                        Slider(
+                            value: $settings.windowGlassTransparency,
+                            in: WindowGlassAppearance.minimumTransparency...WindowGlassAppearance.maximumTransparency
+                        )
+                        .accessibilityLabel(
+                            AppLocalization.text("appearance.glass_transparency", defaultValue: "透明度")
+                        )
+                        .accessibilityValue("\(WindowGlassAppearance.percent(settings.windowGlassTransparency))%")
+                        Text(AppLocalization.text("appearance.glass_sheer", defaultValue: "较透"))
+                            .font(.caption)
+                            .zhixingForeground(.supporting)
+                    }
+                }
+                .disabled(reduceTransparency)
+            } header: {
+                settingsSectionHeader(
+                    AppLocalization.text("appearance.glass_transparency", defaultValue: "透明度")
+                )
+            } footer: {
+                Text(transparencyHelp)
+                    .font(.callout)
+                    .zhixingForeground(.supporting)
+            }
         }
         .formStyle(.grouped)
         .navigationTitle(AppLocalization.text("appearance.title", defaultValue: "外观"))
         .tint(settings.accentColor)
         .preferredColorScheme(settings.appearanceMode.colorScheme)
+    }
+
+    private var transparencyHelp: String {
+        if reduceTransparency {
+            return AppLocalization.text(
+                "appearance.glass_reduce_transparency",
+                defaultValue: "系统已开启“降低透明度”，主界面会保持不透明。"
+            )
+        }
+        return AppLocalization.text(
+            "appearance.glass_limit",
+            defaultValue: "拖动滑块整体调节窗口雾化与通透程度。侧栏会比正文更轻、更冷；背景始终经过模糊处理。"
+        )
     }
 
     private var appearanceDescription: String {

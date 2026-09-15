@@ -1,24 +1,25 @@
 import Foundation
 
-/// Limits and retirement flags for the main-window glass overlay.
+/// Codex-style window frost strength.
 ///
-/// User-facing glass is retired: behind-window blending punched the desktop
-/// wallpaper through the sidebar and lists. Clamp helpers stay so a future
-/// opaque-safe implementation can reuse them without re-enabling punch-through.
+/// The appearance slider stores a single overall transparency. Surface fills
+/// scale from that value while keeping the cool sidebar clearer than the canvas.
+/// The window remains blurred and tinted at every supported value; it never
+/// becomes a raw transparent sheet.
 public enum WindowGlassAppearance: Sendable {
     public static let enabledDefaultsKey = "appearance.windowGlassEnabled"
     public static let transparencyDefaultsKey = "appearance.windowGlassTransparency"
+    public static let codexGlassMigrationDefaultsKey = "appearance.codexGlass.v1"
 
-    /// When false, settings and window chrome must not activate glass.
-    public static let userFacingEnabled = false
+    public static let userFacingEnabled = true
 
     /// Fully solid fill; the glass blur is covered.
     public static let minimumTransparency: Double = 0
     /// Remaining window fill at the most transparent setting.
-    public static let minimumFillOpacity: Double = 0.10
+    public static let minimumFillOpacity: Double = 0.24
     /// Hard cap so the window never goes fully transparent.
     public static let maximumTransparency: Double = 1 - minimumFillOpacity
-    public static let defaultTransparency: Double = 0.40
+    public static let defaultTransparency: Double = 0.42
 
     public static func clamped(_ value: Double) -> Double {
         guard !value.isNaN else { return defaultTransparency }
@@ -35,10 +36,12 @@ public enum WindowGlassAppearance: Sendable {
         Int((clamped(transparency) * 100).rounded())
     }
 
-    /// Writes `false` for existing and missing enabled flags so an upgrade
-    /// cannot keep punch-through glass from a previous default.
-    public static func retireUserFacingPreference(in defaults: UserDefaults) {
-        defaults.set(false, forKey: enabledDefaultsKey)
+    /// Previous releases forcibly stored `false`; migrate that retired value
+    /// once so the new Codex-style appearance is visible after upgrading.
+    public static func activateCodexGlassPreference(in defaults: UserDefaults) {
+        guard !defaults.bool(forKey: codexGlassMigrationDefaultsKey) else { return }
+        defaults.set(true, forKey: enabledDefaultsKey)
+        defaults.set(true, forKey: codexGlassMigrationDefaultsKey)
     }
 
     public static func isUserFacingGlassActive(

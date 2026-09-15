@@ -59,4 +59,22 @@ final class MobileAppSession: ObservableObject {
             section = resolved.section
         }
     }
+
+    func presentCreate() {
+        guard !isCreateSheetPresented else { return }
+        switch section {
+        case .countdown:
+            showingAddEvent = true
+        case .tasks:
+            showingAddTask = true
+        case .missions:
+            showingAddMission = true
+        case .habits:
+            showingAddHabit = true
+        }
+    }
+
+    private var isCreateSheetPresented: Bool {
+        showingAddEvent || showingAddTask || showingAddMission || showingAddHabit
+    }
 }

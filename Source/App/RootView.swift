@@ -16,6 +16,8 @@ struct RootView: View {
     @State private var showingAddTask = false
     @State private var showingAddMission = false
     @State private var showingAddHabit = false
+    @State private var isSearchPresented = false
+    @FocusState private var isSearchFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var currentSection: AppSection { selection ?? .countdown }
@@ -32,12 +34,12 @@ struct RootView: View {
             VStack(spacing: 0) {
                 detailHeader
                 Rectangle()
-                    .fill(ZhixingColor.hairline)
+                    .fill(Color.primary.opacity(0.055))
                     .frame(height: 1)
                 detail
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .background(ZhixingColor.contentBackground)
+            .background(Color.clear)
         }
         .toolbar(.hidden, for: .windowToolbar)
         .background {
@@ -126,7 +128,13 @@ struct RootView: View {
         }
         .animation(ZhixingMotion.standard(reduceMotion: reduceMotion), value: workspace.statusMessage)
         .animation(ZhixingMotion.standard(reduceMotion: reduceMotion), value: model.statusMessage)
-        .onAppear { workspace.reload() }
+        .onAppear {
+            workspace.reload()
+            shortcuts.currentSection = currentSection
+        }
+        .onChange(of: currentSection) { _, section in
+            shortcuts.currentSection = section
+        }
         .onReceive(shortcuts.$request.compactMap { $0 }) { request in
             performShortcut(request.action)
         }
@@ -137,7 +145,14 @@ struct RootView: View {
             sidebarHeader
 
             ScrollView {
-                LazyVStack(spacing: 2) {
+                LazyVStack(alignment: .leading, spacing: 2) {
+                    Text("工作区")
+                        .font(ZhixingTypography.sidebarSectionTitle)
+                        .zhixingForeground(.faint)
+                        .padding(.horizontal, ZhixingMetrics.space16)
+                        .padding(.top, ZhixingMetrics.space12)
+                        .padding(.bottom, ZhixingMetrics.space4)
+
                     ForEach(AppSection.allCases) { section in
                         Button {
                             withAnimation(ZhixingMotion.fast(reduceMotion: reduceMotion)) {
@@ -165,52 +180,99 @@ struct RootView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             sidebarFooter
         }
-        .background(ZhixingColor.sidebarBackground)
+        .background(Color.clear)
         .frame(minWidth: ZhixingMetrics.sidebarMinWidth)
     }
 
     private var sidebarHeader: some View {
-        VStack(alignment: .leading, spacing: ZhixingMetrics.space12) {
+        VStack(alignment: .leading, spacing: ZhixingMetrics.space8) {
             HStack(spacing: ZhixingMetrics.space8) {
-                Image(systemName: "scope")
-                    .font(.system(size: 13, weight: .medium))
-                    .frame(width: 24, height: 24)
-                    .background(Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-                    .zhixingForeground(.heading)
                 Text(AppLocalization.text("app.name", defaultValue: "知行"))
                     .font(ZhixingTypography.sidebarBrandTitle)
                     .zhixingForeground(.heading)
+                Image(systemName: "chevron.down")
+                    .font(.caption2.weight(.medium))
+                    .zhixingForeground(.faint)
+
+                Spacer(minLength: 0)
+
+                Button {
+                    withAnimation(ZhixingMotion.fast(reduceMotion: reduceMotion)) {
+                        isSearchPresented.toggle()
+                    }
+                    if isSearchPresented {
+                        Task { @MainActor in isSearchFocused = true }
+                    } else {
+                        searchText = ""
+                    }
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                }
+                .buttonStyle(CodexBareIconButtonStyle())
+                .help("搜索")
+                .accessibilityLabel("搜索")
+                .appActionFocusEffectDisabled()
             }
 
-            HStack(spacing: ZhixingMetrics.space8) {
-                Image(systemName: "magnifyingglass")
-                    .zhixingForeground(.supporting)
-                TextField("搜索", text: $searchText)
-                    .textFieldStyle(.plain)
-                    .accessibilityIdentifier("sidebar-search-field")
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .zhixingForeground(.faint)
+            if isSearchPresented {
+                HStack(spacing: ZhixingMetrics.space8) {
+                    Image(systemName: "magnifyingglass")
+                        .zhixingForeground(.supporting)
+                    TextField("搜索", text: $searchText)
+                        .textFieldStyle(.plain)
+                        .focused($isSearchFocused)
+                        .onSubmit {
+                            if searchText.isEmpty { isSearchPresented = false }
+                        }
+                        .accessibilityIdentifier("sidebar-search-field")
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .zhixingForeground(.faint)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("清除搜索")
+                        .appActionFocusEffectDisabled()
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("清除搜索")
-                    .appActionFocusEffectDisabled()
+                }
+                .padding(.horizontal, ZhixingMetrics.space12)
+                .frame(height: 34)
+                .background(Color.white.opacity(0.22), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.22), lineWidth: ZhixingMetrics.glassStrokeWidth)
                 }
             }
-            .padding(.horizontal, ZhixingMetrics.space12)
-            .frame(height: 32)
-            .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.07), lineWidth: ZhixingMetrics.glassStrokeWidth)
+
+            Button {
+                presentCreate(for: currentSection)
+            } label: {
+                HStack(spacing: ZhixingMetrics.space8) {
+                    Image(systemName: "square.and.pencil")
+                        .frame(width: 18)
+                    Text(currentSection.createActionTitle)
+                        .font(ZhixingTypography.sidebarItem)
+                    Spacer(minLength: 0)
+                    Image(systemName: "plus.circle")
+                        .font(.caption)
+                        .zhixingForeground(.faint)
+                }
+                .zhixingForeground(.body)
+                .padding(.horizontal, ZhixingMetrics.space8)
+                .frame(height: 34)
+                .contentShape(Rectangle())
             }
+            .buttonStyle(CodexSidebarActionButtonStyle())
+            .keyboardShortcut("n", modifiers: .command)
+            .help(currentSection.createHelp)
+            .accessibilityIdentifier(currentSection == .missions ? "mission-create-toolbar" : "mac-create-button")
+            .appActionFocusEffectDisabled()
         }
         .padding(.horizontal, ZhixingMetrics.space16)
-        .padding(.top, ZhixingMetrics.space12)
-        .padding(.bottom, ZhixingMetrics.space8)
+        .padding(.top, ZhixingMetrics.space24)
+        .padding(.bottom, ZhixingMetrics.space12)
     }
 
     private var sidebarFooter: some View {
@@ -252,7 +314,6 @@ struct RootView: View {
         }
         .padding(.horizontal, ZhixingMetrics.space12)
         .padding(.vertical, ZhixingMetrics.space8)
-        .background(ZhixingColor.sidebarBackground)
         .overlay(alignment: .top) {
             Rectangle().fill(ZhixingColor.hairline).frame(height: 1)
         }
@@ -303,18 +364,9 @@ struct RootView: View {
             .accessibilityIdentifier("sidebar-data-and-projection")
             .appActionFocusEffectDisabled()
 
-            PrimaryToolbarAction(
-                title: currentSection.createActionTitle,
-                systemImage: "plus",
-                help: currentSection.createHelp,
-                identifier: currentSection == .missions ? "mission-create-toolbar" : "mac-create-button"
-            ) {
-                presentCreate(for: currentSection)
-            }
         }
-        .padding(.horizontal, ZhixingMetrics.space20)
-        .frame(height: 54)
-        .background(ZhixingColor.contentBackground)
+        .padding(.horizontal, ZhixingMetrics.space24)
+        .frame(height: 64)
     }
 
     private var detailSummary: String {
@@ -412,7 +464,12 @@ struct RootView: View {
         }
     }
 
+    private var isCreateSheetPresented: Bool {
+        showingAddEvent || showingAddTask || showingAddMission || showingAddHabit
+    }
+
     private func presentCreate(for section: AppSection) {
+        guard !isCreateSheetPresented else { return }
         switch section {
         case .countdown:
             showingAddEvent = true
@@ -427,18 +484,20 @@ struct RootView: View {
 
     private func performShortcut(_ action: AppShortcutAction) {
         switch action {
+        case .addInCurrentModule:
+            presentCreate(for: currentSection)
         case .addCountdown:
             selection = .countdown
-            showingAddEvent = true
+            presentCreate(for: .countdown)
         case .addTask:
             selection = .tasks
-            showingAddTask = true
+            presentCreate(for: .tasks)
         case .addMission:
             selection = .missions
-            showingAddMission = true
+            presentCreate(for: .missions)
         case .addHabit:
             selection = .habits
-            showingAddHabit = true
+            presentCreate(for: .habits)
         case let .selectSection(section):
             selection = section
         }

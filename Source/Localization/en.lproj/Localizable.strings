@@ -190,7 +190,7 @@
 "appearance.glass_transparency" = "Transparency";
 "appearance.glass_solid" = "More solid";
 "appearance.glass_sheer" = "More clear";
-"appearance.glass_limit" = "The main window uses an opaque titanium-gray fill. The desktop wallpaper no longer shows through.";
+"appearance.glass_limit" = "Drag to change overall translucency. The sidebar stays a little clearer than the main page. Wallpaper does not show through.";
 "appearance.glass_reduce_transparency" = "Reduce Transparency is on in macOS, so the main window stays opaque.";
 
 /* Errors */

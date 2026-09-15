@@ -60,16 +60,30 @@ public enum AppSection: String, CaseIterable, Hashable, Identifiable, Sendable {
         }
     }
 
+    public static let inModuleCreateShortcutDisplay = "⌘N"
+
     public var createHelp: String {
         switch self {
         case .countdown:
-            AppLocalization.text("help.create_countdown", defaultValue: "新建倒数日（⇧⌘D）")
+            AppLocalization.text(
+                "help.create_countdown",
+                defaultValue: "新建倒数日（\(Self.inModuleCreateShortcutDisplay)）"
+            )
         case .tasks:
-            AppLocalization.text("help.create_task", defaultValue: "新建任务（⇧⌘N）")
+            AppLocalization.text(
+                "help.create_task",
+                defaultValue: "新建任务（\(Self.inModuleCreateShortcutDisplay)）"
+            )
         case .missions:
-            AppLocalization.text("help.create_mission", defaultValue: "新建使命（⇧⌘M）")
+            AppLocalization.text(
+                "help.create_mission",
+                defaultValue: "新建使命（\(Self.inModuleCreateShortcutDisplay)）"
+            )
         case .habits:
-            AppLocalization.text("help.create_habit", defaultValue: "新建打卡（⇧⌘H）")
+            AppLocalization.text(
+                "help.create_habit",
+                defaultValue: "新建打卡（\(Self.inModuleCreateShortcutDisplay)）"
+            )
         }
     }
 

@@ -3,7 +3,7 @@ import XCTest
 
 final class CalendarCountdownCoreTests: XCTestCase {
     func testReleaseVersion() {
-        XCTAssertEqual(ProductConstants.version, "1.0.14")
+        XCTAssertEqual(ProductConstants.version, "1.0.17")
     }
 
     func testZhixingMetricsStayOnACoherentScale() {
@@ -14,7 +14,7 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertEqual(ZhixingMetrics.space20, 20)
         XCTAssertEqual(ZhixingMetrics.space24, 24)
         XCTAssertEqual(ZhixingMetrics.space32, 32)
-        XCTAssertEqual(ZhixingMetrics.pageInset, 20)
+        XCTAssertEqual(ZhixingMetrics.pageInset, 24)
         XCTAssertEqual(ZhixingMetrics.sidebarMinWidth, 220)
         XCTAssertEqual(ZhixingMetrics.sidebarIdealWidth, 236)
         XCTAssertEqual(ZhixingMetrics.sidebarMaxWidth, 248)
@@ -27,6 +27,296 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertLessThanOrEqual(ZhixingMetrics.accentFillMaxOpacity, 0.15)
         XCTAssertEqual(MissionEditorLayout.cardCornerRadius, ZhixingMetrics.cornerSheet)
         XCTAssertEqual(MissionEditorLayout.horizontalInset, ZhixingMetrics.pageInset)
+        XCTAssertGreaterThanOrEqual(ZhixingSurfaceFill.minimumReadable, 0.04)
+        XCTAssertTrue(WindowGlassAppearance.userFacingEnabled)
+    }
+
+    func testZhixingSurfaceFillStaysReadableAndLayered() {
+        XCTAssertTrue(WindowGlassAppearance.userFacingEnabled)
+        XCTAssertGreaterThanOrEqual(ZhixingSurfaceFill.minimumReadable, 0.04)
+        XCTAssertEqual(ZhixingSurfaceRole.allCases.count, 6)
+
+        for role in ZhixingSurfaceRole.allCases {
+            for isDark in [false, true] {
+                XCTAssertGreaterThanOrEqual(
+                    ZhixingSurfaceFill.opacity(
+                        for: role,
+                        isDark: isDark,
+                        reduceTransparency: false,
+                        increaseContrast: false
+                    ),
+                    ZhixingSurfaceFill.minimumReadable
+                )
+                XCTAssertEqual(
+                    ZhixingSurfaceFill.opacity(
+                        for: role,
+                        isDark: isDark,
+                        reduceTransparency: true,
+                        increaseContrast: false
+                    ),
+                    1
+                )
+                XCTAssertEqual(
+                    ZhixingSurfaceFill.opacity(
+                        for: role,
+                        isDark: isDark,
+                        reduceTransparency: false,
+                        increaseContrast: true
+                    ),
+                    1
+                )
+                XCTAssertFalse(
+                    ZhixingSurfaceFill.usesMaterial(
+                        for: role,
+                        reduceTransparency: true,
+                        increaseContrast: false
+                    )
+                )
+                XCTAssertFalse(
+                    ZhixingSurfaceFill.usesMaterial(
+                        for: role,
+                        reduceTransparency: false,
+                        increaseContrast: true
+                    )
+                )
+            }
+        }
+
+        XCTAssertFalse(
+            ZhixingSurfaceFill.usesMaterial(
+                for: .sheet,
+                reduceTransparency: false,
+                increaseContrast: false
+            )
+        )
+        XCTAssertTrue(
+            ZhixingSurfaceFill.usesMaterial(
+                for: .sidebar,
+                reduceTransparency: false,
+                increaseContrast: false
+            )
+        )
+
+        let lightSidebar = ZhixingSurfaceFill.opacity(
+            for: .sidebar,
+            isDark: false,
+            reduceTransparency: false,
+            increaseContrast: false
+        )
+        let lightGrouped = ZhixingSurfaceFill.opacity(
+            for: .grouped,
+            isDark: false,
+            reduceTransparency: false,
+            increaseContrast: false
+        )
+        let lightCanvas = ZhixingSurfaceFill.opacity(
+            for: .canvas,
+            isDark: false,
+            reduceTransparency: false,
+            increaseContrast: false
+        )
+        let lightSheet = ZhixingSurfaceFill.opacity(
+            for: .sheet,
+            isDark: false,
+            reduceTransparency: false,
+            increaseContrast: false
+        )
+        XCTAssertLessThan(lightGrouped, lightSidebar)
+        XCTAssertLessThan(lightSidebar, lightCanvas)
+        XCTAssertLessThan(lightCanvas, lightSheet)
+        XCTAssertLessThan(lightCanvas, 0.55)
+        XCTAssertGreaterThanOrEqual(lightSheet, 0.70)
+
+        XCTAssertEqual(
+            ZhixingSurfaceFill.opacity(
+                for: .sidebar,
+                isDark: false,
+                reduceTransparency: false,
+                increaseContrast: false
+            ),
+            ZhixingSurfaceFill.sidebarLight,
+            accuracy: 0.000_1
+        )
+
+        XCTAssertGreaterThan(
+            ZhixingSurfaceFill.opacity(
+                for: .sidebar,
+                isDark: true,
+                reduceTransparency: false,
+                increaseContrast: false
+            ),
+            ZhixingSurfaceFill.opacity(
+                for: .sidebar,
+                isDark: false,
+                reduceTransparency: false,
+                increaseContrast: false
+            )
+        )
+        XCTAssertLessThan(
+            ZhixingSurfaceFill.opacity(
+                for: .row,
+                isDark: false,
+                hovering: false,
+                reduceTransparency: false,
+                increaseContrast: false
+            ),
+            ZhixingSurfaceFill.opacity(
+                for: .row,
+                isDark: false,
+                hovering: true,
+                reduceTransparency: false,
+                increaseContrast: false
+            )
+        )
+    }
+
+    func testZhixingSurfaceFillOverallTransparencyScalesTogether() {
+        XCTAssertEqual(
+            ZhixingSurfaceFill.scaled(
+                ZhixingSurfaceFill.sidebarLight,
+                overallTransparency: WindowGlassAppearance.defaultTransparency
+            ),
+            ZhixingSurfaceFill.sidebarLight,
+            accuracy: 0.000_1
+        )
+        XCTAssertEqual(
+            ZhixingSurfaceFill.scaled(
+                ZhixingSurfaceFill.canvasLight,
+                overallTransparency: 0
+            ),
+            1,
+            accuracy: 0.000_1
+        )
+
+        let defaultT = WindowGlassAppearance.defaultTransparency
+        let openT = 0.80
+        let solidT = 0.20
+
+        for isDark in [false, true] {
+            let sidebarDefault = ZhixingSurfaceFill.opacity(
+                for: .sidebar,
+                isDark: isDark,
+                reduceTransparency: false,
+                increaseContrast: false,
+                overallTransparency: defaultT
+            )
+            let groupedDefault = ZhixingSurfaceFill.opacity(
+                for: .grouped,
+                isDark: isDark,
+                reduceTransparency: false,
+                increaseContrast: false,
+                overallTransparency: defaultT
+            )
+            let canvasDefault = ZhixingSurfaceFill.opacity(
+                for: .canvas,
+                isDark: isDark,
+                reduceTransparency: false,
+                increaseContrast: false,
+                overallTransparency: defaultT
+            )
+            let sheetDefault = ZhixingSurfaceFill.opacity(
+                for: .sheet,
+                isDark: isDark,
+                reduceTransparency: false,
+                increaseContrast: false,
+                overallTransparency: defaultT
+            )
+            XCTAssertLessThan(groupedDefault, sidebarDefault)
+            XCTAssertLessThan(sidebarDefault, canvasDefault)
+            XCTAssertLessThan(canvasDefault, sheetDefault)
+
+            let sidebarOpen = ZhixingSurfaceFill.opacity(
+                for: .sidebar,
+                isDark: isDark,
+                reduceTransparency: false,
+                increaseContrast: false,
+                overallTransparency: openT
+            )
+            let groupedOpen = ZhixingSurfaceFill.opacity(
+                for: .grouped,
+                isDark: isDark,
+                reduceTransparency: false,
+                increaseContrast: false,
+                overallTransparency: openT
+            )
+            let canvasOpen = ZhixingSurfaceFill.opacity(
+                for: .canvas,
+                isDark: isDark,
+                reduceTransparency: false,
+                increaseContrast: false,
+                overallTransparency: openT
+            )
+            let sheetOpen = ZhixingSurfaceFill.opacity(
+                for: .sheet,
+                isDark: isDark,
+                reduceTransparency: false,
+                increaseContrast: false,
+                overallTransparency: openT
+            )
+            XCTAssertLessThan(groupedOpen, sidebarOpen)
+            XCTAssertLessThan(sidebarOpen, canvasOpen)
+            XCTAssertLessThan(canvasOpen, sheetOpen)
+            XCTAssertLessThan(sidebarOpen, sidebarDefault)
+            XCTAssertLessThan(canvasOpen, canvasDefault)
+            XCTAssertLessThan(sheetOpen, sheetDefault)
+
+            for role in ZhixingSurfaceRole.allCases {
+                let solid = ZhixingSurfaceFill.opacity(
+                    for: role,
+                    isDark: isDark,
+                    reduceTransparency: false,
+                    increaseContrast: false,
+                    overallTransparency: solidT
+                )
+                let open = ZhixingSurfaceFill.opacity(
+                    for: role,
+                    isDark: isDark,
+                    reduceTransparency: false,
+                    increaseContrast: false,
+                    overallTransparency: openT
+                )
+                XCTAssertLessThan(open, solid)
+                XCTAssertEqual(
+                    ZhixingSurfaceFill.opacity(
+                        for: role,
+                        isDark: isDark,
+                        reduceTransparency: false,
+                        increaseContrast: false,
+                        overallTransparency: 0
+                    ),
+                    1,
+                    accuracy: 0.000_1
+                )
+                XCTAssertEqual(
+                    ZhixingSurfaceFill.opacity(
+                        for: role,
+                        isDark: isDark,
+                        reduceTransparency: true,
+                        increaseContrast: false,
+                        overallTransparency: openT
+                    ),
+                    1,
+                    accuracy: 0.000_1
+                )
+            }
+        }
+
+        XCTAssertFalse(
+            ZhixingSurfaceFill.usesMaterial(
+                for: .sidebar,
+                reduceTransparency: false,
+                increaseContrast: false,
+                overallTransparency: 0
+            )
+        )
+        XCTAssertTrue(
+            ZhixingSurfaceFill.usesMaterial(
+                for: .sidebar,
+                reduceTransparency: false,
+                increaseContrast: false,
+                overallTransparency: defaultT
+            )
+        )
     }
 
     func testCloudSyncPresentationCoversLocalSyncingSyncedAndFailed() {
@@ -146,6 +436,16 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertEqual(AppSection.missions.createActionTitle, "新建使命")
         XCTAssertEqual(AppSection.habits.createActionTitle, "新建打卡")
         XCTAssertEqual(AppSection.allCases.count, 4)
+    }
+
+    func testEveryModuleCreateHelpUsesCommandN() {
+        XCTAssertEqual(AppSection.inModuleCreateShortcutDisplay, "⌘N")
+        for section in AppSection.allCases {
+            XCTAssertTrue(
+                section.createHelp.contains(AppSection.inModuleCreateShortcutDisplay),
+                "\(section.rawValue) create help should mention ⌘N: \(section.createHelp)"
+            )
+        }
     }
 
     func testZhixingIdentityColorIsStableForTheSameUUID() {
@@ -526,15 +826,15 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertEqual(WindowGlassAppearance.percent(0.401), 40)
         XCTAssertEqual(
             WindowGlassAppearance.percent(WindowGlassAppearance.maximumTransparency),
-            90
+            76
         )
-        XCTAssertEqual(WindowGlassAppearance.minimumFillOpacity, 0.10, accuracy: 0.000_1)
+        XCTAssertEqual(WindowGlassAppearance.minimumFillOpacity, 0.24, accuracy: 0.000_1)
         XCTAssertEqual(
             WindowGlassAppearance.maximumTransparency,
             1 - WindowGlassAppearance.minimumFillOpacity,
             accuracy: 0.000_1
         )
-        XCTAssertFalse(WindowGlassAppearance.userFacingEnabled)
+        XCTAssertTrue(WindowGlassAppearance.userFacingEnabled)
     }
 
     func testWindowGlassFillOpacityKeepsReadableFloor() {
@@ -550,17 +850,18 @@ final class CalendarCountdownCoreTests: XCTestCase {
         )
     }
 
-    func testWindowGlassUserFacingPreferenceIsRetiredEvenWhenStoredEnabled() {
+    func testWindowGlassUserFacingPreferenceMigratesRetiredValueOnce() {
         let suiteName = "test.window-glass.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-        defaults.set(true, forKey: WindowGlassAppearance.enabledDefaultsKey)
-        XCTAssertTrue(defaults.bool(forKey: WindowGlassAppearance.enabledDefaultsKey))
-
-        WindowGlassAppearance.retireUserFacingPreference(in: defaults)
-
+        defaults.set(false, forKey: WindowGlassAppearance.enabledDefaultsKey)
         XCTAssertFalse(defaults.bool(forKey: WindowGlassAppearance.enabledDefaultsKey))
-        XCTAssertFalse(
+
+        WindowGlassAppearance.activateCodexGlassPreference(in: defaults)
+
+        XCTAssertTrue(defaults.bool(forKey: WindowGlassAppearance.enabledDefaultsKey))
+        XCTAssertTrue(defaults.bool(forKey: WindowGlassAppearance.codexGlassMigrationDefaultsKey))
+        XCTAssertTrue(
             WindowGlassAppearance.isUserFacingGlassActive(
                 enabledFlag: true,
                 reduceTransparency: false
@@ -572,6 +873,10 @@ final class CalendarCountdownCoreTests: XCTestCase {
                 reduceTransparency: false
             )
         )
+
+        defaults.set(false, forKey: WindowGlassAppearance.enabledDefaultsKey)
+        WindowGlassAppearance.activateCodexGlassPreference(in: defaults)
+        XCTAssertFalse(defaults.bool(forKey: WindowGlassAppearance.enabledDefaultsKey))
     }
 
     func testComposerReturnInsertsNewlineUnlessCommandReturnSaves() {
