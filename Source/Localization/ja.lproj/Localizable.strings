@@ -190,7 +190,7 @@
 "appearance.glass_transparency" = "透明度";
 "appearance.glass_solid" = "不透明寄り";
 "appearance.glass_sheer" = "透明寄り";
-"appearance.glass_limit" = "メインウィンドウは不透明なチタングレーの塗りです。デスクトップの壁紙は透けません。";
+"appearance.glass_limit" = "スライダーで全体の透明度を調整します。サイドバーは本文より常に少し透けます。壁紙は透けません。";
 "appearance.glass_reduce_transparency" = "macOS で「透明度を下げる」がオンのため、メインウィンドウは不透明のままです。";
 
 /* Errors */

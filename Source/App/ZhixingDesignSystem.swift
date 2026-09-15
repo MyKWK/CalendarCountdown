@@ -8,19 +8,19 @@ import UIKit
 
 enum ZhixingColor {
     static var contentBackground: Color {
-        Color(light: (0.976, 0.973, 0.965), dark: (0.075, 0.075, 0.073))
+        Color(light: (0.955, 0.963, 0.982), dark: (0.070, 0.078, 0.096))
     }
 
     static var groupedBackground: Color {
-        Color(light: (0.945, 0.941, 0.932), dark: (0.112, 0.112, 0.108))
+        Color(light: (0.932, 0.950, 0.978), dark: (0.092, 0.104, 0.128))
     }
 
     static var sidebarBackground: Color {
-        Color(light: (0.938, 0.934, 0.925), dark: (0.092, 0.092, 0.089))
+        Color(light: (0.720, 0.835, 0.985), dark: (0.065, 0.090, 0.130))
     }
 
     static var elevatedBackground: Color {
-        Color(light: (1, 1, 0.996), dark: (0.142, 0.142, 0.137))
+        Color(light: (0.985, 0.989, 1.000), dark: (0.118, 0.130, 0.158))
     }
 
     static var hairline: Color {
@@ -121,11 +121,15 @@ enum ZhixingTypography {
     static let countdownValue: Font = .headline.weight(.medium).monospacedDigit()
 }
 
-/// An opaque-to-the-desktop canvas with enough internal color variation for
-/// SwiftUI material surfaces to read as glass instead of flat white cards.
+/// An opaque-to-the-desktop canvas. Internal frost sits on top of this window
+/// fill; it never uses behind-window blending.
 struct AppGlassBackdrop: View {
     var body: some View {
-        ZhixingColor.contentBackground
+        HStack(spacing: 0) {
+            ZhixingSurfaceChrome(role: .sidebar)
+                .frame(width: 244)
+            ZhixingSurfaceChrome(role: .canvas)
+        }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
     }
@@ -141,38 +145,79 @@ enum ZhixingMotion {
     }
 }
 
-struct GlassSurface<Content: View>: View {
-    var cornerRadius: CGFloat = ZhixingMetrics.cornerContainer
+/// In-window frosted wash. Uses `.withinWindow` visual effect only; never
+/// recurses into NSView/NSScrollView trees or punches through to the desktop.
+struct ZhixingSurfaceChrome: View {
+    var role: ZhixingSurfaceRole
+    var cornerRadius: CGFloat = 0
     var tint: Color = .clear
-    var padded: Bool = false
-    @ViewBuilder var content: () -> Content
+    var hovering: Bool = false
+    var showsStroke: Bool? = nil
 
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.appSurfaceTransparency) private var overallTransparency
 
     var body: some View {
-        content()
-            .padding(padded ? ZhixingMetrics.space16 : 0)
-            .background { chrome }
-    }
-
-    private var usesSolidFill: Bool {
-        reduceTransparency || contrast == .increased
-    }
-
-    private var chrome: some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        return ZStack {
-            shape.fill(
-                usesSolidFill
-                    ? ZhixingColor.elevatedBackground
-                    : ZhixingColor.elevatedBackground.opacity(colorScheme == .dark ? 0.82 : 0.92)
-            )
-            if tint != .clear {
-                shape.fill(tint.opacity(colorScheme == .dark ? 0.07 : 0.055))
+        let isDark = colorScheme == .dark
+        let increaseContrast = contrast == .increased
+        let fill = ZhixingSurfaceFill.opacity(
+            for: role,
+            isDark: isDark,
+            hovering: hovering,
+            reduceTransparency: reduceTransparency,
+            increaseContrast: increaseContrast,
+            overallTransparency: overallTransparency
+        )
+        let frosted = ZhixingSurfaceFill.usesMaterial(
+            for: role,
+            reduceTransparency: reduceTransparency,
+            increaseContrast: increaseContrast,
+            overallTransparency: overallTransparency
+        )
+
+        ZStack {
+            if frosted {
+                WithinWindowFrost(role: role)
+                shape.fill(washColor.opacity(fill))
+            } else {
+                shape.fill(washColor.opacity(fill))
             }
-            shape.strokeBorder(strokeColor, lineWidth: strokeWidth)
+            if tint != .clear {
+                shape.fill(
+                    tint.opacity(isDark ? ZhixingSurfaceFill.identityWashDark : ZhixingSurfaceFill.identityWashLight)
+                )
+            }
+            if drawsStroke {
+                shape.strokeBorder(strokeColor, lineWidth: strokeWidth)
+            }
+        }
+        .clipShape(shape)
+        .allowsHitTesting(false)
+    }
+
+    private var washColor: Color {
+        switch role {
+        case .canvas:
+            ZhixingColor.contentBackground
+        case .sidebar:
+            ZhixingColor.sidebarBackground
+        case .grouped:
+            ZhixingColor.groupedBackground
+        case .elevated, .row, .sheet:
+            ZhixingColor.elevatedBackground
+        }
+    }
+
+    private var drawsStroke: Bool {
+        if let showsStroke { return showsStroke }
+        switch role {
+        case .elevated, .row:
+            return true
+        case .canvas, .sidebar, .grouped, .sheet:
+            return false
         }
     }
 
@@ -180,15 +225,120 @@ struct GlassSurface<Content: View>: View {
         if contrast == .increased {
             return Color.primary.opacity(0.45)
         }
-        let highlight = colorScheme == .dark ? Color.white.opacity(0.075) : Color.black.opacity(0.07)
-        if tint == .clear {
-            return highlight
+        if tint != .clear {
+            return tint.opacity(0.28)
         }
-        return tint.opacity(0.28)
+        return colorScheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.07)
     }
 
     private var strokeWidth: CGFloat {
         contrast == .increased ? 1 : ZhixingMetrics.glassStrokeWidth
+    }
+}
+
+private struct WithinWindowFrost: View {
+    var role: ZhixingSurfaceRole
+
+    var body: some View {
+        #if os(macOS)
+        WithinWindowVisualEffect(material: material)
+        #else
+        Rectangle().fill(iosMaterial)
+        #endif
+    }
+
+    #if os(macOS)
+    private var material: NSVisualEffectView.Material {
+        switch role {
+        case .sidebar:
+            .sidebar
+        case .canvas:
+            .underWindowBackground
+        case .grouped, .sheet, .elevated, .row:
+            .headerView
+        }
+    }
+    #else
+    private var iosMaterial: Material {
+        switch role {
+        case .sidebar:
+            .thinMaterial
+        case .canvas, .grouped, .sheet, .elevated, .row:
+            .ultraThinMaterial
+        }
+    }
+    #endif
+}
+
+#if os(macOS)
+private struct WithinWindowVisualEffect: NSViewRepresentable {
+    var material: NSVisualEffectView.Material
+
+    func makeNSView(context: Context) -> HitThroughVisualEffectView {
+        let view = HitThroughVisualEffectView()
+        view.blendingMode = .withinWindow
+        view.state = .followsWindowActiveState
+        view.material = material
+        view.isEmphasized = false
+        return view
+    }
+
+    func updateNSView(_ view: HitThroughVisualEffectView, context: Context) {
+        view.material = material
+        view.blendingMode = .withinWindow
+        view.state = .followsWindowActiveState
+    }
+}
+
+private final class HitThroughVisualEffectView: NSVisualEffectView {
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+}
+#endif
+
+private struct AppSurfaceTransparencyKey: EnvironmentKey {
+    static let defaultValue = WindowGlassAppearance.defaultTransparency
+}
+
+extension EnvironmentValues {
+    var appSurfaceTransparency: Double {
+        get { self[AppSurfaceTransparencyKey.self] }
+        set { self[AppSurfaceTransparencyKey.self] = newValue }
+    }
+}
+
+extension View {
+    func appSurfaceTransparency(_ value: Double) -> some View {
+        environment(\.appSurfaceTransparency, WindowGlassAppearance.clamped(value))
+    }
+
+    func zhixingSurface(
+        _ role: ZhixingSurfaceRole,
+        cornerRadius: CGFloat = 0,
+        tint: Color = .clear
+    ) -> some View {
+        background {
+            ZhixingSurfaceChrome(role: role, cornerRadius: cornerRadius, tint: tint)
+        }
+    }
+}
+
+struct GlassSurface<Content: View>: View {
+    var cornerRadius: CGFloat = ZhixingMetrics.cornerContainer
+    var tint: Color = .clear
+    var padded: Bool = false
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        content()
+            .padding(padded ? ZhixingMetrics.space16 : 0)
+            .background {
+                ZhixingSurfaceChrome(
+                    role: .elevated,
+                    cornerRadius: cornerRadius,
+                    tint: tint,
+                    showsStroke: true
+                )
+            }
     }
 }
 
@@ -197,28 +347,16 @@ struct ContentSurface<Content: View>: View {
     var identity: Color? = nil
     @ViewBuilder var content: () -> Content
 
-    @Environment(\.colorSchemeContrast) private var contrast
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
         content()
             .padding(ZhixingMetrics.space16)
             .background {
-                let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                Group {
-                    shape.fill(
-                        reduceTransparency || contrast == .increased
-                            ? ZhixingColor.elevatedBackground
-                            : ZhixingColor.elevatedBackground.opacity(colorScheme == .dark ? 0.78 : 0.90)
-                    )
-                }
-                    .overlay {
-                        shape.strokeBorder(
-                            Color.primary.opacity(contrast == .increased ? 0.35 : 0.075),
-                            lineWidth: contrast == .increased ? 1 : ZhixingMetrics.glassStrokeWidth
-                        )
-                    }
+                ZhixingSurfaceChrome(
+                    role: .elevated,
+                    cornerRadius: cornerRadius,
+                    tint: identity ?? .clear,
+                    showsStroke: true
+                )
             }
             .overlay(alignment: .leading) {
                 if let identity {
@@ -380,6 +518,7 @@ struct PrimaryToolbarAction: View {
             Label(title, systemImage: systemImage)
         }
         .buttonStyle(CodexPrimaryButtonStyle())
+        .keyboardShortcut("n", modifiers: .command)
         .help(help)
         .accessibilityLabel(title)
         .accessibilityIdentifier(identifier ?? "mac-create-button")
@@ -407,6 +546,36 @@ struct CodexIconButtonStyle: ButtonStyle {
             .frame(width: 30, height: 30)
             .background(Color.primary.opacity(configuration.isPressed ? 0.10 : 0.055), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+    }
+}
+
+struct CodexBareIconButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) private var colorScheme
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 13, weight: .regular))
+            .foregroundStyle(ZhixingColor.text(.supporting, colorScheme: colorScheme, contrast: .standard))
+            .frame(width: 28, height: 28)
+            .background(
+                Color.primary.opacity(configuration.isPressed ? 0.08 : 0),
+                in: RoundedRectangle(cornerRadius: 7, style: .continuous)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+    }
+}
+
+struct CodexSidebarActionButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(
+                Color.white.opacity(configuration.isPressed ? 0.27 : 0.14),
+                in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.14), lineWidth: ZhixingMetrics.glassStrokeWidth)
+            }
     }
 }
 
@@ -571,6 +740,7 @@ struct ComposerSheetScaffold<Content: View>: View {
             )
         }
         .frame(width: width, height: height)
+        .zhixingSurface(.sheet)
         #else
         NavigationStack {
             content()
@@ -697,8 +867,6 @@ extension View {
 struct TaskBarCard<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @Environment(\.colorSchemeContrast) private var contrast
     @State private var isHovering = false
 
     var body: some View {
@@ -707,22 +875,21 @@ struct TaskBarCard<Content: View>: View {
             .padding(.vertical, ZhixingMetrics.space8)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background {
-                let shape = RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSheet, style: .continuous)
-                shape.fill(
-                    reduceTransparency || contrast == .increased
-                        ? ZhixingColor.elevatedBackground
-                        : Color.primary.opacity(isHovering ? 0.055 : 0.025)
+                ZhixingSurfaceChrome(
+                    role: .row,
+                    cornerRadius: ZhixingMetrics.cornerSmall,
+                    hovering: isHovering,
+                    showsStroke: false
                 )
             }
-            .overlay {
-                RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSheet, style: .continuous)
-                    .strokeBorder(
-                        Color.primary.opacity(isHovering ? 0.11 : 0.055),
-                        lineWidth: ZhixingMetrics.glassStrokeWidth
-                    )
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(Color.primary.opacity(isHovering ? 0 : 0.055))
+                    .frame(height: ZhixingMetrics.glassStrokeWidth)
+                    .padding(.leading, 40)
             }
             .contentShape(
-                RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSheet, style: .continuous)
+                RoundedRectangle(cornerRadius: ZhixingMetrics.cornerSmall, style: .continuous)
             )
             .onHover { isHovering = $0 }
     }
@@ -772,14 +939,18 @@ struct TaskCompletedTrailChrome: ViewModifier {
 
 struct SidebarSelectionBackground: View {
     var isSelected: Bool
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         if isSelected {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .fill(Color.primary.opacity(0.075))
+                .fill(colorScheme == .dark ? Color.white.opacity(0.09) : Color.white.opacity(0.28))
                 .overlay {
                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .strokeBorder(Color.primary.opacity(0.055), lineWidth: ZhixingMetrics.glassStrokeWidth)
+                        .strokeBorder(
+                            Color.white.opacity(colorScheme == .dark ? 0.08 : 0.22),
+                            lineWidth: ZhixingMetrics.glassStrokeWidth
+                        )
                 }
         } else {
             Color.clear

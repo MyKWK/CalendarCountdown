@@ -182,14 +182,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             let hostingController = NSHostingController(rootView: rootView)
             hostingController.view.wantsLayer = true
-            hostingController.view.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+            hostingController.view.layer?.backgroundColor = NSColor.clear.cgColor
             let window = NSWindow(contentViewController: hostingController)
             window.title = AppLocalization.text("app.name", defaultValue: "知行")
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             window.setContentSize(NSSize(width: 1_120, height: 740))
             window.minSize = NSSize(width: 880, height: 580)
-            window.isOpaque = true
-            window.backgroundColor = .windowBackgroundColor
+            window.isOpaque = false
+            window.backgroundColor = .clear
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
             window.titlebarSeparatorStyle = .none
@@ -569,6 +569,11 @@ private struct MainWindowRootView: View {
             .frame(minWidth: 880, minHeight: 580)
             .tint(appearanceSettings.accentColor)
             .preferredColorScheme(appearanceSettings.appearanceMode.colorScheme)
+            .appSurfaceTransparency(appearanceSettings.windowGlassTransparency)
+            .appMainWindowGlass(
+                enabled: glassActive,
+                transparency: appearanceSettings.windowGlassTransparency
+            )
             .environment(\.appWindowGlassActive, glassActive)
             .task {
                 await model.bootstrap()

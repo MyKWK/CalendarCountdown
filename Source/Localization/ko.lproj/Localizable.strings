@@ -190,7 +190,7 @@
 "appearance.glass_transparency" = "투명도";
 "appearance.glass_solid" = "더 불투명";
 "appearance.glass_sheer" = "더 투명";
-"appearance.glass_limit" = "메인 창은 불투명한 티타늄 그레이 배경을 사용하며, 바탕 화면 벽지가 비치지 않습니다.";
+"appearance.glass_limit" = "슬라이더로 전체 투명도를 조절합니다. 사이드바는 본문보다 항상 조금 더 투명합니다. 바탕 화면 벽지는 비치지 않습니다.";
 "appearance.glass_reduce_transparency" = "macOS에서 ‘투명도 줄이기’가 켜져 있어 메인 창은 불투명하게 유지됩니다.";
 
 /* Errors */

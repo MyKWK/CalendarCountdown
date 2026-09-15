@@ -5,6 +5,7 @@ import Foundation
 import SwiftUI
 
 enum AppShortcutAction: Equatable {
+    case addInCurrentModule
     case addCountdown
     case addTask
     case addMission
@@ -16,6 +17,12 @@ struct ShortcutCommandMenu: Commands {
     @ObservedObject var shortcuts: AppShortcutCoordinator
 
     var body: some Commands {
+        CommandGroup(replacing: .newItem) {
+            Button(shortcuts.currentSection.createActionTitle) {
+                shortcuts.request(.addInCurrentModule)
+            }
+            .keyboardShortcut("n", modifiers: .command)
+        }
         CommandMenu("快捷操作") {
             Button("新建倒数日") {
                 shortcuts.request(.addCountdown)
@@ -103,6 +110,7 @@ final class AppShortcutCoordinator: ObservableObject {
 
     static let globalWakeDisplay = "⇧⌘E"
 
+    @Published var currentSection: AppSection = .countdown
     @Published var globalWakeEnabled: Bool {
         didSet {
             defaults.set(globalWakeEnabled, forKey: Keys.globalWakeEnabled)

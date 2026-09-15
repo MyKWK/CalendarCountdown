@@ -99,6 +99,7 @@ struct AddEventView: View {
             )
         }
         .frame(width: 560, height: 680)
+        .zhixingSurface(.sheet)
         .onAppear { selectSuggestedCalendar(for: entryKind, force: false) }
     }
 

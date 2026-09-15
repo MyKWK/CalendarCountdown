@@ -190,7 +190,7 @@
 "appearance.glass_transparency" = "透明度";
 "appearance.glass_solid" = "较实";
 "appearance.glass_sheer" = "较透";
-"appearance.glass_limit" = "主窗口使用不透明的钛灰底色，不再从桌面透出壁纸。";
+"appearance.glass_limit" = "拖动滑块整体调节通透程度。侧栏会始终比正文更透一些；不会从桌面透出壁纸。";
 "appearance.glass_reduce_transparency" = "系统已开启“降低透明度”，主界面会保持不透明。";
 
 /* Errors */

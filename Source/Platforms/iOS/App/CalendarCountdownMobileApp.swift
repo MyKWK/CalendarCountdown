@@ -24,5 +24,13 @@ struct CalendarCountdownMobileApp: App {
                     }
                 }
         }
+        .commands {
+            CommandGroup(replacing: .newItem) {
+                Button(session.section.createActionTitle) {
+                    session.presentCreate()
+                }
+                .keyboardShortcut("n", modifiers: .command)
+            }
+        }
     }
 }

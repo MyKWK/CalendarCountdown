@@ -472,11 +472,19 @@ struct CountdownModuleView: View {
                     if displayedEvents.count > 1 {
                         Section {
                             ForEach(Array(displayedEvents.dropFirst())) { event in
-                                eventRow(event, featured: false)
-                                    .zhixingListRow()
-                                    .overlay(alignment: .bottom) {
-                                        Divider().padding(.leading, ZhixingMetrics.space24)
-                                    }
+                                TaskBarCard {
+                                    eventRow(event, featured: false)
+                                }
+                                .listRowSeparator(.hidden)
+                                .listRowInsets(
+                                    EdgeInsets(
+                                        top: ZhixingMetrics.space4,
+                                        leading: ZhixingMetrics.pageInset,
+                                        bottom: ZhixingMetrics.space4,
+                                        trailing: ZhixingMetrics.pageInset
+                                    )
+                                )
+                                .listRowBackground(Color.clear)
                             }
                         }
                     }
