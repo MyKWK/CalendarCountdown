@@ -31,6 +31,17 @@ public enum WindowGlassAppearance: Sendable {
         case strong
 
         public var id: String { rawValue }
+
+        /// Radius, in points, of the additional backdrop softening pass.
+        /// Keep these deliberately far apart so the setting is visually
+        /// meaningful rather than a barely perceptible material variation.
+        public var backdropBlurRadius: Double {
+            switch self {
+            case .subtle: 4
+            case .standard: 14
+            case .strong: 30
+            }
+        }
     }
 
     public static let defaultBlurStrength: BlurStrength = .standard
