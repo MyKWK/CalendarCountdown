@@ -9,6 +9,7 @@ import Foundation
 public enum WindowGlassAppearance: Sendable {
     public static let enabledDefaultsKey = "appearance.windowGlassEnabled"
     public static let transparencyDefaultsKey = "appearance.windowGlassTransparency"
+    public static let blurRadiusDefaultsKey = "appearance.windowGlassBlurRadius"
     public static let blurStrengthDefaultsKey = "appearance.windowGlassBlurStrength"
     public static let codexGlassMigrationDefaultsKey = "appearance.codexGlass.v1"
 
@@ -22,9 +23,11 @@ public enum WindowGlassAppearance: Sendable {
     public static let maximumTransparency: Double = 1 - minimumFillOpacity
     public static let defaultTransparency: Double = 0.42
 
-    /// The blur recipe is deliberately independent from transparency: a user
-    /// can keep a clear window fill while choosing how much desktop detail is
-    /// softened behind it.
+    public static let minimumBlurRadius: Double = 2
+    public static let maximumBlurRadius: Double = 60
+    public static let defaultBlurRadius: Double = 18
+
+    /// Legacy values are retained only to migrate the former three-way picker.
     public enum BlurStrength: String, CaseIterable, Identifiable, Sendable {
         case subtle
         case standard
@@ -38,13 +41,25 @@ public enum WindowGlassAppearance: Sendable {
         public var backdropBlurRadius: Double {
             switch self {
             case .subtle: 4
-            case .standard: 14
-            case .strong: 30
+            case .standard: 18
+            case .strong: 42
             }
         }
     }
 
     public static let defaultBlurStrength: BlurStrength = .standard
+
+    public static func clampedBlurRadius(_ value: Double) -> Double {
+        guard value.isFinite else { return defaultBlurRadius }
+        return min(max(value, minimumBlurRadius), maximumBlurRadius)
+    }
+
+    public static func initialBlurRadius(storedRadius: Double?, legacyStrength: String?) -> Double {
+        if let storedRadius {
+            return clampedBlurRadius(storedRadius)
+        }
+        return blurStrength(for: legacyStrength).backdropBlurRadius
+    }
 
     public static func blurStrength(for rawValue: String?) -> BlurStrength {
         guard let rawValue else { return defaultBlurStrength }

@@ -52,7 +52,8 @@ final class AppAppearanceSettings: ObservableObject {
         static let mode = "appearance.mode"
         static let glassEnabled = WindowGlassAppearance.enabledDefaultsKey
         static let glassTransparency = WindowGlassAppearance.transparencyDefaultsKey
-        static let glassBlurStrength = WindowGlassAppearance.blurStrengthDefaultsKey
+        static let glassBlurRadius = WindowGlassAppearance.blurRadiusDefaultsKey
+        static let legacyGlassBlurStrength = WindowGlassAppearance.blurStrengthDefaultsKey
     }
 
     private let defaults: UserDefaults
@@ -78,9 +79,14 @@ final class AppAppearanceSettings: ObservableObject {
         }
     }
 
-    @Published var windowGlassBlurStrength: WindowGlassAppearance.BlurStrength {
+    @Published var windowGlassBlurRadius: Double {
         didSet {
-            defaults.set(windowGlassBlurStrength.rawValue, forKey: Keys.glassBlurStrength)
+            let clamped = WindowGlassAppearance.clampedBlurRadius(windowGlassBlurRadius)
+            if clamped != windowGlassBlurRadius {
+                windowGlassBlurRadius = clamped
+                return
+            }
+            defaults.set(clamped, forKey: Keys.glassBlurRadius)
         }
     }
 
@@ -102,8 +108,11 @@ final class AppAppearanceSettings: ObservableObject {
                 defaults.double(forKey: Keys.glassTransparency)
             )
         }
-        windowGlassBlurStrength = WindowGlassAppearance.blurStrength(
-            for: defaults.string(forKey: Keys.glassBlurStrength)
+        windowGlassBlurRadius = WindowGlassAppearance.initialBlurRadius(
+            storedRadius: defaults.object(forKey: Keys.glassBlurRadius) == nil
+                ? nil
+                : defaults.double(forKey: Keys.glassBlurRadius),
+            legacyStrength: defaults.string(forKey: Keys.legacyGlassBlurStrength)
         )
     }
 
@@ -190,6 +199,7 @@ struct AppSettingsView: View {
             }
             .zhixingSurface(.canvas)
         }
+        .toolbar(.hidden, for: .windowToolbar)
         .zhixingSurface(.canvas)
         .frame(width: 760, height: 640)
         .zhixingForeground(.body)
@@ -438,13 +448,29 @@ private struct AppearanceSettingsPane: View {
             }
 
             Section {
-                Picker("背景模糊", selection: $settings.windowGlassBlurStrength) {
-                    ForEach(WindowGlassAppearance.BlurStrength.allCases) { strength in
-                        Text(strength.title).tag(strength)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Spacer()
+                        Text("\(Int(settings.windowGlassBlurRadius.rounded())) pt")
+                            .font(.body.monospacedDigit())
+                            .zhixingForeground(.supporting)
+                    }
+                    HStack(spacing: 12) {
+                        Text("较清晰")
+                            .font(.caption)
+                            .zhixingForeground(.supporting)
+                        Slider(
+                            value: $settings.windowGlassBlurRadius,
+                            in: WindowGlassAppearance.minimumBlurRadius...WindowGlassAppearance.maximumBlurRadius,
+                            step: 1
+                        )
+                        .accessibilityLabel("背景模糊")
+                        .accessibilityValue("\(Int(settings.windowGlassBlurRadius.rounded())) 点")
+                        Text("浓雾")
+                            .font(.caption)
+                            .zhixingForeground(.supporting)
                     }
                 }
-                .pickerStyle(.segmented)
-                .accessibilityLabel("背景模糊")
                 .disabled(reduceTransparency)
             } header: {
                 settingsSectionHeader("背景模糊")
@@ -497,16 +523,6 @@ private struct AppearanceSettingsPane: View {
                 "appearance.description_dark",
                 defaultValue: "始终使用深色页面与浅色文字。"
             )
-        }
-    }
-}
-
-private extension WindowGlassAppearance.BlurStrength {
-    var title: String {
-        switch self {
-        case .subtle: "轻柔"
-        case .standard: "标准"
-        case .strong: "浓雾"
         }
     }
 }

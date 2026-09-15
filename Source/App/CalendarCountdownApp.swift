@@ -193,6 +193,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
             window.titlebarSeparatorStyle = .none
+            installSidebarToggleAccessory(on: window)
             window.center()
             window.isReleasedWhenClosed = false
             mainWindowController = NSWindowController(window: window)
@@ -220,7 +221,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 "window.settings",
                 defaultValue: "设置"
             )
-            window.styleMask = [.titled, .closable]
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+            window.titleVisibility = .hidden
+            window.titlebarAppearsTransparent = true
+            window.titlebarSeparatorStyle = .none
+            installSidebarToggleAccessory(on: window)
             window.setContentSize(NSSize(width: 760, height: 640))
             window.center()
             window.isReleasedWhenClosed = false
@@ -230,6 +235,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController?.showWindow(nil)
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func installSidebarToggleAccessory(on window: NSWindow) {
+        guard !window.titlebarAccessoryViewControllers.contains(where: {
+            $0.view.identifier?.rawValue == SidebarToggleTitlebarAccessoryController.identifier.rawValue
+        }) else { return }
+        window.addTitlebarAccessoryViewController(SidebarToggleTitlebarAccessoryController())
     }
 
     private func installStatusBarOverview() {
@@ -522,6 +534,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+@MainActor
+private final class SidebarToggleTitlebarAccessoryController: NSTitlebarAccessoryViewController {
+    static let identifier = NSUserInterfaceItemIdentifier("app.sidebar.toggle.titlebar")
+
+    init() {
+        super.init(nibName: nil, bundle: nil)
+        layoutAttribute = .left
+
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 36, height: 28))
+        container.identifier = Self.identifier
+
+        let button = NSButton(
+            image: NSImage(systemSymbolName: "sidebar.leading", accessibilityDescription: "收起或展开侧边栏")!,
+            target: self,
+            action: #selector(toggleSidebar(_:))
+        )
+        button.isBordered = false
+        button.imagePosition = .imageOnly
+        button.contentTintColor = .secondaryLabelColor
+        button.toolTip = "收起或展开侧边栏"
+        button.identifier = NSUserInterfaceItemIdentifier("mac-sidebar-toggle")
+        button.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(button)
+
+        NSLayoutConstraint.activate([
+            button.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            button.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            button.widthAnchor.constraint(equalToConstant: 24),
+            button.heightAnchor.constraint(equalToConstant: 24),
+        ])
+        view = container
+    }
+
+    @available(*, unavailable)
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    @objc private func toggleSidebar(_ sender: NSButton) {
+        NSApp.sendAction(#selector(NSSplitViewController.toggleSidebar(_:)), to: nil, from: sender)
+    }
+}
+
 @main
 @MainActor
 struct CalendarCountdownApp: App {
@@ -573,7 +628,7 @@ private struct MainWindowRootView: View {
             .appMainWindowGlass(
                 enabled: glassActive,
                 transparency: appearanceSettings.windowGlassTransparency,
-                blurStrength: appearanceSettings.windowGlassBlurStrength
+                blurRadius: appearanceSettings.windowGlassBlurRadius
             )
             .environment(\.appWindowGlassActive, glassActive)
             .task {
