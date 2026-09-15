@@ -38,7 +38,7 @@ open CalendarCountdown.xcodeproj
 ./Scripts/package-dmg.sh
 ```
 
-1.0.17 产物位于 `dist/CalendarCountdown-1.0.17-macos-universal.dmg`，内含 arm64 和 x86_64 可执行文件。当前构建采用 ad-hoc 签名，不等同于经过 Developer ID 签名和 Apple 公证的发行包。验证和安装只启动 `/Applications/知行.app`，不要打开 DerivedData 里的 `CalendarCountdown.app`。替换安装不会清空已有任务、使命、打卡或日历数据。
+1.0.18 产物位于 `dist/CalendarCountdown-1.0.18-macos-universal.dmg`，内含 arm64 和 x86_64 可执行文件。当前构建采用 ad-hoc 签名，不等同于经过 Developer ID 签名和 Apple 公证的发行包。验证和安装只启动 `/Applications/知行.app`，不要打开 DerivedData 里的 `CalendarCountdown.app`。替换安装不会清空已有任务、使命、打卡或日历数据。
 
 完成一轮大改动或版本更新后，用下面这条命令走完整本地发布流程：
 
