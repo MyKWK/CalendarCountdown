@@ -9,6 +9,7 @@ import Foundation
 public enum WindowGlassAppearance: Sendable {
     public static let enabledDefaultsKey = "appearance.windowGlassEnabled"
     public static let transparencyDefaultsKey = "appearance.windowGlassTransparency"
+    public static let blurStrengthDefaultsKey = "appearance.windowGlassBlurStrength"
     public static let codexGlassMigrationDefaultsKey = "appearance.codexGlass.v1"
 
     public static let userFacingEnabled = true
@@ -20,6 +21,24 @@ public enum WindowGlassAppearance: Sendable {
     /// Hard cap so the window never goes fully transparent.
     public static let maximumTransparency: Double = 1 - minimumFillOpacity
     public static let defaultTransparency: Double = 0.42
+
+    /// The blur recipe is deliberately independent from transparency: a user
+    /// can keep a clear window fill while choosing how much desktop detail is
+    /// softened behind it.
+    public enum BlurStrength: String, CaseIterable, Identifiable, Sendable {
+        case subtle
+        case standard
+        case strong
+
+        public var id: String { rawValue }
+    }
+
+    public static let defaultBlurStrength: BlurStrength = .standard
+
+    public static func blurStrength(for rawValue: String?) -> BlurStrength {
+        guard let rawValue else { return defaultBlurStrength }
+        return BlurStrength(rawValue: rawValue) ?? defaultBlurStrength
+    }
 
     public static func clamped(_ value: Double) -> Double {
         guard !value.isNaN else { return defaultTransparency }

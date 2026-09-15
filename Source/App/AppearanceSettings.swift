@@ -52,6 +52,7 @@ final class AppAppearanceSettings: ObservableObject {
         static let mode = "appearance.mode"
         static let glassEnabled = WindowGlassAppearance.enabledDefaultsKey
         static let glassTransparency = WindowGlassAppearance.transparencyDefaultsKey
+        static let glassBlurStrength = WindowGlassAppearance.blurStrengthDefaultsKey
     }
 
     private let defaults: UserDefaults
@@ -77,6 +78,12 @@ final class AppAppearanceSettings: ObservableObject {
         }
     }
 
+    @Published var windowGlassBlurStrength: WindowGlassAppearance.BlurStrength {
+        didSet {
+            defaults.set(windowGlassBlurStrength.rawValue, forKey: Keys.glassBlurStrength)
+        }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         appearanceMode = AppAppearanceMode(
@@ -95,6 +102,9 @@ final class AppAppearanceSettings: ObservableObject {
                 defaults.double(forKey: Keys.glassTransparency)
             )
         }
+        windowGlassBlurStrength = WindowGlassAppearance.blurStrength(
+            for: defaults.string(forKey: Keys.glassBlurStrength)
+        )
     }
 
     /// Fixed brand signal color. Mission identity colors are configured on each mission.
@@ -426,6 +436,23 @@ private struct AppearanceSettingsPane: View {
                     .font(.callout)
                     .zhixingForeground(.supporting)
             }
+
+            Section {
+                Picker("背景模糊", selection: $settings.windowGlassBlurStrength) {
+                    ForEach(WindowGlassAppearance.BlurStrength.allCases) { strength in
+                        Text(strength.title).tag(strength)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .accessibilityLabel("背景模糊")
+                .disabled(reduceTransparency)
+            } header: {
+                settingsSectionHeader("背景模糊")
+            } footer: {
+                Text(blurHelp)
+                    .font(.callout)
+                    .zhixingForeground(.supporting)
+            }
         }
         .formStyle(.grouped)
         .navigationTitle(AppLocalization.text("appearance.title", defaultValue: "外观"))
@@ -446,6 +473,13 @@ private struct AppearanceSettingsPane: View {
         )
     }
 
+    private var blurHelp: String {
+        if reduceTransparency {
+            return "系统已开启“降低透明度”，背景模糊暂不显示。"
+        }
+        return "透明度决定背景显露多少；背景模糊决定这些内容被柔化的程度。"
+    }
+
     private var appearanceDescription: String {
         switch settings.appearanceMode {
         case .system:
@@ -463,6 +497,16 @@ private struct AppearanceSettingsPane: View {
                 "appearance.description_dark",
                 defaultValue: "始终使用深色页面与浅色文字。"
             )
+        }
+    }
+}
+
+private extension WindowGlassAppearance.BlurStrength {
+    var title: String {
+        switch self {
+        case .subtle: "轻柔"
+        case .standard: "标准"
+        case .strong: "浓雾"
         }
     }
 }

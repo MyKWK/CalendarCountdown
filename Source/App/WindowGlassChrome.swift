@@ -18,10 +18,18 @@ extension View {
     }
 
     @ViewBuilder
-    func appMainWindowGlass(enabled: Bool, transparency: Double) -> some View {
+    func appMainWindowGlass(
+        enabled: Bool,
+        transparency: Double,
+        blurStrength: WindowGlassAppearance.BlurStrength
+    ) -> some View {
         #if os(macOS)
         background {
-            WindowGlassProbeRepresentable(enabled: enabled, transparency: transparency)
+            WindowGlassProbeRepresentable(
+                enabled: enabled,
+                transparency: transparency,
+                blurStrength: blurStrength
+            )
                 .allowsHitTesting(false)
         }
         #else
@@ -42,13 +50,18 @@ import AppKit
 private struct WindowGlassProbeRepresentable: NSViewRepresentable {
     var enabled: Bool
     var transparency: Double
+    var blurStrength: WindowGlassAppearance.BlurStrength
 
     func makeNSView(context: Context) -> WindowGlassProbeView {
         WindowGlassProbeView()
     }
 
     func updateNSView(_ view: WindowGlassProbeView, context: Context) {
-        view.apply(enabled: enabled, transparency: transparency)
+        view.apply(
+            enabled: enabled,
+            transparency: transparency,
+            blurStrength: blurStrength
+        )
     }
 }
 
@@ -61,8 +74,16 @@ private final class WindowGlassProbeView: NSView {
         WindowGlassBackdropController.shared.refresh()
     }
 
-    func apply(enabled: Bool, transparency: Double) {
-        WindowGlassBackdropController.shared.update(enabled: enabled, transparency: transparency)
+    func apply(
+        enabled: Bool,
+        transparency: Double,
+        blurStrength: WindowGlassAppearance.BlurStrength
+    ) {
+        WindowGlassBackdropController.shared.update(
+            enabled: enabled,
+            transparency: transparency,
+            blurStrength: blurStrength
+        )
         WindowGlassBackdropController.shared.attach(to: window)
         WindowGlassBackdropController.shared.refresh()
     }
@@ -76,13 +97,19 @@ private final class WindowGlassBackdropController {
     private weak var window: NSWindow?
     private var enabled = false
     private var transparency = WindowGlassAppearance.defaultTransparency
+    private var blurStrength = WindowGlassAppearance.defaultBlurStrength
     private var refreshScheduled = false
     private weak var configuredWindow: NSWindow?
     private var configuredForGlass: Bool?
 
-    func update(enabled: Bool, transparency: Double) {
+    func update(
+        enabled: Bool,
+        transparency: Double,
+        blurStrength: WindowGlassAppearance.BlurStrength
+    ) {
         self.enabled = enabled
         self.transparency = WindowGlassAppearance.clamped(transparency)
+        self.blurStrength = blurStrength
     }
 
     func attach(to window: NSWindow?) {
@@ -116,7 +143,7 @@ private final class WindowGlassBackdropController {
             }
             backdrop.frame = contentView.bounds
             backdrop.autoresizingMask = [.width, .height]
-            backdrop.apply(transparency: transparency)
+            backdrop.apply(transparency: transparency, blurStrength: blurStrength)
             makeAncestorsClear(from: contentView)
             applyTranslucency(to: contentView, skipping: backdrop)
         } else {
@@ -251,7 +278,11 @@ private final class WindowGlassBackdropView: NSView {
         refreshOverlay()
     }
 
-    func apply(transparency: Double) {
+    func apply(
+        transparency: Double,
+        blurStrength: WindowGlassAppearance.BlurStrength
+    ) {
+        effectView.material = blurStrength.material
         overlayView.alphaValue = WindowGlassAppearance.fillOpacity(transparency: transparency)
         refreshOverlay()
     }
@@ -262,6 +293,19 @@ private final class WindowGlassBackdropView: NSView {
             ? NSColor(red: 0.055, green: 0.065, blue: 0.085, alpha: 1)
             : NSColor(red: 0.955, green: 0.968, blue: 0.992, alpha: 1)
         overlayView.layer?.backgroundColor = color.cgColor
+    }
+}
+
+private extension WindowGlassAppearance.BlurStrength {
+    var material: NSVisualEffectView.Material {
+        switch self {
+        case .subtle:
+            .underPageBackground
+        case .standard:
+            .underWindowBackground
+        case .strong:
+            .hudWindow
+        }
     }
 }
 #endif
