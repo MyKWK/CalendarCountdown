@@ -1,4 +1,5 @@
 import CalendarCountdownCore
+import CoreImage
 import SwiftUI
 
 private struct AppWindowGlassActiveKey: EnvironmentKey {
@@ -239,6 +240,7 @@ private final class WindowGlassBackdropController {
 /// washes above this view; the desktop itself is never shown unblurred.
 private final class WindowGlassBackdropView: NSView {
     private let effectView = NSVisualEffectView()
+    private let mistView = NSView()
     private let overlayView = NSView()
 
     override init(frame frameRect: NSRect) {
@@ -251,6 +253,12 @@ private final class WindowGlassBackdropView: NSView {
         effectView.state = .active
         effectView.autoresizingMask = [.width, .height]
         addSubview(effectView)
+
+        mistView.wantsLayer = true
+        mistView.layer?.backgroundColor = NSColor.clear.cgColor
+        mistView.layer?.masksToBounds = true
+        mistView.autoresizingMask = [.width, .height]
+        addSubview(mistView)
 
         overlayView.wantsLayer = true
         overlayView.autoresizingMask = [.width, .height]
@@ -270,6 +278,7 @@ private final class WindowGlassBackdropView: NSView {
     override func layout() {
         super.layout()
         effectView.frame = bounds
+        mistView.frame = bounds
         overlayView.frame = bounds
     }
 
@@ -282,7 +291,8 @@ private final class WindowGlassBackdropView: NSView {
         transparency: Double,
         blurStrength: WindowGlassAppearance.BlurStrength
     ) {
-        effectView.material = blurStrength.material
+        effectView.material = .underWindowBackground
+        mistView.layer?.backgroundFilters = [blurStrength.backgroundBlurFilter]
         overlayView.alphaValue = WindowGlassAppearance.fillOpacity(transparency: transparency)
         refreshOverlay()
     }
@@ -297,15 +307,10 @@ private final class WindowGlassBackdropView: NSView {
 }
 
 private extension WindowGlassAppearance.BlurStrength {
-    var material: NSVisualEffectView.Material {
-        switch self {
-        case .subtle:
-            .underPageBackground
-        case .standard:
-            .underWindowBackground
-        case .strong:
-            .hudWindow
-        }
+    var backgroundBlurFilter: CIFilter {
+        let filter = CIFilter(name: "CIGaussianBlur")!
+        filter.setValue(backdropBlurRadius, forKey: kCIInputRadiusKey)
+        return filter
     }
 }
 #endif

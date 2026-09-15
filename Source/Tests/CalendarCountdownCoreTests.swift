@@ -3,7 +3,7 @@ import XCTest
 
 final class CalendarCountdownCoreTests: XCTestCase {
     func testReleaseVersion() {
-        XCTAssertEqual(ProductConstants.version, "1.0.18")
+        XCTAssertEqual(ProductConstants.version, "1.0.19")
     }
 
     func testZhixingMetricsStayOnACoherentScale() {
@@ -838,6 +838,9 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertEqual(WindowGlassAppearance.defaultBlurStrength, .standard)
         XCTAssertEqual(WindowGlassAppearance.blurStrength(for: "subtle"), .subtle)
         XCTAssertEqual(WindowGlassAppearance.blurStrength(for: "strong"), .strong)
+        XCTAssertEqual(WindowGlassAppearance.BlurStrength.subtle.backdropBlurRadius, 4)
+        XCTAssertEqual(WindowGlassAppearance.BlurStrength.standard.backdropBlurRadius, 14)
+        XCTAssertEqual(WindowGlassAppearance.BlurStrength.strong.backdropBlurRadius, 30)
         XCTAssertEqual(
             WindowGlassAppearance.blurStrength(for: "invalid"),
             WindowGlassAppearance.defaultBlurStrength
