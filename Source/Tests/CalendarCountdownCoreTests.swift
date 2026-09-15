@@ -3,7 +3,7 @@ import XCTest
 
 final class CalendarCountdownCoreTests: XCTestCase {
     func testReleaseVersion() {
-        XCTAssertEqual(ProductConstants.version, "1.0.19")
+        XCTAssertEqual(ProductConstants.version, "1.0.20")
     }
 
     func testZhixingMetricsStayOnACoherentScale() {

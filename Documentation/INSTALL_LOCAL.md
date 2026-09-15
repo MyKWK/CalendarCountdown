@@ -1,8 +1,8 @@
-# 知行 1.0.19（macOS Universal）
+# 知行 1.0.20（macOS Universal）
 
 ## 安装 App
 
-1. 打开 `CalendarCountdown-1.0.19-macos-universal.dmg`。
+1. 打开 `CalendarCountdown-1.0.20-macos-universal.dmg`。
 2. 将“知行.app”拖到“Applications”快捷方式。
 3. 此 GitHub 构建为 ad-hoc 签名、尚未经过 Apple 公证。首次打开若被 macOS 阻止，请在 Finder 中按住 Control 点击 App，选择“打开”，或前往“系统设置 → 隐私与安全性”确认打开。
 4. 在 App 中点击“授权日历访问”。若权限此前被拒绝，请在系统设置中打开日历权限后回到知行。只有在你明确新建或导入时，App 才会写入选定的 Apple 日历。
@@ -22,10 +22,10 @@ DMG 只附带匿名格式示例，不包含开发者或用户的私人纪念日�
 DMG 根目录中的 `calcount` 是同时支持 Apple Silicon 与 Intel Mac 的 Universal 命令行工具。示例：
 
 ```bash
-/Volumes/知行\ 1.0.19/calcount version
-/Volumes/知行\ 1.0.19/calcount auth
-/Volumes/知行\ 1.0.19/calcount import "/Volumes/知行 1.0.19/导入格式示例.json" --dry-run
-/Volumes/知行\ 1.0.19/calcount tracking export --output ~/Desktop/important-days.json
+/Volumes/知行\ 1.0.20/calcount version
+/Volumes/知行\ 1.0.20/calcount auth
+/Volumes/知行\ 1.0.20/calcount import "/Volumes/知行 1.0.20/导入格式示例.json" --dry-run
+/Volumes/知行\ 1.0.20/calcount tracking export --output ~/Desktop/important-days.json
 ```
 
 ## 签名状态
