@@ -99,10 +99,9 @@ struct MissionEditorSheet: View {
                                 isOn: $targetDateEnabled
                             )
                             if targetDateEnabled {
-                                DatePicker(
+                                QuickDateSelection(
                                     AppLocalization.text("mission.due", defaultValue: "截止"),
-                                    selection: $targetDate,
-                                    displayedComponents: .date
+                                    selection: $targetDate
                                 )
                             }
                         }

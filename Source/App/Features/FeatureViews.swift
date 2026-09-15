@@ -1224,10 +1224,10 @@ struct AddTaskSheet: View {
                     Toggle("有到期时间", isOn: $hasDue)
                 }
                 if kind == .timeWindow {
-                    DatePicker("开始", selection: $start)
-                    DatePicker("结束", selection: $due)
+                    QuickDateSelection("开始", selection: $start, showsTime: true)
+                    QuickDateSelection("结束", selection: $due, showsTime: true)
                 } else if hasDue {
-                    DatePicker("到期", selection: $due)
+                    QuickDateSelection("到期", selection: $due, showsTime: true)
                 }
                 Picker("循环", selection: $recurrencePreset) {
                     Text("不循环").tag("none")
@@ -1254,7 +1254,7 @@ struct AddTaskSheet: View {
                     Stepper("重复 \(endCount) 次", value: $endCount, in: 1...99)
                 }
                 if endPreset == "date" {
-                    DatePicker("结束日期", selection: $endDate, displayedComponents: .date)
+                    QuickDateSelection("结束日期", selection: $endDate)
                 }
                 Picker("优先级", selection: $priority) {
                     Text("无").tag(TaskPriority.none)
@@ -1450,10 +1450,10 @@ struct EditTaskSheet: View {
                     Toggle("有到期时间", isOn: $hasDue)
                 }
                 if kind == .timeWindow {
-                    DatePicker("开始", selection: $start)
-                    DatePicker("结束", selection: $due)
+                    QuickDateSelection("开始", selection: $start, showsTime: true)
+                    QuickDateSelection("结束", selection: $due, showsTime: true)
                 } else if hasDue {
-                    DatePicker("到期", selection: $due)
+                    QuickDateSelection("到期", selection: $due, showsTime: true)
                 }
                 Picker("优先级", selection: $priority) {
                     Text("无").tag(TaskPriority.none)

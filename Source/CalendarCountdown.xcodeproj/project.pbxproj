@@ -17,6 +17,7 @@
 		0D9D06512CA2E9EDF9F98024 /* AppDatabaseAndServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ECC252F5FC5BA4A9DB2C3E7 /* AppDatabaseAndServiceTests.swift */; };
 		0DF8F68F8F47301569F2CABA /* WorkspaceModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54E21D5602054C0D9526F004 /* WorkspaceModel.swift */; };
 		0EDB1739CD964CC00121611B /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C025F6B7CBFAD1B439BC04F /* CloudSync.swift */; };
+		113003F1A38CD76B439FB00D /* QuickDateSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 954C00669D3FC3F897CCACC1 /* QuickDateSelection.swift */; };
 		12A1E87ECDE0152F86544FFB /* MissionSymbolCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = A80135EA0B72539F80B410FF /* MissionSymbolCatalog.swift */; };
 		12A8887DB42A8C8FA664EFD5 /* TaskModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1AC2F31B82C9A7C26B912BE /* TaskModels.swift */; };
 		12E479D33AFF22E782C210CF /* CountdownService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B53565419EC12A323EEE029 /* CountdownService.swift */; };
@@ -156,6 +157,7 @@
 		AB6F8E338AA50C4FEDA7396B /* AppInstanceIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CB9B969263690168F3248B0 /* AppInstanceIdentity.swift */; };
 		ABBBBA4A6BCABAF1179CA52F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7BD05FE988DA963486060135 /* WidgetKit.framework */; };
 		ACAA580A04615F0FEBACB6D3 /* CalendarAccessRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA8AFEB2B7F8FD73174B85A7 /* CalendarAccessRecovery.swift */; };
+		ADEB0B82A8FDD1D0CE70E9C0 /* QuickDateSelection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 954C00669D3FC3F897CCACC1 /* QuickDateSelection.swift */; };
 		AF97464B11F18BC9B17D2B51 /* CalendarAccessRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA8AFEB2B7F8FD73174B85A7 /* CalendarAccessRecovery.swift */; };
 		B1EFE68C3937E11D124B9321 /* ColorHex.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD739417C823778AC4F9EEFA /* ColorHex.swift */; };
 		B27FCAD3125A8102A3F02CCB /* CalendarCountdownMobileWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 114B7C6F4636E2DA13F826F4 /* CalendarCountdownMobileWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -522,6 +524,7 @@
 		8EEE845B42F1D86E560D1C09 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		918C9B454898EDC9D7657C73 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		942EEB5D847A1B1F63214B15 /* DiagnosticLogging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticLogging.swift; sourceTree = "<group>"; };
+		954C00669D3FC3F897CCACC1 /* QuickDateSelection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickDateSelection.swift; sourceTree = "<group>"; };
 		9649D5FB7F8C4D15DCCC4BA6 /* MobileSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MobileSettingsView.swift; sourceTree = "<group>"; };
 		989899874343374156153C10 /* HabitService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HabitService.swift; sourceTree = "<group>"; };
 		9B1CCF3969F271F463A6A3EB /* RecurrenceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurrenceModels.swift; sourceTree = "<group>"; };
@@ -939,6 +942,7 @@
 				056E118F36D92693F8D13E2E /* MenuBarContentView.swift */,
 				D2E31CA2F2D85800914876FF /* MissionEditorSheet.swift */,
 				FA22EE8C73646074E3F3CDB8 /* MissionIconPicker.swift */,
+				954C00669D3FC3F897CCACC1 /* QuickDateSelection.swift */,
 				665804FB61AC774DA2DEC7F3 /* RootView.swift */,
 				3455EB3F20D6087599FF757F /* ShortcutSupport.swift */,
 				7E7FD2BED5CCEA01B4DC76D6 /* StatusBarCoordinator.swift */,
@@ -1623,6 +1627,7 @@
 				7512173887D39BFCEF5753AE /* MobileRootView.swift in Sources */,
 				47D722C2FBCA2084999D8173 /* MobileSettingsView.swift in Sources */,
 				0D26272A38783421716A6515 /* PhoneTabRoot.swift in Sources */,
+				113003F1A38CD76B439FB00D /* QuickDateSelection.swift in Sources */,
 				D5DABE37E155B5D3583738F3 /* WindowGlassChrome.swift in Sources */,
 				0DF8F68F8F47301569F2CABA /* WorkspaceModel.swift in Sources */,
 				91AB381BB812933F15148C93 /* ZhixingDesignSystem.swift in Sources */,
@@ -1734,6 +1739,7 @@
 				9B9961711EE60D16A5727842 /* MenuBarContentView.swift in Sources */,
 				4733342B915B7F6659215CB9 /* MissionEditorSheet.swift in Sources */,
 				9373B3B8D34FAED6CA0F4CC6 /* MissionIconPicker.swift in Sources */,
+				ADEB0B82A8FDD1D0CE70E9C0 /* QuickDateSelection.swift in Sources */,
 				A1473E7D018EC74D8C446707 /* RootView.swift in Sources */,
 				86B11414FB2A54227218172F /* ShortcutSupport.swift in Sources */,
 				A8639A61A257ACF83D5A22FE /* StatusBarCoordinator.swift in Sources */,

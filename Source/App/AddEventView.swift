@@ -49,10 +49,10 @@ struct AddEventView: View {
 
                 if entryKind == .oneTime {
                     Section("日期") {
-                        DatePicker(
+                        QuickDateSelection(
                             "发生时间",
                             selection: $date,
-                            displayedComponents: isAllDay ? [.date] : [.date, .hourAndMinute]
+                            showsTime: !isAllDay
                         )
                         Toggle("全天事件", isOn: $isAllDay)
                     }
@@ -117,10 +117,10 @@ struct AddEventView: View {
             }
 
             if calendarSystem == .gregorian {
-                DatePicker(
+                QuickDateSelection(
                     "首次日期",
                     selection: $date,
-                    displayedComponents: isAllDay ? [.date] : [.date, .hourAndMinute]
+                    showsTime: !isAllDay
                 )
                 Toggle("全天事件", isOn: $isAllDay)
                 Text("Apple 日历会保存为每年重复的日历事件。")
