@@ -839,8 +839,8 @@ final class CalendarCountdownCoreTests: XCTestCase {
         XCTAssertEqual(WindowGlassAppearance.blurStrength(for: "subtle"), .subtle)
         XCTAssertEqual(WindowGlassAppearance.blurStrength(for: "strong"), .strong)
         XCTAssertEqual(WindowGlassAppearance.BlurStrength.subtle.backdropBlurRadius, 4)
-        XCTAssertEqual(WindowGlassAppearance.BlurStrength.standard.backdropBlurRadius, 14)
-        XCTAssertEqual(WindowGlassAppearance.BlurStrength.strong.backdropBlurRadius, 30)
+        XCTAssertEqual(WindowGlassAppearance.BlurStrength.standard.backdropBlurRadius, 18)
+        XCTAssertEqual(WindowGlassAppearance.BlurStrength.strong.backdropBlurRadius, 42)
         XCTAssertEqual(
             WindowGlassAppearance.blurStrength(for: "invalid"),
             WindowGlassAppearance.defaultBlurStrength

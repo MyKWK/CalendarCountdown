@@ -190,6 +190,7 @@ struct AppSettingsView: View {
             }
             .zhixingSurface(.canvas)
         }
+        .toolbar(.hidden, for: .windowToolbar)
         .zhixingSurface(.canvas)
         .frame(width: 760, height: 640)
         .zhixingForeground(.body)

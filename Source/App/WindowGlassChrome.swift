@@ -239,26 +239,28 @@ private final class WindowGlassBackdropController {
 /// Window-level blurred backdrop. Broad SwiftUI surfaces add the cool Codex
 /// washes above this view; the desktop itself is never shown unblurred.
 private final class WindowGlassBackdropView: NSView {
+    private let effectContainerView = NSView()
     private let effectView = NSVisualEffectView()
-    private let mistView = NSView()
     private let overlayView = NSView()
+    private var blurRadius: CGFloat = 0
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
         layer?.backgroundColor = NSColor.clear.cgColor
+        layer?.masksToBounds = true
+
+        effectContainerView.wantsLayer = true
+        effectContainerView.layerUsesCoreImageFilters = true
+        effectContainerView.layer?.backgroundColor = NSColor.clear.cgColor
+        effectContainerView.autoresizingMask = [.width, .height]
+        addSubview(effectContainerView)
 
         effectView.material = .underWindowBackground
         effectView.blendingMode = .behindWindow
         effectView.state = .active
         effectView.autoresizingMask = [.width, .height]
-        addSubview(effectView)
-
-        mistView.wantsLayer = true
-        mistView.layer?.backgroundColor = NSColor.clear.cgColor
-        mistView.layer?.masksToBounds = true
-        mistView.autoresizingMask = [.width, .height]
-        addSubview(mistView)
+        effectContainerView.addSubview(effectView)
 
         overlayView.wantsLayer = true
         overlayView.autoresizingMask = [.width, .height]
@@ -277,8 +279,11 @@ private final class WindowGlassBackdropView: NSView {
 
     override func layout() {
         super.layout()
-        effectView.frame = bounds
-        mistView.frame = bounds
+        // Gaussian blur expands beyond its source bounds. Overscan the actual
+        // visual-effect content so no clear seam appears around the window.
+        let overscan = max(blurRadius * 2, 12)
+        effectContainerView.frame = bounds.insetBy(dx: -overscan, dy: -overscan)
+        effectView.frame = effectContainerView.bounds
         overlayView.frame = bounds
     }
 
@@ -292,7 +297,14 @@ private final class WindowGlassBackdropView: NSView {
         blurStrength: WindowGlassAppearance.BlurStrength
     ) {
         effectView.material = .underWindowBackground
-        mistView.layer?.backgroundFilters = [blurStrength.backgroundBlurFilter]
+        blurRadius = CGFloat(blurStrength.backdropBlurRadius)
+        // Filter the view that contains the live behind-window material. The
+        // previous implementation filtered an empty transparent sibling, so
+        // Core Animation had no pixels to soften and all three choices looked
+        // identical.
+        effectContainerView.layer?.filters = [blurStrength.contentBlurFilter]
+        effectContainerView.layer?.setNeedsDisplay()
+        needsLayout = true
         overlayView.alphaValue = WindowGlassAppearance.fillOpacity(transparency: transparency)
         refreshOverlay()
     }
@@ -307,7 +319,7 @@ private final class WindowGlassBackdropView: NSView {
 }
 
 private extension WindowGlassAppearance.BlurStrength {
-    var backgroundBlurFilter: CIFilter {
+    var contentBlurFilter: CIFilter {
         let filter = CIFilter(name: "CIGaussianBlur")!
         filter.setValue(backdropBlurRadius, forKey: kCIInputRadiusKey)
         return filter

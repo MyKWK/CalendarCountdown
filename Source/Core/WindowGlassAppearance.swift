@@ -38,8 +38,8 @@ public enum WindowGlassAppearance: Sendable {
         public var backdropBlurRadius: Double {
             switch self {
             case .subtle: 4
-            case .standard: 14
-            case .strong: 30
+            case .standard: 18
+            case .strong: 42
             }
         }
     }
